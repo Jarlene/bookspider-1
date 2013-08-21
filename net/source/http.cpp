@@ -85,7 +85,7 @@ int http_get(void* http, const char* uri, void** reply)
 	return http_request(http, uri, NULL, 0, reply);
 }
 
-int http_post(void* http, const char* uri, const void* req, size_t len, void** reply)
+int http_post(void* http, const char* uri, const void* req, unsigned int len, void** reply)
 {
 	return http_request(http, uri, (!req&&len<1)?"":req, len, reply);
 }
@@ -98,7 +98,7 @@ int http_set_header(void* http, const char* name, const char* value)
 	return 0;
 }
 
-int http_get_header(void* http, const char* name, char* value, size_t len)
+int http_get_header(void* http, const char* name, char* value, unsigned int len)
 {
 	assert(http);
 	httpobj* obj = (httpobj*)http;

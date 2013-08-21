@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;include;E:\work\webservice\sdk\include"
+				AdditionalIncludeDirectories=".;include;..\..\sdk\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;NET_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -117,7 +117,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories=".;include;E:\work\webservice\sdk\include"
+				AdditionalIncludeDirectories=".;include;..\..\sdk\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;NET_EXPORTS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -200,7 +200,7 @@
 			Name="libs"
 			>
 			<File
-				RelativePath="..\..\..\work\webservice\sdk\source\cookie.cpp"
+				RelativePath="..\..\sdk\source\cookie.cpp"
 				>
 			</File>
 			<File
@@ -208,15 +208,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\work\webservice\sdk\source\HttpSocket.cpp"
+				RelativePath="..\..\sdk\source\HttpSocket.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\work\webservice\sdk\source\url.c"
+				RelativePath="..\..\sdk\source\url.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\work\webservice\sdk\source\urlcodec.c"
+				RelativePath="..\..\sdk\source\urlcodec.c"
 				>
 			</File>
 		</Filter>

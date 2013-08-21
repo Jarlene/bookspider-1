@@ -1,4 +1,4 @@
-ROOT:=../../webservice/sdk
+ROOT:=../../sdk
 
 #--------------------------------Output------------------------------
 # OUTTYPE: 0-exe, 1-dll, 2-static
@@ -11,7 +11,7 @@ OUTFILE = libnet.so
 # INCLUDES = $(addprefix -I,$(INCLUDES)) # add -I prefix
 #--------------------------------------------------------------------
 INCLUDES = . \
-					.include \
+					./include \
 					$(ROOT)/include 
 					
 #-------------------------------Source-------------------------------
