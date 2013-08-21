@@ -42,7 +42,7 @@ int parse_search_result(const char* xml, parse_search_result_fcb fcb, ...)
 	return -1; // not found
 }
 
-int url_encode_utf8(const char* src, char* dst, size_t len)
+int url_encode_utf8(const char* src, char* dst, unsigned int len)
 {
 	char buffer[256] = {0};
 	

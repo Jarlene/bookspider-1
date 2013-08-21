@@ -1,23 +1,12 @@
 #ifndef _booksite_h_
 #define _booksite_h_
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-	#define BOOKSITE_API_EXPORT __declspec(dllexport)
-	#define BOOKSITE_API_IMPORT __declspec(dllimport)
-#else
-	#if __GNUC__ >= 4
-		#define BOOKSITE_API_EXPORT __attribute__((visibility ("default")))
-		#define BOOKSITE_API_IMPORT __attribute__((visibility ("default")))
-	#else
-		#define BOOKSITE_API_EXPORT
-		#define BOOKSITE_API_IMPORT
-	#endif
-#endif
+#include "dllexport.h"
 
 #ifdef BOOKSPIDER_EXPORTS
-	#define BOOKSITE_API BOOKSITE_API_EXPORT
+	#define BOOKSITE_API DLL_EXPORT_API
 #else
-	#define BOOKSITE_API BOOKSITE_API_IMPORT
+	#define BOOKSITE_API DLL_IMPORT_API
 #endif
 
 #ifdef  __cplusplus

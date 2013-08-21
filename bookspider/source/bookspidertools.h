@@ -7,6 +7,6 @@ typedef int (*parse_search_result_fcb)(const char* name, const char* author, con
 
 int parse_search_result(const char* xml, parse_search_result_fcb fcb, ...);
 
-int url_encode_utf8(const char* src, char* dst, size_t len);
+int url_encode_utf8(const char* src, char* dst, unsigned int len);
 
 #endif /* !_bookspidertools_h_ */

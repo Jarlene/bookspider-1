@@ -18,7 +18,7 @@ int book_site_count()
 const book_site_t* book_site_get(int index)
 {
 	if(index >= book_site_count() || index<0)
-		return NULL;
+		return (book_site_t*)0;
 
 	return g_sites[index];
 }
