@@ -39,7 +39,7 @@ int BookManager::AddBook(const Book& book)
 	{
 		snprintf(sql, sizeof(sql)-1,
 			"update books set uri='%s', datetime='%s', chapter='%s', mid=%d, vote=%d where bid=%d", 
-			book.uri, book.datetime, book.chapter, db_mid(), bookid);
+			book.uri, book.datetime, book.chapter, db_mid(), book.vote, bookid);
 		int r = db_update(m_db, sql);
 		return 0==r ? 1 : r;
 	}

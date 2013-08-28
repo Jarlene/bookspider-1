@@ -2,7 +2,9 @@
 #include "cstringext.h"
 #include <stdio.h>
 #include <assert.h>
+#if defined(_WIN32)
 #include <WinSock2.h>
+#endif
 extern "C"
 {
 #include "mysql.h"

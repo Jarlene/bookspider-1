@@ -344,10 +344,6 @@
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath=".\poversion.ver"
-			>
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

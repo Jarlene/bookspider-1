@@ -3,24 +3,12 @@
 
 #include <vector>
 #include <string>
-
-#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
-	#define DBCLIENT_API_EXPORT __declspec(dllexport)
-	#define DBCLIENT_API_IMPORT __declspec(dllimport)
-#else
-	#if __GNUC__ >= 4
-		#define DBCLIENT_API_EXPORT __attribute__((visibility ("default")))
-		#define DBCLIENT_API_IMPORT __attribute__((visibility ("default")))
-	#else
-		#define DBCLIENT_API_EXPORT
-		#define DBCLIENT_API_IMPORT
-	#endif
-#endif
+#include "dllexport.h"
 
 #ifdef DBCLIENT_EXPORTS
-	#define DBCLIENT_API DBCLIENT_API_EXPORT
+	#define DBCLIENT_API DLL_EXPORT_API
 #else
-	#define DBCLIENT_API DBCLIENT_API_IMPORT
+	#define DBCLIENT_API DLL_IMPORT_API
 #endif
 
 class DBCLIENT_API BookManager
