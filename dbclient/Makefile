@@ -22,6 +22,7 @@ SOURCE_PATHS = source
 SOURCE_FILES = $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.cpp))
 SOURCE_FILES += $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.c))
 SOURCE_FILES += $(ROOT)/source/systimeconfig.c
+SOURCE_FILES += $(ROOT)/source/tools.c
 
 #-----------------------------Library--------------------------------
 #
@@ -35,7 +36,7 @@ else
 LIBPATHS +=
 endif
 
-LIBS = 
+LIBS = rt dl
 
 STATIC_LIBS = ./mysql-connector-c-6.1.1-linux-glibc2.5-i686/lib/libmysqlclient.a
 

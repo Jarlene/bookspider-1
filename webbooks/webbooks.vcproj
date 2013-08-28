@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="E:\work\webservice\sdk\include;..\booksite\include;..\bookspider\include;..\dbclient\include;..\webspider\source"
+				AdditionalIncludeDirectories="..\..\sdk\include;..\bookspider\include;..\dbclient\include;..\webspider\source"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -209,7 +209,7 @@
 			Name="util"
 			>
 			<File
-				RelativePath="..\..\..\work\webservice\sdk\source\unicode.c"
+				RelativePath="..\..\sdk\source\unicode.c"
 				>
 			</File>
 			<File

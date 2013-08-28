@@ -184,7 +184,7 @@ int BookWorker()
 		thread_destroy(threads[i]);
 	}
 
-	printf("BookWorker: add book %d, update book %d\n", 
+	printf("BookWorker: add book %ld, update book %ld\n", 
 		g_bookstatistic.newbooks, g_bookstatistic.updatebooks);
 
 	// dump book top to file

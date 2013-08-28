@@ -185,7 +185,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\work\webservice\sdk\source\systimeconfig.c"
+				RelativePath="..\..\sdk\source\systimeconfig.c"
 				>
 			</File>
 		</Filter>

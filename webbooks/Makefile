@@ -3,8 +3,8 @@ ROOT:=../../sdk
 #--------------------------------Output------------------------------
 # OUTTYPE: 0-exe, 1-dll, 2-static
 #--------------------------------------------------------------------
-OUTTYPE = 1
-OUTFILE = libbookspider.so
+OUTTYPE = 0
+OUTFILE = webbooks
 
 #-------------------------------Include------------------------------
 #
@@ -12,41 +12,40 @@ OUTFILE = libbookspider.so
 #--------------------------------------------------------------------
 INCLUDES = . \
 					./include \
-					../webspider/source \
 					$(ROOT)/include \
-					$(ROOT)/xml/include
-					
+					../bookspider/include \
+					../dbclient/include \
+					../webspider/source
+
 #-------------------------------Source-------------------------------
 #
 #--------------------------------------------------------------------
-SOURCE_PATHS = source json stream
+SOURCE_PATHS = source
 SOURCE_FILES = $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.cpp))
 SOURCE_FILES += $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.c))
-
 SOURCE_FILES += $(ROOT)/source/unicode.c
-SOURCE_FILES += $(ROOT)/source/urlcodec.c
 SOURCE_FILES += ../webspider/source/utf8.c
 
 #-----------------------------Library--------------------------------
 #
 # LIBPATHS = $(addprefix -L,$(LIBPATHS)) # add -L prefix
 #--------------------------------------------------------------------
-LIBPATHS = ../tpm/$(BUILD).$(PLATFORM)
-
-ifeq ($(RELEASE),1)
-LIBPATHS += 
+LIBPATHS = ../bookspider/$(BUILD).$(PLATFORM) ../dbclient/$(BUILD).$(PLATFORM)
+ifdef RELEASE
+# relase library path
+LIBPATHS +=
 else
-LIBPATHS += 
+LIBPATHS +=
 endif
 
-LIBS = pthread
+LIBS = pthread bookspider dbclient
 
-STATIC_LIBS = $(ROOT)/xml/$(BUILD).$(PLATFORM)/libtinyxml.a
+STATIC_LIBS =
 
 #-----------------------------DEFINES--------------------------------
 #
 # DEFINES := $(addprefix -D,$(DEFINES)) # add -L prefix
 #--------------------------------------------------------------------
-DEFINES = BOOKSPIDER_EXPORTS
+DEFINES =
 
 include $(ROOT)/gcc.mk
