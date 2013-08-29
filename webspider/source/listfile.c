@@ -47,7 +47,9 @@ static int ListFiles(const char* dir, FCBListFile fcb, ...)
 
 static int OnListFile(const char* filename, int attributes, va_list args)
 {
+#if defined(_WIN32) || defined(_WIN64)
 	HMODULE h = system_load(filename);
 	system_unload(h);
+#endif
 	return 0;
 }

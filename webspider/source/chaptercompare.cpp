@@ -1,4 +1,4 @@
-#include "../algorithm/algorithm.h"
+ï»¿#include "../algorithm/algorithm.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +12,7 @@
 static int CheckSpecialCharacter(const char* s)
 {
 	static char buffer[64] = {0};
-	wchar_t* chinese = L" <>():-¡¶¡·£¨£©£º";
+	wchar_t* chinese = L" <>():-ã€Šã€‹ï¼ˆï¼‰ï¼š";
 
 	if(0 == buffer[0])
 		unicode_to_utf8(chinese, 0,  buffer, sizeof(buffer));
@@ -43,8 +43,8 @@ static void ChapterPreprocess(const char* s, std::string& chapter)
 
 static void chapter_split(const char* s, std::vector<std::wstring>& parts)
 {
-	const wchar_t* special1 = L" <(£¨¡¢¡¡";
-	const wchar_t* special2 = L"?\'\",.:>)£©¡¶¡·£º£¬¡£¡¯¡°?";
+	const wchar_t* special1 = L" <(ï¼ˆã€ã€€";
+	const wchar_t* special2 = L"?\'\",.:>)ï¼‰ã€Šã€‹ï¼šï¼Œã€‚â€™â€œ?";
 
 	mmptr ptr(sizeof(wchar_t)*(strlen(s)+1));
 	unicode_from_utf8(s, 0, (wchar_t*)ptr.get(), ptr.capacity());

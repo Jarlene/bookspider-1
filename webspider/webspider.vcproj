@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="source;E:\work\webservice\sdk\include;E:\work\webservice\dxt\include;&quot;mysql-connector-c-noinstall-6.0.2-win32\include&quot;;E:\work\webservice\sdk\xml\include;..\bookspider\include;..\dbclient\include;..\net\include"
+				AdditionalIncludeDirectories=".;..\..\sdk\include;..\..\sdk\xml\include;..\dxt\include;..\bookspider\include;..\dbclient\include;..\net\include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -60,7 +60,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="tinyxmlSTL.lib"
-				AdditionalLibraryDirectories="&quot;mysql-connector-c-noinstall-6.0.2-win32\lib&quot;;E:\work\webservice\sdk\xml\debug.linux"
+				AdditionalLibraryDirectories="..\..\sdk\xml\debug.linux"
 				GenerateDebugInformation="true"
 				TargetMachine="1"
 			/>
@@ -226,31 +226,31 @@
 			Name="libs"
 			>
 			<File
-				RelativePath="..\..\..\work\webservice\sdk\source\base64.c"
+				RelativePath="..\..\sdk\source\base64.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\work\webservice\sdk\source\cookie.cpp"
+				RelativePath="..\..\sdk\source\cookie.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\work\webservice\sdk\source\HttpSocket.cpp"
+				RelativePath="..\..\sdk\source\HttpSocket.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\work\webservice\sdk\source\tools.c"
+				RelativePath="..\..\sdk\source\tools.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\work\webservice\sdk\source\unicode.c"
+				RelativePath="..\..\sdk\source\unicode.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\work\webservice\sdk\source\url.c"
+				RelativePath="..\..\sdk\source\url.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\work\webservice\sdk\source\urlcodec.c"
+				RelativePath="..\..\sdk\source\urlcodec.c"
 				>
 			</File>
 			<File
