@@ -41,12 +41,12 @@ endif
 
 LIBS =
 
-STATIC_LIBS =
+STATIC_LIBS = ./zlib/libz.a
 
 #-----------------------------DEFINES--------------------------------
 #
 # DEFINES := $(addprefix -D,$(DEFINES)) # add -L prefix
 #--------------------------------------------------------------------
-DEFINES =
+DEFINES = NET_EXPORTS
 
 include $(ROOT)/gcc.mk
