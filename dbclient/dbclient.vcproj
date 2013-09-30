@@ -88,6 +88,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="xcopy mysql-connector-c-noinstall-6.0.2-win32\lib\libmysql.dll $(OutDir) /Y"
 			/>
 		</Configuration>
 		<Configuration

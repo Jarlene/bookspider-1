@@ -12,11 +12,11 @@ int main(int argc, char* argv[])
 {
 	socket_init();
 
-	BookManager* bookmgr;
-	bookmgr = BookManager::FetchBookManager();
+//	BookManager* bookmgr;
+//	bookmgr = BookManager::FetchBookManager();
 
-	//BookWorker();
-	BookSpider();
+	BookWorker();
+	//BookSpider();
 
 	socket_cleanup();
 	return 0;

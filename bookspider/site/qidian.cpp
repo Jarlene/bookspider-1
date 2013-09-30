@@ -1,8 +1,11 @@
 #include "booksite.h"
 #include <string>
+#include "sys/system.h"
 #include "XMLParser.h"
 #include "netmanager.h"
 #include "utf8.h"
+
+static const char* g_name = "qidian";
 
 struct TopUrls
 {
@@ -11,15 +14,13 @@ struct TopUrls
 };
 
 static TopUrls g_urls[] = { 
-	{ ETT_ALL_VIEW, "http://top.qidian.com/Book/TopDetail.aspx?TopType=29&Time=3&PageIndex=%d" },
-	{ ETT_ALL_MARK, "http://top.qidian.com/Book/TopDetail.aspx?TopType=4&Time=3&PageIndex=%d" },
-	{ ETT_ALL_VOTE, "http://top.qidian.com/Book/TopDetail.aspx?TopType=2&Time=3&PageIndex=%d" },
-	{ ETT_MONTH_VIEW, "http://top.qidian.com/Book/TopDetail.aspx?TopType=2&Time=2&PageIndex=%d" },
-	{ ETT_MONTH_MARK, "http://top.qidian.com/Book/TopDetail.aspx?TopType=2&Time=2&PageIndex=%d" },
-	{ ETT_MONTH_VOTE, "http://top.qidian.com/Book/TopDetail.aspx?TopType=2&Time=2&PageIndex=%d" },
-	{ ETT_WEEK_VIEW, "http://top.qidian.com/Book/TopDetail.aspx?TopType=2&Time=1&PageIndex=%d" },
-	{ ETT_WEEK_MARK, "http://top.qidian.com/Book/TopDetail.aspx?TopType=2&Time=1&PageIndex=%d" },
-	{ ETT_WEEK_VOTE, "http://top.qidian.com/Book/TopDetail.aspx?TopType=2&Time=1&PageIndex=%d" },
+	{ ETT_ALL_VIEW, "http://all.qidian.com/book/bookStore.aspx?ChannelId=-1&SubCategoryId=-1&Tag=all&Size=-1&Action=-1&OrderId=13&P=all&PageIndex=%d&update=-1&Vip=-1&Boutique=-1&SignStatus=-1" },
+	{ ETT_ALL_MARK, "http://all.qidian.com/book/bookStore.aspx?ChannelId=-1&SubCategoryId=-1&Tag=all&Size=-1&Action=-1&OrderId=9&P=all&PageIndex=%d&update=-1&Vip=-1&Boutique=-1&SignStatus=-1" },
+	{ ETT_ALL_VOTE, "http://all.qidian.com/book/bookStore.aspx?ChannelId=-1&SubCategoryId=-1&Tag=all&Size=-1&Action=-1&OrderId=3&P=all&PageIndex=%d&update=-1&Vip=-1&Boutique=-1&SignStatus=-1" },
+	{ ETT_MONTH_VIEW, "http://all.qidian.com/book/bookStore.aspx?ChannelId=-1&SubCategoryId=-1&Tag=all&Size=-1&Action=-1&OrderId=12&P=all&PageIndex=%d&update=-1&Vip=-1&Boutique=-1&SignStatus=-1" },
+	{ ETT_MONTH_VOTE, "http://all.qidian.com/book/bookStore.aspx?ChannelId=-1&SubCategoryId=-1&Tag=all&Size=-1&Action=-1&OrderId=4&P=all&PageIndex=%d&update=-1&Vip=-1&Boutique=-1&SignStatus=-1" },
+	{ ETT_WEEK_VIEW, "http://all.qidian.com/book/bookStore.aspx?ChannelId=-1&SubCategoryId=-1&Tag=all&Size=-1&Action=-1&OrderId=11&P=all&PageIndex=%d&update=-1&Vip=-1&Boutique=-1&SignStatus=-1" },
+	{ ETT_WEEK_VOTE, "http://all.qidian.com/book/bookStore.aspx?ChannelId=-1&SubCategoryId=-1&Tag=all&Size=-1&Action=-1&OrderId=8&P=all&PageIndex=%d&update=-1&Vip=-1&Boutique=-1&SignStatus=-1" },
 };
 
 static int GetTopUrl(int top, std::string& url)
@@ -84,15 +85,21 @@ static int Spider(int top, book_site_spider_fcb callback, void* param)
 	if(r)
 		return r;
 
-	for(int page=1; page<10000; page++)
+	for(int page=1; page<=5; page++)
 	{
 		char* result;
 		sprintf(uri, pattern.c_str(), page);
-		int r = WebToXml(uri, NULL, "E:\\app\\web\\qidian\\top.xml", &result);
-		if(r < 0)
+		for(int i=0; i<10; i++)
 		{
-			printf("qidian uri %s get page error: %d\n", uri, r);
-			continue;
+			int r = WebToXml(uri, NULL, "E:\\app\\web\\qidian\\top.xml", &result);
+			if(r < 0)
+			{
+				printf("qidian uri %s get page error: %d\n", uri, r);
+				system_sleep(10);
+				continue;
+			}
+			printf("[%s] page[%d] ok\n", g_name, page);
+			break;
 		}
 
 		r = ParseXml(result, callback, param);
@@ -105,7 +112,6 @@ static int Spider(int top, book_site_spider_fcb callback, void* param)
 	return 0;
 }
 
-static const char* g_name = "qidian";
 static int Register()
 {
 	static book_site_t site;
@@ -115,4 +121,4 @@ static int Register()
 	return book_site_register(&site);
 }
 
-static int dummy = Register();
+//static int dummy = Register();

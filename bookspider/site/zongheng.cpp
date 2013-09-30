@@ -1,8 +1,11 @@
 #include "booksite.h"
 #include <string>
+#include "sys/system.h"
 #include "XMLParser.h"
 #include "netmanager.h"
 #include "utf8.h"
+
+static const char* g_name = "zongheng";
 
 struct TopUrls
 {
@@ -83,15 +86,22 @@ int Spider(int top, book_site_spider_fcb callback, void* param)
 	if(r)
 		return r;
 
-	for(int page=1; page<10000; page++)
+	for(int page=1; page<=10; page++)
 	{
 		char* result;
 		sprintf(uri, pattern.c_str(), page);
-		int r = WebToXml(uri, NULL, "E:\\app\\web\\zongheng\\top.xml", &result);
-		if(r < 0)
+		for(int i=0; i<10; i++)
 		{
-			printf("get %s error: %d\n", uri, r);
-			continue;
+			int r = WebToXml(uri, NULL, "E:\\app\\web\\zongheng\\top.xml", &result);
+			if(r < 0)
+			{
+				printf("get %s error: %d\n", uri, r);
+				system_sleep(10);
+				continue;
+			}
+
+			printf("[%s] page[%d] ok\n", g_name, page);
+			break;
 		}
 
 		r = ParseXml(result, callback, param);
@@ -104,7 +114,6 @@ int Spider(int top, book_site_spider_fcb callback, void* param)
 	return 0;
 }
 
-static const char* g_name = "zongheng";
 static int Register()
 {
 	static book_site_t site;

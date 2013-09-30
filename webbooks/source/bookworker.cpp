@@ -8,11 +8,13 @@
 #include <assert.h>
 #include <vector>
 #include "booktop.h"
+#include "jsonhelper.h"
+#include "time64.h"
 
 struct BookSpiderParam
 {
 	const char* sitename;
-	int top;
+	jsonarray json;
 	int num;
 	int total;
 };
@@ -124,19 +126,22 @@ static int BookSpider(void* param, const book_t* book)
 {
 	BookSpiderParam* p = (BookSpiderParam*)param;
 
-	if(++p->num > p->total)
-		return 1; // stop spider
+	jsonobject json;
+	json.add("name", book->name);
+	json.add("author", book->author);
+	json.add("category", book->category);
+	json.add("count", book->vote);
+	p->json.add(json);
+	//int r = AddBook(p->sitename, book);
+	//if(r < 0)
+	//{
+	//	printf("%s add book %s err: %d\n", p->sitename, book->name, r);
+	//	return 0;
+	//}
 
-	int r = AddBook(p->sitename, book);
-	if(r < 0)
-	{
-		printf("%s add book %s err: %d\n", p->sitename, book->name, r);
-		return 0;
-	}
-
-	// top 500
-	if(p->num <= 500)
-		UpdateBookTop(p->top, p->sitename, book->name, book->author, book->vote);
+	//// top 500
+	//if(p->num <= 500)
+	//	UpdateBookTop(p->top, p->sitename, book->name, book->author, book->vote);
 	return 0;
 }
 
@@ -144,26 +149,39 @@ static int BookSiteWorker(void* param)
 {
 	const book_site_t* site = book_site_get((int)param);
 
-	BookSpiderParam p;
-	p.sitename = site->name;
+	//if(g_param_bookall)
+	//{
+	//	p.num = 0;
+	//	p.top = ETT_ALL_VOTE;
+	//	p.total = GetBookNum(site->name, ETT_ALL_VOTE);
+	//	site->spider(ETT_ALL_VOTE, BookSpider, &p);
+	//}
 
-	if(g_param_bookall)
+	ETopType types[] = {ETT_MONTH_VIEW,ETT_MONTH_VOTE};
+	for(int i=0; i<sizeof(types)/sizeof(types[0]); i++)
 	{
+		BookSpiderParam p;
+		p.sitename = site->name;
 		p.num = 0;
-		p.top = ETT_ALL_VOTE;
-		p.total = GetBookNum(site->name, ETT_ALL_VOTE);
-		site->spider(ETT_ALL_VOTE, BookSpider, &p);
+		p.total = GetBookNum(site->name, types[i]);
+		site->spider(types[i], BookSpider, &p);
+
+		char date[16] = {0};
+		time64_format(time64_now(), "%04Y-%02M-%02D", date);
+		
+		char filename[128]= {0};
+		snprintf(filename, sizeof(filename), "%s-%d-%s", site->name, types[i], date);
+
+		FILE* fp = fopen(filename, "w");
+		std::string json = p.json.json();
+		fwrite(json.c_str(), json.length(), 1, fp);
+		fclose(fp);
 	}
 
-	p.num = 0;
-	p.top = ETT_MONTH_VOTE;
-	p.total = GetBookNum(site->name, ETT_MONTH_VOTE);
-	site->spider(ETT_MONTH_VOTE, BookSpider, &p);
-
-	p.num = 0;
-	p.top = ETT_WEEK_VOTE;
-	p.total = GetBookNum(site->name, ETT_WEEK_VOTE);
-	site->spider(ETT_WEEK_VOTE, BookSpider, &p);
+	//p.num = 0;
+	//p.top = ETT_WEEK_VOTE;
+	//p.total = GetBookNum(site->name, ETT_WEEK_VOTE);
+	//site->spider(ETT_WEEK_VOTE, BookSpider, &p);
 	return 0;
 }
 
@@ -188,9 +206,9 @@ int BookWorker()
 		g_bookstatistic.newbooks, g_bookstatistic.updatebooks);
 
 	// dump book top to file
-	if(g_param_bookall)
-		g_booktop.find(ETT_ALL_VOTE)->second.Save("topallvote.xml");
-	g_booktop.find(ETT_MONTH_VOTE)->second.Save("topmonthvote.xml");
-	g_booktop.find(ETT_WEEK_VOTE)->second.Save("topweekvote.xml");
+	//if(g_param_bookall)
+	//	g_booktop.find(ETT_ALL_VOTE)->second.Save("topallvote.xml");
+	//g_booktop.find(ETT_MONTH_VOTE)->second.Save("topmonthvote.xml");
+	//g_booktop.find(ETT_WEEK_VOTE)->second.Save("topweekvote.xml");
 	return 0;
 }

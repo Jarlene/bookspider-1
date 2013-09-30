@@ -205,18 +205,6 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 		</Filter>
-		<Filter
-			Name="util"
-			>
-			<File
-				RelativePath="..\..\sdk\source\unicode.c"
-				>
-			</File>
-			<File
-				RelativePath="..\webspider\source\utf8.c"
-				>
-			</File>
-		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

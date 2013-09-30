@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;..\..\sdk\include;..\..\sdk\xml\include;..\dxt\include;..\bookspider\include;..\dbclient\include;..\net\include"
+				AdditionalIncludeDirectories=".;..\..\sdk\include;..\..\sdk\xml\include;..\dxt\include;..\bookspider\include;..\dbclient\include;..\net\include;..\libbook\json;..\libbook\include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -114,7 +114,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="source;E:\work\webservice\sdk\include;E:\work\webservice\dxt\include;&quot;mysql-connector-c-noinstall-6.0.2-win32\include&quot;;E:\work\webservice\sdk\xml\include;..\bookspider\include;..\dbclient\include"
+				AdditionalIncludeDirectories=".;..\..\sdk\include;..\..\sdk\xml\include;..\dxt\include;..\bookspider\include;..\dbclient\include;..\net\include;..\libbook\json;..\libbook\include"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				WarningLevel="4"
@@ -198,6 +198,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\source\WebSession.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\source\webspider.cpp"
 				>
 			</File>
@@ -215,52 +219,16 @@
 				RelativePath=".\source\netmanager.h"
 				>
 			</File>
+			<File
+				RelativePath=".\source\WebSession.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
-		</Filter>
-		<Filter
-			Name="libs"
-			>
-			<File
-				RelativePath="..\..\sdk\source\base64.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\sdk\source\cookie.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\sdk\source\HttpSocket.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\sdk\source\tools.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\sdk\source\unicode.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\sdk\source\url.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\sdk\source\urlcodec.c"
-				>
-			</File>
-			<File
-				RelativePath=".\source\utf8.c"
-				>
-			</File>
-			<File
-				RelativePath=".\source\utf8.h"
-				>
-			</File>
 		</Filter>
 	</Files>
 	<Globals>

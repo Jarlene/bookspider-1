@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="include;source;E:\work\webservice\sdk\include;E:\work\webservice\sdk\xml\include;..\webspider\source;E:\work\webservice\dxt\include;..\net\include"
+				AdditionalIncludeDirectories="include;source;..\..\sdk\include;..\..\sdk\xml\include;..\libbook\include;..\libhttp\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;BOOKSPIDER_EXPORTS;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -117,7 +117,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="include;source;E:\work\webservice\sdk\include;E:\work\webservice\sdk\xml\include;..\webspider\source;E:\work\webservice\dxt\include"
+				AdditionalIncludeDirectories="include;source;..\..\sdk\include;..\..\sdk\xml\include;..\libbook\include;..\libhttp\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;BOOKSPIDER_EXPORTS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -226,26 +226,6 @@
 			</File>
 			<File
 				RelativePath=".\site\luoqiu.cpp"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="libs"
-			>
-			<File
-				RelativePath="..\webspider\source\netmanager.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\sdk\source\unicode.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\sdk\source\urlcodec.c"
-				>
-			</File>
-			<File
-				RelativePath="..\webspider\source\utf8.c"
 				>
 			</File>
 		</Filter>

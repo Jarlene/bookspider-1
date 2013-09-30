@@ -1,37 +1,44 @@
+#include "tcpserver.h"
+#include "thread-pool.h"
+#include "WebSession.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "sys/sock.h"
 
-int WebSpider(const char* spider);
+thread_pool_t g_thdpool;
 
-static void PrintHelpAndExit()
+void OnTcpConnected(void* param, socket_t sock, const char* ip, int port)
 {
-	printf("webspider 0.1\n");
-	printf("webspider [-h|--heper|--spider name]\n");
-	exit(0);
+	WebSession* session = new WebSession(sock, ip, port);
+	if(0 != thread_pool_push(g_thdpool, WebSession::Run, session))
+	{
+		printf("thread pool push error[%s.%d].\n", ip, port);
+		delete session;
+	}
+}
+
+void OnTcpError(void* param, int errcode)
+{
+	printf("OnTcpError: %d\n", errcode);
 }
 
 int main(int argc, char* argv[])
 {
-	const char* spider = NULL;
-	for(int i=1; i<argc; i++)
-	{
-		if(0==strcmp("-h", argv[i]) || 0==strcmp("--help", argv[i]))
-		{
-			PrintHelpAndExit();
-		}
-		else if(0 == strcmp("--spider", argv[i]))
-		{
-			if(i+1 >= argc)
-			{
-				PrintHelpAndExit();
-			}
-			spider = argv[++i];
-		}
-	}
+	tcpserver_t tcpserver;
+	tcpserver_handler_t tcphandler;
+	tcphandler.onerror = OnTcpError;
+	tcphandler.onconnected = OnTcpConnected;
 
 	socket_init();
 	WebSpider(spider);
+	g_thdpool = thread_pool_create(2, 1, 64);
+	tcpserver = tcpserver_start(NULL, 10000, &tcphandler, NULL);
+
+	while('q' != getch())
+	{
+	}
+
+	tcpserver_stop(tcpserver);
+	thread_pool_destroy(g_thdpool);
 	socket_cleanup();
 	return 0;
 }
