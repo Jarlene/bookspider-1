@@ -1,0 +1,19 @@
+<xml>
+	<search>
+		<web-58xs>data/58xs-search.xml</web-58xs>
+		<web-86zw>data/86zw-search.xml</web-86zw>
+		<web-luoqiu>data/luoqiu-search.xml</web-luoqiu>
+	</search>
+	
+	<index>
+		<web-58xs>data/58xs-index.xml</web-58xs>
+		<web-86zw>data/86zw-index.xml</web-86zw>
+		<web-luoqiu>data/luoqiu-index.xml</web-luoqiu>
+	</index>
+	
+	<update>
+		<web-58xs>data/58xs-update.xml</web-58xs>
+		<web-86zw>data/86zw-update.xml</web-86zw>
+		<web-luoqiu>data/luoqiu-update.xml</web-luoqiu>
+	</update>
+</xml>
