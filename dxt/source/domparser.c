@@ -82,6 +82,51 @@ static void domparser_rearrange(domnode_t* node)
 	parent->child->prev = node;
 }
 
+static void domparser_rearrange_ul(domnode_t* parent)
+{
+	// ul -> li: miss </li>
+	domnode_t* next;
+	domnode_t* node;
+	domnode_t* child = parent->child;
+	while(child)
+	{
+		if(child->name && 0==stricmp(child->name, "li"))
+		{
+			if(0==child->end && 0==child->child)
+			{
+				// find next li node
+				next = child->next;
+				while(next != parent->child && (NULL==next->name || stricmp(next->name, "li")))
+					next = next->next;
+
+				node = child->next;
+				while(node != next)
+				{
+					node->parent = child;
+					node = node->next;
+				}
+
+				// re-list children
+				assert(0 == child->child);
+				if(child->next != next)
+				{
+					child->child = child->next;
+					child->child->prev = next->prev;
+					child->child->prev->next = child->child;
+				}
+
+				// re-list parent
+				child->next = next;
+				next->prev = child;
+			}
+		}
+
+		child = child->next;
+		if(child == parent->child)
+			break;
+	}
+}
+
 int domparser_append(domnode_t* parent, domnode_t* node)
 {
 	domnode_t* child = parent->child;
@@ -97,12 +142,16 @@ int domparser_append(domnode_t* parent, domnode_t* node)
 		while(child)
 		{
 			assert(node->name);
-			child = child->prev;
+			child = child->prev; // last child node
 			if(0==child->end && child->name && 0==stricmp(child->name, node->name))
 			{
-				assert(0 == child->end);
+				assert(0 == child->child);
 				child->end = node; // endtag
 				domparser_rearrange(child);
+
+				// rearrange ul -> li node
+				if(0 == stricmp(child->name, "ul"))
+					domparser_rearrange_ul(child);
 				return 0;
 			}
 
