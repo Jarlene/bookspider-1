@@ -60,47 +60,58 @@ int db_query(void* db, const char* sql, DBQueryResult& result)
 {
 	MYSQL* mysql = (MYSQL*)db;
 	if(mysql_real_query(mysql, sql, strlen(sql)))
-		return (int)mysql_errno(mysql);
+		return -(int)mysql_errno(mysql);
 	return result.StoreResult(db);
+}
+
+int db_query_int(void* db, const char* sql, int* value)
+{
+	DBQueryResult result;
+	int r = db_query(db, sql, result);
+	if(r < 0)
+		return r;
+
+	r = result.FetchRow();
+	if(r < 0)
+		return r;
+
+	return result.GetValue(0, *value);
+}
+
+int db_query_string(void* db, const char* sql, char* value, int bytes)
+{
+	DBQueryResult result;
+	int r = db_query(db, sql, result);
+	if(r < 0)
+		return r;
+
+	r = result.FetchRow();
+	if(r < 0)
+		return r;
+
+	return result.GetValue(0, value, bytes);
 }
 
 int db_insert(void* db, const char* sql)
 {
-	MYSQL* mysql = (MYSQL*)db;
-	if(mysql_real_query(mysql, sql, strlen(sql)))
-		return (int)mysql_errno(mysql);
-
-	MYSQL_RES* result = mysql_store_result(mysql);
-	int r = (int)mysql_errno(mysql);
-	if(result)
-		mysql_free_result(result);
-	return r;
+	return db_update(db, sql);
 }
 
 int db_delete(void* db, const char* sql)
 {
-	MYSQL* mysql = (MYSQL*)db;
-	if(mysql_real_query(mysql, sql, strlen(sql)))
-		return (int)mysql_errno(mysql);
-
-	MYSQL_RES* result = mysql_store_result(mysql);
-	int r = (int)mysql_errno(mysql);
-	if(result)
-		mysql_free_result(result);
-	return r;
+	return db_update(db, sql);
 }
 
 int db_update(void* db, const char* sql)
 {
 	MYSQL* mysql = (MYSQL*)db;
 	if(mysql_real_query(mysql, sql, strlen(sql)))
-		return (int)mysql_errno(mysql);
+		return -(int)mysql_errno(mysql);
 
-	MYSQL_RES* result = mysql_store_result(mysql);
-	int r = (int)mysql_errno(mysql);
-	if(result)
-		mysql_free_result(result);
-	return r;
+	my_ulonglong rows = mysql_affected_rows(mysql);
+	assert(NULL == mysql_store_result(mysql));
+	assert(0 == mysql_field_count(mysql));
+	return (int)rows;
 }
 
 DBQueryResult::DBQueryResult()
@@ -126,7 +137,7 @@ int DBQueryResult::StoreResult(void* db)
 	if(m_result)
 		return 0;
 	assert(0==mysql_field_count(mysql));
-	return (int)mysql_errno(mysql);
+	return -(int)mysql_errno(mysql);
 }
 
 int DBQueryResult::GetRows() const

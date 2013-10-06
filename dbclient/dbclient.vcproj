@@ -186,6 +186,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\source\sqlite-dbclient.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\sdk\source\systimeconfig.c"
 				>
 			</File>

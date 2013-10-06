@@ -11,18 +11,33 @@
 	#define DBCLIENT_API DLL_IMPORT_API
 #endif
 
+#define BOOK_ID	100000000
+
+// top type
+enum EBookTop{ 
+	ETT_ALL_VIEW=1, // all page view
+	ETT_ALL_MARK,	// all bookmark
+	ETT_ALL_VOTE,	// all user vote
+	ETT_MONTH_VIEW,	// month
+	ETT_MONTH_MARK,
+	ETT_MONTH_VOTE,
+	ETT_WEEK_VIEW,	// week
+	ETT_WEEK_MARK,
+	ETT_WEEK_VOTE,
+};
+
 class DBCLIENT_API BookManager
 {
 public:
 	struct Book
 	{
-		char name[100];		// book name
-		char author[100];	// author name
+		int id;				// book id (siteid * BOOK_ID + book)
+		char name[120];		// book name
+		char author[120];	// author name
 		char uri[128];		// http://www.book.com/books/book.html
 		char category[20];	// magic
-		char chapter[100];	// book chapter
+		char chapter[180];	// book chapter
 		char datetime[24];	// 2012-08-21 10:11:32
-		int siteid;
 		int vote;
 	};
 
@@ -31,6 +46,8 @@ public:
 		int bookid;
 		char uri[128];
 	};
+
+	typedef std::vector<Book> Books;
 
 private:
 	BookManager();
@@ -53,10 +70,7 @@ public:
 	int GetBookInfo(const char* name, const char* author, Book& book) const;
 	int GetBookInfo(int bookid, Book& book) const;
 
-	int QueryBook(int mid, int from, int count, std::vector<std::pair<int, Book> >& books) const;
-
-	int GetBookChapter(int bookid, char chapter1[100], char chapter2[100], char chapter3[100]);
-	int SetBookChapter(int bookid, const char* chapter1, const char* chapter2, const char* chapter3);
+	int QueryBook(int mid, int from, int count, Books& books) const;
 
 	///add or update book site
 	///@param[in] bookid book id
@@ -76,8 +90,19 @@ public:
 
 	int SetBookSiteChapter(const char* site, int bookid, const char* chapter);
 
+	// books.siteid must all the same value
+	int SetTopBooks(EBookTop top, const Books& books);
+
+	// name: book name
+	// author: book author
+	// chapter: book last chapter
+	int SetChapter(const char* site, const char* name, const char* author, const char* uri, const char* chapter, const char* datetime);
+
+	int GetLastCheckDatetime(const char* site, char datetime[20]);
+
 private:
 	int db_mid();
+	bool HaveBook(int bookid);
 
 private:
 	void* m_db;

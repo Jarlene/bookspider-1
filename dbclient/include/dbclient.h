@@ -46,9 +46,18 @@ int db_fini();
 void* db_connect(const char* ip, int port, const char* db, const char* username, const char* password);
 int db_disconnect(void* db);
 
+/// @return: <0-sql error, =0-ok
 int db_query(void* db, const char* sql, DBQueryResult& result);
+int db_query_int(void* db, const char* sql, int* value);
+int db_query_string(void* db, const char* sql, char* value, int bytes);
+
+/// @return: <0-sql error, >0-insert rows, =0-no matched
 int db_insert(void* db, const char* sql);
+
+/// @return: <0-sql error, >0-delete rows, =0-no matched
 int db_delete(void* db, const char* sql);
+
+/// @return: <0-sql error, >0-update rows, =0-no matched
 int db_update(void* db, const char* sql);
 
 #endif /* !_dbclient_h_ */
