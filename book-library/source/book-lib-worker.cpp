@@ -6,8 +6,6 @@
 #include "qidian.h"
 #include "zongheng.h"
 
-#define MAX_BOOK	10000
-
 static int OnBook(void* param, const book_t* book)
 {
 	BookManager* bookmgr = BookManager::FetchBookManager();
@@ -39,16 +37,16 @@ static int OnBook(void* param, const book_t* book)
 	}
 
 	int *n = (int*)param;
-	return ++*n >= MAX_BOOK ? 1 : 0;
+	return --*n > 0 ? 0 : 1;
 }
 
 static int OnThread(void* param)
 {
 	IBookSite* site = (IBookSite*)param;
-	EBookTop types[] = {ETT_ALL_VIEW, ETT_ALL_MARK, /*ETT_ALL_VOTE*/};
+	EBookTop types[] = { ETT_ALL_VIEW, ETT_ALL_MARK, ETT_ALL_VOTE, };
 	for(int i=0; i<sizeof(types)/sizeof(types[0]); i++)
 	{
-		int n = 0;
+		int n = site->GetCount();;
 		int r = ListBook(site, types[i], OnBook, &n);
 		if(r < 0)
 		{
@@ -62,7 +60,7 @@ static int OnThread(void* param)
 
 int BookLibrary()
 {
-	IBookSite* sites[] = { new CQiDian(), new CZongHeng(), new C17K() };
+	IBookSite* sites[] = { new CQiDian(),  new CZongHeng(), new C17K(), };
 
 	// start worker thread
 	std::vector<thread_t> threads;

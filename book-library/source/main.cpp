@@ -1,6 +1,7 @@
 #include "cstringext.h"
 #include "sys/sock.h"
 #include <stdio.h>
+#include "bookmanager.h"
 
 int BookTop();
 int BookLibrary();

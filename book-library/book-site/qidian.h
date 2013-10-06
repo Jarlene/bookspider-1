@@ -9,6 +9,7 @@ public:
 	virtual int GetId() const { return 1; }
 	virtual const char* GetName() const { return "qidian"; }
 	virtual const char* GetUri(int top) const;
+	virtual int GetCount() const { return 8000; }
 };
 
 #endif /* !_qidian_h_ */

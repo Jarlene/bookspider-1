@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<top>
+  <books>
+    <xsl:for-each select="/html/body/div[2]/div[4]/div">
+      <book>
+        <name>
+          <xsl:value-of select="div[3]/dl/dt/a" />
+        </name>
+        <author>
+          <xsl:value-of select="div[3]/dl/dd/ul/li/span/a" />
+        </author>
+        <uri>
+          <xsl:attr-of select="div[3]/dl/dt/a" attr='href' />
+        </uri>
+        <category>
+          <xsl:value-of select="div[3]/dl/dd/ul/li/span[2]/a" />
+        </category>
+        <chapter>
+          <xsl:value-of select="div[3]/dl/dd/ul/li[4]/a" />
+        </chapter>
+        <datetime>
+          <xsl:value-of select="div[3]/dl/dd/ul/li[4]/cite" />
+        </datetime>
+        <vote>
+          <xsl:value-of select="div[3]/dl/dd/ul/li/span[3]/code1" />
+        </vote>
+      </book>
+    </xsl:for-each>
+  </books>
+</top>

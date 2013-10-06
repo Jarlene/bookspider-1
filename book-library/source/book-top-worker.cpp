@@ -28,7 +28,7 @@ static int OnThread(void* param)
 		return 0;
 	}
 
-	EBookTop types[] = {ETT_MONTH_VIEW, ETT_MONTH_MARK, ETT_MONTH_VOTE};
+	EBookTop types[] = {ETT_MONTH_VIEW, /*ETT_MONTH_MARK, */ETT_MONTH_VOTE};
 	for(int i=0; i<sizeof(types)/sizeof(types[0]); i++)
 	{
 		BookManager::Books books;
@@ -60,7 +60,7 @@ static int OnThread(void* param)
 
 int BookTop()
 {
-	IBookSite* sites[] = { new CQiDian(), new CZongHeng(), new C17K() };
+	IBookSite* sites[] = { /*new CQiDian(), new CZongHeng(), */new C17K() };
 
 	// start worker thread
 	std::vector<thread_t> threads;

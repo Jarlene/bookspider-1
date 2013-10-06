@@ -1,6 +1,7 @@
 <xml>
 	<top>
-		<qidian>data/qidian-top.xml</qidian>
-		<zongheng>data/zongheng-top.xml</zongheng>
+		<web-qidian>data/qidian-top.xml</web-qidian>
+		<web-zongheng>data/zongheng-top.xml</web-zongheng>
+		<web-17k>data/17k-top.xml</web-17k>
 	</top>
-<xml/>
+</xml>

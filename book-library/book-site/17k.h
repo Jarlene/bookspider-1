@@ -9,6 +9,7 @@ public:
 	virtual int GetId() const { return 3; }
 	virtual const char* GetName() const { return "17k"; }
 	virtual const char* GetUri(int top) const;
+	virtual int GetCount() const { return 2000; }
 };
 
 #endif /* !_17k_h_ */

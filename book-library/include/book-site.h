@@ -10,6 +10,7 @@ struct IBookSite
 	virtual int GetId() const = 0;
 	virtual const char* GetName() const = 0;
 	virtual const char* GetUri(int top) const = 0;
+	virtual int GetCount() const = 0;
 };
 
 typedef BookManager::Book book_t;

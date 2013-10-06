@@ -6,6 +6,13 @@
 #include "http.h"
 #include "config.h"
 #include "dxt.h"
+#include "tools.h"
+
+static int GetBookId(const char* uri)
+{
+	const char* p = strrchr(uri, '/');
+	return p ? atoi(p+1) : atoi(uri);
+}
 
 static int ParseXml(IBookSite* site, const char* xml, book_site_spider_fcb callback, void* param)
 {
@@ -29,14 +36,26 @@ static int ParseXml(IBookSite* site, const char* xml, book_site_spider_fcb callb
 		parser.GetValue("chapter", chapter);
 		parser.GetValue("datetime", datetime);
 
+		const char* encoding = parser.GetEncoding();
+
+		// qidian/zongheng: 13-03-07 21:03 => 2013-03-07 21:03
+		if(datetime.length() == 14)
+			datetime.insert(0, "20");
+
+		// zongheng: [category] => category
+		if('['==category.at(0) && ']'==category.at(category.length()-1))
+		{
+			category.erase(0, 1);
+			category.erase(category.length()-1, 1);
+		}
+
 		// data filter
 
-		// to utf-8
 		book_t book;
-		book.siteid = site->GetId();
 		parser.GetValue("vote", book.vote);
+		book.id = site->GetId() * BOOK_ID + GetBookId(uri.c_str());
 
-		const char* encoding = parser.GetEncoding();
+		// to utf-8
 		strcpy(book.name, UTF8Encode(name.c_str(), encoding));
 		strcpy(book.author, UTF8Encode(author.c_str(), encoding));
 		strcpy(book.uri, UTF8Encode(uri.c_str(), encoding));
@@ -55,14 +74,13 @@ static int ParseXml(IBookSite* site, const char* xml, book_site_spider_fcb callb
 static int Http(const char* uri, void** reply)
 {
 	int r = -1;
-	for(int i=0; i<10; i++)
+	for(int i=0; r < 0 && i<10; i++)
 	{
 		r = http_request(uri, NULL, reply);
 		if(r < 0)
 		{
 			printf("get %s error: %d\n", uri, r);
 			system_sleep(10);
-			continue;
 		}
 	}
 	return r;
@@ -71,7 +89,7 @@ static int Http(const char* uri, void** reply)
 int ListBook(IBookSite* site, int top, book_site_spider_fcb callback, void* param)
 {
 	char uri[256] = {0};
-	sprintf(uri, "top/%s", site->GetName());
+	sprintf(uri, "top/web-%s", site->GetName());
 
 	std::string xmlfile;
 	if(!g_config.GetConfig(uri, xmlfile)) // xml file
@@ -94,11 +112,11 @@ int ListBook(IBookSite* site, int top, book_site_spider_fcb callback, void* para
 			return r;
 		}
 
-		//tools_write("e:\\a.html", reply, r);
 		libct::auto_ptr<char> result;
 		r = DxTransformHtml(&result, reply, xmlfile.c_str());
 		if(r < 0)
 		{
+			tools_write("e:\\a.html", reply, strlen(reply));
 			printf("TopBook[%s]: dxt page %d error: %d.\n", site->GetName(), page, r);
 			return r;
 		}

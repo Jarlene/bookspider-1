@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;./include;&quot;./book-site&quot;;../../sdk/include;../libhttp/include;../dxt/include;../dbclient/include;../../sdk/xml/include"
+				AdditionalIncludeDirectories=".;./include;&quot;./book-site&quot;;../../sdk/include;../../sdk/xml/include;../libsdk/include;../libhttp/include;../dxt/include;../dbclient/include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -117,7 +117,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories=".;./include;&quot;./book-site&quot;;../../sdk/include;../libhttp/include;../dxt/include;../dbclient/include;../../sdk/xml/include"
+				AdditionalIncludeDirectories=".;./include;&quot;./book-site&quot;;../../sdk/include;../../sdk/xml/include;../libsdk/include;../libhttp/include;../dxt/include;../dbclient/include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -189,7 +189,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\source\config.cpp"
+				RelativePath="..\libsdk\source\config.cpp"
 				>
 			</File>
 			<File
@@ -207,7 +207,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\include\config.h"
+				RelativePath="..\libsdk\include\config.h"
 				>
 			</File>
 		</Filter>
