@@ -9,7 +9,7 @@
 		
 		if($page > 1)
 		{
-			$a = sprintf("<a class=\"page\" href=\"/book/books.php?sort=%s&page=%d\">%s</a>", $sort, $page-1, "Previous");
+			$a = sprintf("<a class=\"page\" href=\"books.php?sort=%s&page=%d\">%s</a>", $sort, $page-1, "Previous");
 			echo $a;
 		}
 		
@@ -17,15 +17,15 @@
 		for($i=$start; $i<=$count && $i<$start+10; $i++)
 		{
 			if($i == $page)
-				$a = sprintf("<a class=\"page\" href=\"/book/books.php?sort=%s&page=%d\" style=\"text-decoration: underline; color:red;\">%d</a>", $sort, $i, $i);
+				$a = sprintf("<a class=\"page\" href=\"books.php?sort=%s&page=%d\" style=\"text-decoration: underline; color:red;\">%d</a>", $sort, $i, $i);
 			else
-				$a = sprintf("<a class=\"page\" href=\"/book/books.php?sort=%s&page=%d\">%d</a>", $sort, $i, $i);
+				$a = sprintf("<a class=\"page\" href=\"books.php?sort=%s&page=%d\">%d</a>", $sort, $i, $i);
 			echo $a;
 		}
 		
 		if($page < $count)
 		{
-			$a = sprintf("<a class=\"page\" href=\"/book/books.php?sort=%s&page=%d\">%s</a>", $sort, $page+1, "Next");
+			$a = sprintf("<a class=\"page\" href=\"books.php?sort=%s&page=%d\">%s</a>", $sort, $page+1, "Next");
 			echo $a;
 		}
 	}

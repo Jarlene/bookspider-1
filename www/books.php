@@ -6,7 +6,7 @@
 </head>
 <body>
 <div align="right" style="margin: 5px">
-	<form method="post" action="/book/search.php">
+	<form method="post" action="search.php">
 		search:
 		<input type="text" name="search" />
 		<input type="submit" value="Search" />
@@ -16,14 +16,14 @@
 <div id="books">
 <table align="center" width="98%">
 	<tr style="background-color: #CCCCCC">
-		<td width="50px" align="center"><a href="/book/books.php?sort=bid">编号</a></td>
-		<td width="75px" align="center"><a href="/book/books.php?sort=category">类型</a></td>
-		<td width="20%" align="center"><a href="/book/books.php?sort=name">书名</a></td>
-		<td width="15%" align="center"><a href="/book/books.php?sort=author">作者</a></td>
-		<td width="120px" align="center"><a href="/book/books.php?sort=uptime">最后更新时间</a></td>
-		<td width="50px" align="center"><a href="/book/books.php?sort=vote">权值</a></td>
-		<td width="30%" align="center"><a href="/book/books.php?sort=chapter">最新章节</a></td>
-		<td width="12px" align="center"><a href="/book/books.php?sort=mid">mid</a></td>
+		<td width="50px" align="center"><a href="books.php?sort=bid">编号</a></td>
+		<td width="75px" align="center"><a href="books.php?sort=category">类型</a></td>
+		<td width="20%" align="center"><a href="books.php?sort=name">书名</a></td>
+		<td width="15%" align="center"><a href="books.php?sort=author">作者</a></td>
+		<td width="120px" align="center"><a href="books.php?sort=uptime">最后更新时间</a></td>
+		<td width="50px" align="center"><a href="books.php?sort=vote">权值</a></td>
+		<td width="30%" align="center"><a href="books.php?sort=chapter">最新章节</a></td>
+		<td width="12px" align="center"><a href="books.php?sort=mid">mid</a></td>
 	</tr>
 	
 <?php
@@ -45,9 +45,9 @@
 	{
 		echo "<tr>";
 		echo sprintf("<td><a href=\"%s\">%s</a></td>", $row["uri"], $row["bid"]);
-		echo sprintf("<td><a href=\"/book/search.php?type=category&search=%s\">%s</a></td>", $row["category"], $row["category"]);
-		echo sprintf("<td><a href=\"/book/detail.php?book=%s\">%s</a></td>", $row["bid"], $row["name"]);
-		echo sprintf("<td><a href=\"/book/search.php?type=author&search=%s\">%s</a></td>", $row["author"], $row["author"]);
+		echo sprintf("<td><a href=\"search.php?type=category&search=%s\">%s</a></td>", $row["category"], $row["category"]);
+		echo sprintf("<td><a href=\"detail.php?book=%s\">%s</a></td>", $row["bid"], $row["name"]);
+		echo sprintf("<td><a href=\"search.php?type=author&search=%s\">%s</a></td>", $row["author"], $row["author"]);
 		echo "<td>" . $row["datetime"] . "</td>";
 		echo "<td>" . $row["vote"] . "</td>";
 		echo "<td>" . $row["chapter"] . "</td>";
@@ -63,7 +63,7 @@
 <div id="pages" align="right" style="margin:20px;">
 <?php
 	autopage($db, $sort, $page);
-	$gotoform = sprintf("<form method=\"post\" action=\"/book/books.php?sort=%s\">", $sort);
+	$gotoform = sprintf("<form method=\"post\" action=\"books.php?sort=%s\">", $sort);
 	echo $gotoform;
 ?>
 
