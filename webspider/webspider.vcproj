@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;..\..\sdk\include;..\..\sdk\xml\include;..\dxt\include;..\bookspider\include;..\dbclient\include;..\net\include;..\libbook\json;..\libbook\include"
+				AdditionalIncludeDirectories=".;..\..\sdk\include;..\..\sdk\xml\include;..\dxt\include;..\dbclient\include;..\libsdk\include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -114,7 +114,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories=".;..\..\sdk\include;..\..\sdk\xml\include;..\dxt\include;..\bookspider\include;..\dbclient\include;..\net\include;..\libbook\json;..\libbook\include"
+				AdditionalIncludeDirectories=".;..\..\sdk\include;..\..\sdk\xml\include;..\dxt\include;..\dbclient\include;..\libsdk\include"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				WarningLevel="4"
@@ -178,7 +178,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\source\ChapterManager.cpp"
+				RelativePath="..\libsdk\source\config.cpp"
 				>
 			</File>
 			<File
@@ -190,19 +190,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\source\netmanager.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\source\readbook.cpp"
+				RelativePath=".\source\WebProcess.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\source\WebSession.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\source\webspider.cpp"
 				>
 			</File>
 		</Filter>
@@ -216,7 +208,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\source\netmanager.h"
+				RelativePath=".\source\WebProcess.h"
 				>
 			</File>
 			<File

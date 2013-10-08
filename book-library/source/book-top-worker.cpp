@@ -60,7 +60,7 @@ static int OnThread(void* param)
 
 int BookTop()
 {
-	IBookSite* sites[] = { /*new CQiDian(), new CZongHeng(), */new C17K() };
+	IBookSite* sites[] = { new CQiDian(), new CZongHeng(), new C17K() };
 
 	// start worker thread
 	std::vector<thread_t> threads;

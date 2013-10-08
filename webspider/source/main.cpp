@@ -29,11 +29,10 @@ int main(int argc, char* argv[])
 	tcphandler.onconnected = OnTcpConnected;
 
 	socket_init();
-	WebSpider(spider);
 	g_thdpool = thread_pool_create(2, 1, 64);
 	tcpserver = tcpserver_start(NULL, 10000, &tcphandler, NULL);
 
-	while('q' != getch())
+	while('q' != getchar())
 	{
 	}
 
