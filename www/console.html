@@ -1,0 +1,54 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Task Manager</title>
+<link rel="stylesheet" type="text/css" href="css/book.css" /> 
+<script type="text/javascript" src="js/xml.js"></script>
+<script type="text/javascript">
+	var http = HttpRequest();
+	function Start(task)
+	{
+		var url = "/books/api/" + task;
+		http.open("GET", url, true);
+		http.setRequestHeader("Content-Type", "text/html;charset=UTF-8");
+		http.onreadystatechange = OnStartReply;
+		http.send("");
+	}
+
+	function OnStartReply()
+	{
+		if(http.readyState!=4)
+			return;
+
+		if(http.status != 200)
+		{
+			alert(http.status);
+			return;
+		}
+
+		alert(http.responseText);
+	}
+
+</script>
+</head>
+<body>
+	<div>
+		<table width="98%">
+			<thead>
+				<tr><td width="50px" align="right">编号</td><td width="20%" align="left">任务</td><td width="%40" align="left">状态</td><td width="200px" align="center">计划时间</td><td width="20%" align="center"></td></tr>
+			</thead>
+			<tbody>
+				<tr><td>1</td><td><a href="task-library.html">书库</a></td><td>未启动</td><td>2013-10-06 10:00:00</td><td><input type="button" value="启动" onclick="Start('library')"/></td></tr>
+				
+				<tr><td>2</td><td><a href="task-library.html">排行榜</a></td><td>未启动</td><td>2013-10-06 10:00:00</td><td><input type="button" value="启动" onclick="Start('top')"/></td></tr>
+				
+				<tr><td>3</td><td><a href="task-library.html">58小说网</a></td><td>未启动</td><td>2013-10-06 10:00:00</td><td><input type="button" value="启动" onclick="Start('58xs')"/></td></tr>
+				
+				<tr><td>4</td><td><a href="task-library.html">八路中文网</a></td><td>未启动</td><td>2013-10-06 10:00:00</td><td><input type="button" value="启动" onclick="Start('86zw')"/></td></tr>
+				
+				<tr><td>5</td><td><a href="task-library.html">落秋中文网</a></td><td>未启动</td><td>2013-10-06 10:00:00</td><td><input type="button" value="启动" onclick="Start('luoqiu')"/></td></tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>
