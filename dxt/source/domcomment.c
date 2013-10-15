@@ -12,8 +12,8 @@ static int identify(const char* p)
 	if('<' != *p)
 		return 0;
 
-	p = domutil_skip(p);
-	return strnicmp(p, "!--", 3)?0:1;
+	p = domutil_skip(p+1);
+	return 0==strncmp(p, "!--", 3) ? 1 : 0;
 }
 
 static const char* parse(domdoc_t* doc, domnode_t* node, const char* p)

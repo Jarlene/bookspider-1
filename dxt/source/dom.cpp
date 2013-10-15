@@ -19,8 +19,9 @@ dom::~dom()
 // div[class="style",id="xid"] => (div, 3, ("class", "style"), ("id", "xid"))
 
 typedef std::list<std::pair<std::string, std::string> > TXProps;
-static void ParseXPathName(const char* name, std::string& tag, int& idx, TXProps& props)
+static void ParseXPathName(const char* name, std::string& label, int& idx, TXProps& props)
 {
+	idx = -1;
 	const char* p = strchr(name, '[');
 	if(p)
 	{
@@ -39,54 +40,46 @@ static void ParseXPathName(const char* name, std::string& tag, int& idx, TXProps
 		{
 			idx = atoi(p+1);
 		}
-		tag.assign(name, p-name);
+		label.assign(name, p-name);
 	}
 	else
 	{
-		idx = 1;
-		tag = name;
+		label = name;
 	}
 }
 
-static bool CheckNodeProp(const domnode_t* node, const TXProps& props)
+static bool DOMCheckNode(const domnode_t* node, const char* label, const TXProps& attrs)
 {
-	for(TXProps::const_iterator it=props.begin(); it!=props.end(); ++it)
+	assert(label);
+	if(!node->name || (0!=stricmp(node->name, label) && 0!=strcmp("*", label)))
+		return false;
+
+	for(TXProps::const_iterator it=attrs.begin(); it!=attrs.end(); ++it)
 	{
 		const char* value = domnode_attr_find(node, it->first.c_str());
 		if(!value || stricmp(value, it->second.c_str()))
 			return false;
 	}
+
 	return true;
 }
 
-static const domnode_t* DOMFindChild(const domnode_t* node, const char* name)
+static const domnode_t* DOMFindChild(const domnode_t* node, const char* label, int idx, const TXProps& attrs, bool recursion)
 {
 	int i = 0;
-	int idx = 0;
-	TXProps props;
-	std::string tag;
-	ParseXPathName(name, tag, idx, props);
-
 	const domnode_t* child = node->child;
 	while(child)
 	{
-		// "*" match anything
-		if(0==strcmp("*", tag.c_str()))
-			return child;
-
-		if(child->name && 0==stricmp(child->name, tag.c_str()))
+		++i;
+		if(DOMCheckNode(child, label, attrs) && (-1==idx || i==idx))
 		{
-			if(props.size() > 0)
-			{
-				if(CheckNodeProp(child, props))
-					return child;
-			}
-			else
-			{
-				// match div[3]
-				if(++i == idx)
-					return child;
-			}
+			return child;
+		}
+		else if(recursion && child->child)
+		{
+			const domnode_t* childchild = DOMFindChild(child, label, idx, attrs, recursion);
+			if(childchild)
+				return childchild;
 		}
 
 		child = (child->next==node->child)?NULL:child->next;
@@ -94,7 +87,7 @@ static const domnode_t* DOMFindChild(const domnode_t* node, const char* name)
 	return NULL;
 }
 
-static const domnode_t* DOMFindElement(const domnode_t* node, const char* name)
+static const domnode_t* DOMFindElement(const domnode_t* node, const char* name, bool recursion)
 {
 	if(0 == strcmp("..", name)) // parent
 	{
@@ -114,7 +107,11 @@ static const domnode_t* DOMFindElement(const domnode_t* node, const char* name)
 	}
 	else
 	{
-		return DOMFindChild(node, name);
+		int idx = 0;
+		TXProps attrs;
+		std::string label;
+		ParseXPathName(name, label, idx, attrs);
+		return DOMFindChild(node, label.c_str(), idx, attrs, recursion);
 	}
 }
 
@@ -126,12 +123,12 @@ static const domnode_t* DOMFindElementByPath(const domnode_t* node, const char* 
 	const char* p = strchr(xpath, '/');
 	if(NULL == p)
 	{
-		return DOMFindElement(node, xpath);
+		return DOMFindElement(node, xpath, false);
 	}
 	else
 	{
 		std::string name(xpath, p-xpath);
-		const domnode_t* child = DOMFindElement(node, name.c_str());
+		const domnode_t* child = DOMFindElement(node, name.c_str(), false);
 		if(NULL == child)
 			return NULL;
 		return DOMFindElementByPath(child, p+1);
@@ -148,10 +145,10 @@ const domnode_t* dom::FindElement(const char* path) const
 		path += 2;
 		const char* p = strchr(path, '/');
 		if(!p)
-			return FindElementById(path);
+			return DOMFindElement(m_doc->root, path, true);
 		
 		std::string name(path, p-path);
-		const domnode_t* node = FindElementById(name.c_str());
+		const domnode_t* node = DOMFindElement(m_doc->root, name.c_str(), true);
 		if(!node)
 			return NULL;
 		return DOMFindElementByPath(node, p+1);
@@ -164,30 +161,6 @@ const domnode_t* dom::FindElement(const char* path) const
 	{
 		return DOMFindElementByPath(GetContextElement(), path);
 	}
-}
-
-static const domnode_t* DOMFindChildById(const domnode_t* parent, const char* id)
-{
-	const domnode_t* node = parent->child;
-	while(node)
-	{
-		const char* value = domnode_attr_find(node, "id");
-		if(value && 0==stricmp(value, id))
-			return node;
-
-		// find children
-		const domnode_t* child = DOMFindChildById(node, id);
-		if(child)
-			return child;
-
-		node = (node->next==parent->child)?NULL:node->next;
-	}
-	return NULL;
-}
-
-const domnode_t* dom::FindElementById(const char* id) const
-{
-	return DOMFindChildById(m_doc->root, id);
 }
 
 const domnode_t* dom::GetContextElement() const
@@ -265,12 +238,21 @@ bool dom::GetValue(const domnode_t* node, std::string& value) const
 	}
 
 	const domnode_t* child = node->child;
-	if(child && !child->name)
+	//if(child && !child->name)
+	//{
+	//	value = child->padding?child->padding:"";
+	//	return true;
+	//}
+	while(child)
 	{
-		value = child->padding?child->padding:"";
-		return true;
+		if(!child->name)
+		{
+			value = child->padding?child->padding:"";
+			return true;
+		}
+
+		child = (child->next==node->child)?NULL:child->next;
 	}
-	
 	return false;
 }
 

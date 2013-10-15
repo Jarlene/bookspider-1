@@ -42,7 +42,6 @@ private:
 
 private:
 	const domnode_t* FindElement(const char* path) const;
-	const domnode_t* FindElementById(const char* id) const;
 
 private:
 	const domnode_t* GetContextElement() const;

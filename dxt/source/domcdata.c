@@ -11,7 +11,7 @@ static int identify(const char* p)
 	if('<' != *p)
 		return 0;
 
-	p = domutil_skip(p);
+	p = domutil_skip(p+1);
 	return strnicmp(p, "![CDATA[", 8)?0:1;
 }
 
