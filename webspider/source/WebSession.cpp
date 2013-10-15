@@ -4,9 +4,9 @@
 #include "http-server.h"
 #include "error.h"
 #include "dlog.h"
+#include "url.h"
 #include "config.h"
 #include "WebProcess.h"
-#include "jsonhelper.h"
 #include <time.h>
 
 #define SERVER_TIMEOUT	(5*60*1000)
@@ -43,58 +43,129 @@ void WebSession::Run()
 		if(r < 0)
 			break; // exit
 
-		const char* urlpath = http_server_get_path(m_http);
-		if( 0 == strncmp(urlpath, "/api/", 5) )
-		{
-			OnApi(urlpath+5);
-		}
+		OnApi();
 	}
 
 	dlog_log("\n[%d] client %s.%d disconnect[%d].\n", (int)time(NULL), m_ip.c_str(), m_port, r);
 	delete this;
 }
 
-void WebSession::OnApi(const char* api)
+void WebSession::OnApi()
 {
-	char uri[128] = {0};
-	char path[128] = {0};
-	std::string app, arg1, arg2;
-
-	snprintf(uri, sizeof(uri)-1, "api/api-%s/app", api);
-	g_config.GetConfig(uri, app);
-
-	snprintf(uri, sizeof(uri)-1, "api/api-%s/arg1", api);
-	g_config.GetConfig(uri, arg1);
-
-	snprintf(uri, sizeof(uri)-1, "api/api-%s/arg2", api);
-	g_config.GetConfig(uri, arg2);
-
-	process_selfname(uri, sizeof(uri));
-	path_dirname(uri, path);
-	app.insert(0, "/");
-	app.insert(0, path);
-
-	jsonobject json;
-	if(app.empty() || arg1.empty())
+	typedef int (WebSession::*Handler)(jsonobject& reply);
+	typedef std::map<std::string, Handler> THandlers;
+	static THandlers handlers;
+	if(0 == handlers.size())
 	{
-		json.add("code", -1).add("msg", "command not found");
+		handlers.insert(std::make_pair("library", &WebSession::OnBookLibrary));
+		handlers.insert(std::make_pair("top", &WebSession::OnBookTop));
+		handlers.insert(std::make_pair("list", &WebSession::OnBookList));
+		handlers.insert(std::make_pair("update", &WebSession::OnBookUpdate));
+	}
+
+	std::string json;
+	if(0 == strncmp(m_path.c_str(), "/api/", 5))
+	{
+		THandlers::iterator it;
+		it = handlers.find(m_path.substr(5));
+		if(it != handlers.end())
+		{
+			jsonobject reply;
+			(this->*(it->second))(reply);
+			json = reply.json();
+		}
+	}
+
+	if(json.empty())
+	{
+		jsonobject reply;
+		reply.add("code", -1).add("msg", "command not found");
+		std::string json = reply.json();
+	}
+
+	Send(200, "application/json", json.c_str(), json.length());
+}
+
+int WebSession::OnBookLibrary(jsonobject& reply)
+{
+	process_t pid = 0;
+	int r = web_process_create("debug/book-library.exe", "--library", "", &pid);
+	if(r < 0)
+	{
+		reply.add("code", r).add("msg", "start process error.");
 	}
 	else
 	{
-		process_t pid = 0;
-		int r = web_process_create(app.c_str(), arg1.c_str(), arg2.c_str(), &pid);
-		if(r < 0)
-		{
-			json.add("code", r).add("msg", "start process error.");
-		}
-		else
-		{
-			json.add("code", 0).add("msg", "ok");
-		}
+		reply.add("code", 0).add("msg", "ok");
+	}
+	return r;
+}
+
+int WebSession::OnBookTop(jsonobject& reply)
+{
+	process_t pid = 0;
+	int r = web_process_create("book-library.exe", "--top", "", &pid);
+	if(r < 0)
+	{
+		reply.add("code", r).add("msg", "start process error.");
+	}
+	else
+	{
+		reply.add("code", 0).add("msg", "ok");
+	}
+	return r;
+}
+
+int WebSession::OnBookList(jsonobject& reply)
+{
+	std::string booksite;
+	std::map<std::string, std::string>::const_iterator it;
+	it = m_params.find("site");
+	if(it == m_params.end())
+	{
+		reply.add("code", -1).add("msg", "start process error.");
+		return -1;
 	}
 
-	std::string reply = json.json();
-	Send(200, "application/json", reply.c_str(), reply.length());
+	booksite = it->second;
+
+	process_t pid = 0;
+	int r = web_process_create("book-spider.exe", "--list", booksite.c_str(), &pid);
+	if(r < 0)
+	{
+		reply.add("code", r).add("msg", "start process error.");
+	}
+	else
+	{
+		reply.add("code", 0).add("msg", "ok");
+	}
+	return r;
+}
+
+int WebSession::OnBookUpdate(jsonobject& reply)
+{
+	std::string booksite;
+	std::map<std::string, std::string>::const_iterator it;
+	it = m_params.find("site");
+	if(it == m_params.end())
+	{
+		reply.add("code", -1).add("msg", "start process error.");
+		return -1;
+	}
+
+	booksite = it->second;
+
+	process_t pid = 0;
+	int r = web_process_create("book-spider.exe", "--update", booksite.c_str(), &pid);
+	if(r < 0)
+	{
+		reply.add("code", r).add("msg", "start process error.");
+	}
+	else
+	{
+		reply.add("code", 0).add("msg", "ok");
+	}
+	return r;
 }
 
 int WebSession::Recv()
@@ -109,6 +180,17 @@ int WebSession::Recv()
 	r = http_server_recv(m_http);
 	if(r < 0)
 		return r;
+
+	void* url = url_parse(http_server_get_path(m_http));
+	for(int i=0; i<url_getparam_count(url); i++)
+	{
+		const char *name, *value;
+		if(0 != url_getparam(url, i, &name, &value))
+			continue;
+		m_params.insert(std::make_pair(std::string(name), std::string(value)));
+	}
+	m_path.assign(url_getpath(url));
+	url_free(url);
 
 	http_server_get_content(m_http, &m_content, &m_contentLength);
 	if(m_contentLength > 0 && m_contentLength < 2*1024)
