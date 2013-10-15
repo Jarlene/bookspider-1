@@ -3,13 +3,7 @@
 
 #include <vector>
 #include <string>
-#include "dllexport.h"
-
-#ifdef DBCLIENT_EXPORTS
-	#define DBCLIENT_API DLL_EXPORT_API
-#else
-	#define DBCLIENT_API DLL_IMPORT_API
-#endif
+#include "dbclient.h"
 
 #define BOOK_ID	100000000
 

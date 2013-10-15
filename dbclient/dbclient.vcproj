@@ -185,14 +185,6 @@
 				RelativePath=".\source\dbclient.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\source\sqlite-dbclient.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\sdk\source\systimeconfig.c"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

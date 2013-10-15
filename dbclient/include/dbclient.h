@@ -1,9 +1,16 @@
 #ifndef _dbclient_h_
 #define _dbclient_h_
 
+#include "dllexport.h"
 #include <string>
 
-class DBQueryResult
+#ifdef DBCLIENT_EXPORTS
+	#define DBCLIENT_API DLL_EXPORT_API
+#else
+	#define DBCLIENT_API DLL_IMPORT_API
+#endif
+
+class DBCLIENT_API DBQueryResult
 {
 	DBQueryResult(const DBQueryResult&){}
 	DBQueryResult& operator=(const DBQueryResult&){ return *this; }
@@ -29,9 +36,9 @@ public:
 	int GetValue(const char* name, std::string& value);
 	int GetValue(const char* name, char* value, int valueLen);
 
-private:
-	friend int db_query(void* db, const char* sql, DBQueryResult& result);
 	int StoreResult(void* db);
+
+private:
 	int FindColumn(const char* name) const;
 
 private:
@@ -40,24 +47,24 @@ private:
 	void* m_row;
 };
 
-int db_init();
-int db_fini();
+DBCLIENT_API int db_init();
+DBCLIENT_API int db_fini();
 
-void* db_connect(const char* ip, int port, const char* db, const char* username, const char* password);
-int db_disconnect(void* db);
+DBCLIENT_API void* db_connect(const char* ip, int port, const char* db, const char* username, const char* password);
+DBCLIENT_API int db_disconnect(void* db);
 
 /// @return: <0-sql error, =0-ok
-int db_query(void* db, const char* sql, DBQueryResult& result);
-int db_query_int(void* db, const char* sql, int* value);
-int db_query_string(void* db, const char* sql, char* value, int bytes);
+DBCLIENT_API int db_query(void* db, const char* sql, DBQueryResult& result);
+DBCLIENT_API int db_query_int(void* db, const char* sql, int* value);
+DBCLIENT_API int db_query_string(void* db, const char* sql, char* value, int bytes);
 
 /// @return: <0-sql error, >0-insert rows, =0-no matched
-int db_insert(void* db, const char* sql);
+DBCLIENT_API int db_insert(void* db, const char* sql);
 
 /// @return: <0-sql error, >0-delete rows, =0-no matched
-int db_delete(void* db, const char* sql);
+DBCLIENT_API int db_delete(void* db, const char* sql);
 
 /// @return: <0-sql error, >0-update rows, =0-no matched
-int db_update(void* db, const char* sql);
+DBCLIENT_API int db_update(void* db, const char* sql);
 
 #endif /* !_dbclient_h_ */
