@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <joke>
   <jokes>
-    <xsl:for-each select="//*[class='main']/div/div/div">
+    <xsl:for-each select="//div[class='main']/div/div/div">
       <joke>
       	<id>
       	  <xsl:attr-of select="div[class='bar']" attr='id' />

@@ -15,7 +15,15 @@ typedef struct
 	int disapprove;
 } Joke;
 
+typedef struct
+{
+	std::string icon;
+	std::string user;
+	std::string content;
+} Comment;
+
 typedef std::vector<Joke> Jokes;
+typedef std::vector<Comment> Comments;
 
 int jokedb_init();
 int jokedb_clean();
@@ -23,6 +31,7 @@ int jokedb_clean();
 int jokedb_gettime(const char* website, char datetime[20]);
 int jokedb_settime(const char* website, const char* datetime);
 
-int jokedb_insert(const char* website, const Jokes& jokes);
+int jokedb_insert_jokes(const char* website, const Jokes& jokes);
+int jokedb_insert_comments(const char* website, unsigned int id, const Comments& comments);
 
 #endif /* !_joke_db_h_ */

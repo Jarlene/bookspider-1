@@ -11,7 +11,9 @@ struct IJokeSpider
 };
 
 typedef int (*OnJoke)(void* param, const char* id, const char* author, const char* datetime, const char* content, const char* image, int approve, int disapprove);
+typedef int (*OnComment)(void* param, const char* icon, const char* user, const char* content);
 
-int ListJoke(const IJokeSpider* spider, const char* uri, const char* req, OnJoke callback, void* param);
+int joke_get(const IJokeSpider* spider, const char* uri, const char* req, OnJoke callback, void* param);
+int joke_comment(const IJokeSpider* spider, const char* uri, const char* req, OnComment callback, void* param);
 
 #endif /* !_IJokeSpider_h_ */

@@ -1,4 +1,4 @@
-#include "QiuShiBaiKe.h"
+#include "BaiSiBuDeJie.h"
 #include "cstringext.h"
 #include "joke-db.h"
 #include <time.h>
@@ -25,11 +25,8 @@ static int OnList(void* param, const char* id, const char* author, const char* d
 	return 0;
 }
 
-int CQiuShiBaiKe::List()
+int CBaiSiBuDeJie::List()
 {
-	time_t v = time(NULL);
-	v = v / (5*60);
-
 	char datetime[20] = {0};
 	jokedb_gettime(GetName(), datetime);
 
@@ -37,11 +34,14 @@ int CQiuShiBaiKe::List()
 	for(int page=1; page <= 35; page++)
 	{
 		// latest update
-		snprintf(uri, sizeof(uri)-1, "http://www.qiushibaike.com/8hr/page/%d?s=%d", page, v);
+		if(2 == m_nav)
+			snprintf(uri, sizeof(uri)-1, "http://budejie.com/xcs.php?page=%d", page);
+		else
+			snprintf(uri, sizeof(uri)-1, "http://budejie.com/index.php?page=%d", page);
 
 		Jokes jokes;
 		int r = joke_get(this, uri, NULL, OnList, &jokes);
-		printf("CQiuShiBaiKe::List[%d] joke_get=%d.\n", page, r);
+		printf("CBaiSiBuDeJie::List[%d] joke_get=%d.\n", page, r);
 		if(0 != r)
 			return r;
 
@@ -51,7 +51,7 @@ int CQiuShiBaiKe::List()
 		// save
 		r = jokedb_insert_jokes(GetName(), jokes);
 		if(r < 0)
-			printf("CQiuShiBaiKe::List[%d] jokedb_insert=%d.\n", page, r);
+			printf("CBaiSiBuDeJie::List[%d] jokedb_insert=%d.\n", page, r);
 
 		Jokes::const_iterator it = jokes.begin();
 		for(size_t i=0; i<jokes.size(); i++, ++it)
@@ -82,21 +82,21 @@ static int OnGetComment(void* param, const char* icon, const char* user, const c
 	return 0;
 }
 
-int CQiuShiBaiKe::GetComment(unsigned int id)
+int CBaiSiBuDeJie::GetComment(unsigned int id)
 {
 	char uri[256] = {0};
-	snprintf(uri, sizeof(uri)-1, "http://www.qiushibaike.com/article/%u", id);
+	snprintf(uri, sizeof(uri)-1, "http://budejie.com/detail.php?id=%u&nav=%d", id, m_nav);
 
 	Comments comments;
 	int r = joke_comment(this, uri, NULL, OnGetComment, &comments);
 	if(r < 0)
 	{
-		printf("CQiuShiBaiKe::GetComment[%d] error=%d.\n", r);
+		printf("CBaiSiBuDeJie::GetComment[%u] error=%d.\n", r);
 		return r;
 	}
 
 	r = jokedb_insert_comments(GetName(), id, comments);
 	if(r < 0)
-		printf("CQiuShiBaiKe::GetComment[%d] save comment error=%d\n", r);
+		printf("CBaiSiBuDeJie::GetComment[%u] save comment error=%d\n", r);
 	return r;
 }

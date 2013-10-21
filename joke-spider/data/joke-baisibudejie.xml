@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xml>
+  <jokes>
+    <xsl:for-each select="//div[class='main']/div/div/div">
+      <joke>
+      	<id>
+      	  <xsl:attr-of select="//p[class='web_size']" attr='id' />
+      	</id>
+  	    <author>
+          <xsl:value-of select="//div[class='web_msg']/p/a" />
+        </author>
+        <datetime>
+          <xsl:value-of select="//div[class='web_msg']/p/span" />
+        </datetime>
+        <content>
+          <xsl:value-of select="//p[class='web_size']" />
+        </content>
+        <image>
+        	<xsl:attr-of select="//p[class='web_pic']/a/img" attr='src' />
+        </image>
+        <approve>
+        	<xsl:value-of select="//div[class='web_column']/ul/li/a/span" />
+        </approve>
+        <disapprove>
+        	<xsl:value-of select="//div[class='web_column']/ul/li[2]/a/span" />
+        </disapprove>
+      </joke>
+    </xsl:for-each>
+  </jokes>
+</xml>

@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <xml>
-	<web-qiushibaike>data/qiushibaike.xml</web-qiushibaike>
-	<web-baisibudejie>data/baisibudejie.xml</web-baisibudejie>
+	<joke-qiushibaike>data/joke-qiushibaike.xml</joke-qiushibaike>
+	<joke-baisibudejie>data/joke-baisibudejie.xml</joke-baisibudejie>
+	
+	<comment-qiushibaike>data/comment-qiushibaike.xml</comment-qiushibaike>
+	<comment-baisibudejie>data/comment-baisibudejie.xml</comment-baisibudejie>
 </xml>

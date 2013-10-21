@@ -31,7 +31,7 @@ int jokedb_settime(const char* website, const char* datetime)
 	return db_update(db, buffer);
 }
 
-int jokedb_insert(const char* /*website*/, const Jokes& jokes)
+int jokedb_insert_jokes(const char* /*website*/, const Jokes& jokes)
 {
 	int i = 0;
 	std::string sql;
@@ -39,7 +39,8 @@ int jokedb_insert(const char* /*website*/, const Jokes& jokes)
 	for(it = jokes.begin(); it != jokes.end(); ++it,++i)
 	{
 		const Joke& joke = *it;
-		snprintf(buffer, sizeof(buffer)-1, "(%u, '%s', '%s', '%s', '%s', %d, %d)",
+		snprintf(buffer, sizeof(buffer)-1, 
+			"(%u, '%s', '%s', '%s', '%s', %d, %d)",
 			joke.id, joke.author.c_str(), joke.datetime.c_str(), joke.content.c_str(), joke.image.c_str(), joke.approve, joke.disapprove);
 
 		if(!sql.empty())
@@ -48,5 +49,31 @@ int jokedb_insert(const char* /*website*/, const Jokes& jokes)
 	}
 
 	sql.insert(0, "insert into joke (id, author, datetime, content, image, approve, disapprove) values ");
+	sql += " on duplicate key update approve=values(approve), disapprove=values(disapprove)";
+	return db_insert(db, sql.c_str());
+}
+
+int jokedb_insert_comments(const char* /*website*/, unsigned int id, const Comments& comments)
+{
+	int i = 0;
+	std::string sql;
+	Comments::const_iterator it;
+	for(it = comments.begin(); it != comments.end(); ++it,++i)
+	{
+		const Comment& comment = *it;
+		snprintf(buffer, sizeof(buffer)-1, 
+			"(%u, '%s', '%s', '%s')",
+			id, comment.icon.c_str(), comment.user.c_str(), comment.content.c_str());
+
+		if(!sql.empty())
+			sql += ',';
+		sql += buffer;
+	}
+
+	// clear comment data
+	snprintf(buffer, sizeof(buffer)-1, "delete from comment where id=%d", id);
+	db_delete(db, buffer);
+
+	sql.insert(0, "insert into comment (id, icon, user, content) values ");
 	return db_insert(db, sql.c_str());
 }

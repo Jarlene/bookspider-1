@@ -176,6 +176,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\source\BaiSiBuDeJie.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\libsdk\source\config.cpp"
 				>
 			</File>
@@ -184,7 +188,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\source\list.cpp"
+				RelativePath=".\source\joke-spider.cpp"
 				>
 			</File>
 			<File
@@ -201,6 +205,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\source\BaiSiBuDeJie.h"
+				>
+			</File>
 			<File
 				RelativePath=".\include\joke-db.h"
 				>

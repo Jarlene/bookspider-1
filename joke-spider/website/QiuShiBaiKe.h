@@ -9,6 +9,9 @@ public:
 	virtual int GetId() const { return 101; }
 	virtual const char* GetName() const { return "qiushibaike"; }
 	virtual int List();
+
+private:
+	int GetComment(unsigned int id);
 };
 
 #endif /* !_QiuShiBaiKe_h_ */

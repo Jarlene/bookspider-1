@@ -7,11 +7,12 @@
 #include <stdio.h>
 
 #include "QiuShiBaiKe.h"
+#include "BaiSiBuDeJie.h"
 
 static IJokeSpider* CreateSpider(const char* site)
 {
 	if(strieq(site, "qiushibaike")) return new CQiuShiBaiKe();
-	//else if(strieq(site, "86zw")) return new C86ZW();
+	else if(strieq(site, "baisibudejie")) return new CBaiSiBuDeJie(1);
 	//else if(strieq(site, "luoqiu")) return new CLuoQiu();
 
 	return NULL;
