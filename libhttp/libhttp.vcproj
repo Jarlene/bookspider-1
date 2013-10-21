@@ -177,7 +177,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\source\http-translate.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\source\http.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\network-http.cpp"
 				>
 			</File>
 		</Filter>
@@ -187,7 +195,15 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath=".\include\http-translate.h"
+				>
+			</File>
+			<File
 				RelativePath=".\include\http.h"
+				>
+			</File>
+			<File
+				RelativePath=".\source\network-http.h"
 				>
 			</File>
 		</Filter>
