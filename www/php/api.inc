@@ -71,9 +71,9 @@
 			$id = $row["id"];
 			
 			$joke = array();
-			if($id / 1000000000 == 1)
+			if(intval($id / 1000000000) == 1)
 				$joke["comment_uri"] = sprintf("http://www.qiushibaike.com/article/%u", $id % 1000000000);
-			else if($id / 1000000000 == 2)
+			else if(intval($id / 1000000000) == 2)
 				$joke["comment_uri"] = sprintf("http://budejie.com/detail.php?id=%u&nav=%d", $id % 1000000000, 1);
 			else
 				$joke["comment_uri"] = "";
