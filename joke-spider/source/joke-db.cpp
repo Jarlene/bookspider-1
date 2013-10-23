@@ -40,16 +40,16 @@ int jokedb_insert_jokes(const char* /*website*/, const Jokes& jokes)
 	{
 		const Joke& joke = *it;
 		snprintf(buffer, sizeof(buffer)-1, 
-			"(%u, '%s', '%s', '%s', '%s', %d, %d)",
-			joke.id, joke.author.c_str(), joke.datetime.c_str(), joke.content.c_str(), joke.image.c_str(), joke.approve, joke.disapprove);
+			"(%u, '%s', '%s', '%s', '%s', '%s', %d, %d, '%d')",
+			joke.id, joke.icon.c_str(), joke.author.c_str(), joke.datetime.c_str(), joke.content.c_str(), joke.image.c_str(), joke.approve, joke.disapprove, joke.comment);
 
 		if(!sql.empty())
 			sql += ',';
 		sql += buffer;
 	}
 
-	sql.insert(0, "insert into joke (id, author, datetime, content, image, approve, disapprove) values ");
-	sql += " on duplicate key update approve=values(approve), disapprove=values(disapprove)";
+	sql.insert(0, "insert into joke (id, icon, author, datetime, content, image, approve, disapprove, comment) values ");
+	sql += " on duplicate key update approve=values(approve), disapprove=values(disapprove), comment=values(comment)";
 	return db_insert(db, sql.c_str());
 }
 

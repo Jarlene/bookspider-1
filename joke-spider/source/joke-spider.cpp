@@ -26,7 +26,8 @@ static int joke_get_helper(void* param, const char* xml)
 	{
 		int approve = 0;
 		int disapprove = 0;
-		std::string id, author, datetime, content, image;
+		int comment = 0;
+		std::string id, icon, author, datetime, content, image;
 		if(!parser.GetValue("id", id)
 			|| !parser.GetValue("content", content)
 			|| !parser.GetValue("approve", approve)
@@ -37,9 +38,11 @@ static int joke_get_helper(void* param, const char* xml)
 		if(id.empty() || content.empty())
 			continue;
 
+		parser.GetValue("icon", icon);
 		parser.GetValue("image", image);
 		parser.GetValue("author", author);
 		parser.GetValue("datetime", datetime);
+		parser.GetValue("comment", comment);
 
 		// 13-03-07 21:03 => 2013-03-07 21:03
 		if(datetime.length() == 14)
@@ -51,11 +54,12 @@ static int joke_get_helper(void* param, const char* xml)
 		const char* encoding = parser.GetEncoding();
 		p->callback(p->param, 
 			UTF8Encode(id.c_str(), encoding), 
+			UTF8Encode(icon.c_str(), encoding), 
 			UTF8Encode(author.c_str(), encoding), 
 			UTF8Encode(datetime.c_str(), encoding),
 			UTF8Encode(content.c_str(), encoding),
 			UTF8Encode(image.c_str(), encoding),
-			approve, disapprove);
+			approve, disapprove, comment);
 	}
 
 	return 0;

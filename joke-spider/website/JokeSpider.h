@@ -13,7 +13,7 @@ struct IJokeSpider
 	virtual int GetComment(unsigned int id) = 0;
 };
 
-typedef int (*OnJoke)(void* param, const char* id, const char* author, const char* datetime, const char* content, const char* image, int approve, int disapprove);
+typedef int (*OnJoke)(void* param, const char* id, const char* icon, const char* author, const char* datetime, const char* content, const char* image, int approve, int disapprove, int comment);
 typedef int (*OnComment)(void* param, const char* icon, const char* user, const char* content);
 
 int joke_get(const IJokeSpider* spider, const char* uri, const char* req, OnJoke callback, void* param);

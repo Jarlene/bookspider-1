@@ -3,7 +3,7 @@
 #include "joke-db.h"
 #include <time.h>
 
-static int OnList(void* param, const char* id, const char* author, const char* datetime, const char* content, const char* image, int approve, int disapprove)
+static int OnList(void* param, const char* id, const char* icon, const char* author, const char* datetime, const char* content, const char* image, int approve, int disapprove, int comment)
 {
 	Jokes* jokes = (Jokes*)param;
 
@@ -15,12 +15,14 @@ static int OnList(void* param, const char* id, const char* author, const char* d
 
 	Joke joke;
 	joke.id = (unsigned int)atoi(p) + 2 * JOKE_SITE_ID;
+	joke.icon = icon;
 	joke.author = author;
 	joke.datetime.assign(datetime, 19);
 	joke.content = content;
 	joke.image = image;
 	joke.approve = approve;
 	joke.disapprove = disapprove;
+	joke.comment = comment;
 	jokes->push_back(joke);
 	return 0;
 }

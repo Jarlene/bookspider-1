@@ -24,6 +24,9 @@
         <disapprove>
         	<xsl:value-of select="//div[class='web_column']/ul/li[2]/a/span" />
         </disapprove>
+        <comment>
+        	<xsl:value-of select="//div[class='web_column']/ul[2]/li/a/em" />
+        </comment>
       </joke>
     </xsl:for-each>
   </jokes>

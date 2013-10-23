@@ -7,12 +7,14 @@
 typedef struct
 {
 	unsigned int id;
+	std::string icon;
 	std::string author;
 	std::string datetime;
 	std::string content;
 	std::string image;
 	int approve;
 	int disapprove;
+	int comment;
 } Joke;
 
 typedef struct
