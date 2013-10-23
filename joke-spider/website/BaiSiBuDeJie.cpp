@@ -7,16 +7,16 @@ static int OnList(void* param, const char* id, const char* author, const char* d
 {
 	Jokes* jokes = (Jokes*)param;
 
-	const char* p = strrchr(id, '_');
+	const char* p = strrchr(id, '-');
 	if(p)
 		p = p+1;
 	else
 		p = id;
 
 	Joke joke;
-	joke.id = (unsigned int)atoi(p);
+	joke.id = (unsigned int)atoi(p) + 2 * JOKE_SITE_ID;
 	joke.author = author;
-	joke.datetime = datetime;
+	joke.datetime.assign(datetime, 19);
 	joke.content = content;
 	joke.image = image;
 	joke.approve = approve;
@@ -27,9 +27,6 @@ static int OnList(void* param, const char* id, const char* author, const char* d
 
 int CBaiSiBuDeJie::List()
 {
-	char datetime[20] = {0};
-	jokedb_gettime(GetName(), datetime);
-
 	char uri[256] = {0};
 	for(int page=1; page <= 35; page++)
 	{
@@ -53,20 +50,14 @@ int CBaiSiBuDeJie::List()
 		if(r < 0)
 			printf("CBaiSiBuDeJie::List[%d] jokedb_insert=%d.\n", page, r);
 
-		Jokes::const_iterator it = jokes.begin();
-		for(size_t i=0; i<jokes.size(); i++, ++it)
-		{
-			const Joke& joke = *it;
-			GetComment(joke.id);
-		}
-
-		// check datetime
-		strcpy(uri, jokes.rbegin()->datetime.c_str());
-		if(strcmp(uri, datetime) < 0)
-			break;
+		//Jokes::const_iterator it = jokes.begin();
+		//for(size_t i=0; i<jokes.size(); i++, ++it)
+		//{
+		//	const Joke& joke = *it;
+		//	GetComment(joke.id);
+		//}
 	}
 
-	jokedb_settime(GetName(), uri);
 	return 0;
 }
 
@@ -85,7 +76,7 @@ static int OnGetComment(void* param, const char* icon, const char* user, const c
 int CBaiSiBuDeJie::GetComment(unsigned int id)
 {
 	char uri[256] = {0};
-	snprintf(uri, sizeof(uri)-1, "http://budejie.com/detail.php?id=%u&nav=%d", id, m_nav);
+	snprintf(uri, sizeof(uri)-1, "http://budejie.com/detail.php?id=%u&nav=%d", id%(GetId()*JOKE_SITE_ID), m_nav);
 
 	Comments comments;
 	int r = joke_comment(this, uri, NULL, OnGetComment, &comments);
@@ -98,5 +89,6 @@ int CBaiSiBuDeJie::GetComment(unsigned int id)
 	r = jokedb_insert_comments(GetName(), id, comments);
 	if(r < 0)
 		printf("CBaiSiBuDeJie::GetComment[%u] save comment error=%d\n", r);
+
 	return r;
 }

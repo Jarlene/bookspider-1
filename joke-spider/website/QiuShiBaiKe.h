@@ -6,12 +6,10 @@
 class CQiuShiBaiKe : public IJokeSpider
 {
 public:
-	virtual int GetId() const { return 101; }
+	virtual int GetId() const { return 1; }
 	virtual const char* GetName() const { return "qiushibaike"; }
 	virtual int List();
-
-private:
-	int GetComment(unsigned int id);
+	virtual int GetComment(unsigned int id);
 };
 
 #endif /* !_QiuShiBaiKe_h_ */

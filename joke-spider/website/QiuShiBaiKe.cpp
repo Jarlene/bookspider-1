@@ -2,6 +2,7 @@
 #include "cstringext.h"
 #include "joke-db.h"
 #include <time.h>
+#include <math.h>
 
 static int OnList(void* param, const char* id, const char* author, const char* datetime, const char* content, const char* image, int approve, int disapprove)
 {
@@ -14,13 +15,13 @@ static int OnList(void* param, const char* id, const char* author, const char* d
 		p = id;
 
 	Joke joke;
-	joke.id = (unsigned int)atoi(p);
+	joke.id = (unsigned int)atoi(p) + 1 * JOKE_SITE_ID;
 	joke.author = author;
 	joke.datetime = datetime;
 	joke.content = content;
 	joke.image = image;
 	joke.approve = approve;
-	joke.disapprove = disapprove;
+	joke.disapprove = abs(disapprove);
 	jokes->push_back(joke);
 	return 0;
 }
@@ -29,9 +30,6 @@ int CQiuShiBaiKe::List()
 {
 	time_t v = time(NULL);
 	v = v / (5*60);
-
-	char datetime[20] = {0};
-	jokedb_gettime(GetName(), datetime);
 
 	char uri[256] = {0};
 	for(int page=1; page <= 35; page++)
@@ -53,20 +51,14 @@ int CQiuShiBaiKe::List()
 		if(r < 0)
 			printf("CQiuShiBaiKe::List[%d] jokedb_insert=%d.\n", page, r);
 
-		Jokes::const_iterator it = jokes.begin();
-		for(size_t i=0; i<jokes.size(); i++, ++it)
-		{
-			const Joke& joke = *it;
-			GetComment(joke.id);
-		}
-
-		// check datetime
-		strcpy(uri, jokes.rbegin()->datetime.c_str());
-		if(strcmp(uri, datetime) < 0)
-			break;
+		//Jokes::const_iterator it = jokes.begin();
+		//for(size_t i=0; i<jokes.size(); i++, ++it)
+		//{
+		//	const Joke& joke = *it;
+		//	GetComment(joke.id);
+		//}
 	}
 
-	jokedb_settime(GetName(), uri);
 	return 0;
 }
 
@@ -85,7 +77,7 @@ static int OnGetComment(void* param, const char* icon, const char* user, const c
 int CQiuShiBaiKe::GetComment(unsigned int id)
 {
 	char uri[256] = {0};
-	snprintf(uri, sizeof(uri)-1, "http://www.qiushibaike.com/article/%u", id);
+	snprintf(uri, sizeof(uri)-1, "http://www.qiushibaike.com/article/%u", id%(GetId()*JOKE_SITE_ID));
 
 	Comments comments;
 	int r = joke_comment(this, uri, NULL, OnGetComment, &comments);
@@ -98,5 +90,6 @@ int CQiuShiBaiKe::GetComment(unsigned int id)
 	r = jokedb_insert_comments(GetName(), id, comments);
 	if(r < 0)
 		printf("CQiuShiBaiKe::GetComment[%d] save comment error=%d\n", r);
+
 	return r;
 }

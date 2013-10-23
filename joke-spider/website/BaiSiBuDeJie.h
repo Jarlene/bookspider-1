@@ -10,12 +10,10 @@ public:
 	CBaiSiBuDeJie(int nav){ m_nav = nav; }
 
 public:
-	virtual int GetId() const { return 101; }
+	virtual int GetId() const { return 2; }
 	virtual const char* GetName() const { return "baisibudejie"; }
 	virtual int List();
-
-private:
-	int GetComment(unsigned int id);
+	virtual int GetComment(unsigned int id);
 
 private:
 	int m_nav;
