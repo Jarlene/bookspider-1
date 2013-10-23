@@ -32,7 +32,7 @@ static void ParseXPathName(const char* name, std::string& label, int& idx, TXPro
 			for(size_t i=0; i<items.size(); i++)
 			{
 				std::string first, second;
-				if(SplitPair(items[i].c_str(), '=', first, second, " \"\']"))
+				if(SplitPair(items[i].c_str(), '=', first, second, "@ \"\']"))
 					props.push_back(std::make_pair(first, second));
 			}
 		}
@@ -145,10 +145,10 @@ const domnode_t* dom::FindElement(const char* path) const
 		path += 2;
 		const char* p = strchr(path, '/');
 		if(!p)
-			return DOMFindElement(m_doc->root, path, true);
+			return DOMFindElement(GetContextElement(), path, true);
 		
 		std::string name(path, p-path);
-		const domnode_t* node = DOMFindElement(m_doc->root, name.c_str(), true);
+		const domnode_t* node = DOMFindElement(GetContextElement(), name.c_str(), true);
 		if(!node)
 			return NULL;
 		return DOMFindElementByPath(node, p+1);
