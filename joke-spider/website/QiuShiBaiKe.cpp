@@ -35,7 +35,7 @@ int CQiuShiBaiKe::List()
 	for(int page=1; page <= 35; page++)
 	{
 		// latest update
-		snprintf(uri, sizeof(uri)-1, "http://www.qiushibaike.com/8hr/page/%d?s=%d", page, v);
+		snprintf(uri, sizeof(uri)-1, "http://www.qiushibaike.com/8hr/page/%d?s=%u", page, (unsigned int)v);
 
 		Jokes jokes;
 		int r = joke_get(this, uri, NULL, OnList, &jokes);
@@ -83,13 +83,13 @@ int CQiuShiBaiKe::GetComment(unsigned int id)
 	int r = joke_comment(this, uri, NULL, OnGetComment, &comments);
 	if(r < 0)
 	{
-		printf("CQiuShiBaiKe::GetComment[%d] error=%d.\n", r);
+		printf("CQiuShiBaiKe::GetComment[%u] error=%d.\n", id, r);
 		return r;
 	}
 
 	r = jokedb_insert_comments(GetName(), id, comments);
 	if(r < 0)
-		printf("CQiuShiBaiKe::GetComment[%d] save comment error=%d\n", r);
+		printf("CQiuShiBaiKe::GetComment[%u] save comment error=%d\n", id, r);
 
 	return r;
 }

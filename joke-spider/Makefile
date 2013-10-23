@@ -3,48 +3,50 @@ ROOT:=../../sdk
 #--------------------------------Output------------------------------
 # OUTTYPE: 0-exe, 1-dll, 2-static
 #--------------------------------------------------------------------
-OUTTYPE = 1
-OUTFILE = libdbclient.so
+OUTTYPE = 0
+OUTFILE = joke-spider
 
 #-------------------------------Include------------------------------
 #
 # INCLUDES = $(addprefix -I,$(INCLUDES)) # add -I prefix
 #--------------------------------------------------------------------
-INCLUDES = . \
-					./include \
+INCLUDES = . ./include ./website \
 					$(ROOT)/include \
-					./mysql-connector-c-6.1.1-linux-glibc2.5-i686/include
-
+					$(ROOT)/xml/include \
+					../dbclient/include \
+					../libhttp/include \
+					../libsdk/include
+					
 #-------------------------------Source-------------------------------
 #
 #--------------------------------------------------------------------
-SOURCE_PATHS = source
+SOURCE_PATHS = source website
 SOURCE_FILES = $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.cpp))
 SOURCE_FILES += $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.c))
-SOURCE_FILES += $(ROOT)/source/systimeconfig.c
-SOURCE_FILES += $(ROOT)/source/tools.c
-SOURCE_FILES += $(ROOT)/source/time64.c
+
+SOURCE_FILES += ../libsdk/source/config.cpp
 
 #-----------------------------Library--------------------------------
 #
 # LIBPATHS = $(addprefix -L,$(LIBPATHS)) # add -L prefix
 #--------------------------------------------------------------------
-LIBPATHS =
-ifdef RELEASE
-# relase library path
-LIBPATHS +=
+LIBPATHS = ../dxt/$(BUILD).$(PLATFORM) ../libhttp/$(BUILD).$(PLATFORM) ../dbclient/$(BUILD).$(PLATFORM)
+
+ifeq ($(RELEASE),1)
+LIBPATHS += 
 else
-LIBPATHS +=
+LIBPATHS += 
 endif
 
-LIBS = rt dl
+LIBS = dxt http dbclient rt dl pthread
 
-STATIC_LIBS = ./mysql-connector-c-6.1.1-linux-glibc2.5-i686/lib/libmysqlclient.a
+STATIC_LIBS = $(ROOT)/xml/$(BUILD).$(PLATFORM)/libtinyxml.a
+STATIC_LIBS += ../libsdk/$(BUILD).$(PLATFORM)/libsdk.a
 
 #-----------------------------DEFINES--------------------------------
 #
 # DEFINES := $(addprefix -D,$(DEFINES)) # add -L prefix
 #--------------------------------------------------------------------
-DEFINES = DBCLIENT_EXPORTS
+DEFINES = OS_LINUX
 
 include $(ROOT)/gcc.mk

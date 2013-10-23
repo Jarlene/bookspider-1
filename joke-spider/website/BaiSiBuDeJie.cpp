@@ -82,13 +82,13 @@ int CBaiSiBuDeJie::GetComment(unsigned int id)
 	int r = joke_comment(this, uri, NULL, OnGetComment, &comments);
 	if(r < 0)
 	{
-		printf("CBaiSiBuDeJie::GetComment[%u] error=%d.\n", r);
+		printf("CBaiSiBuDeJie::GetComment[%u] error=%d.\n", id, r);
 		return r;
 	}
 
 	r = jokedb_insert_comments(GetName(), id, comments);
 	if(r < 0)
-		printf("CBaiSiBuDeJie::GetComment[%u] save comment error=%d\n", r);
+		printf("CBaiSiBuDeJie::GetComment[%u] save comment error=%d\n", id, r);
 
 	return r;
 }

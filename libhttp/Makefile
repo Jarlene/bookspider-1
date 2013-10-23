@@ -11,7 +11,8 @@ OUTFILE = libhttp.so
 # INCLUDES = $(addprefix -I,$(INCLUDES)) # add -I prefix
 #--------------------------------------------------------------------
 INCLUDES = . ./include ./zlib \
-					$(ROOT)/include 
+					$(ROOT)/include \
+					../dxt/include
 					
 #-------------------------------Source-------------------------------
 #
@@ -25,7 +26,7 @@ SOURCE_FILES += $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.c))
 #
 # LIBPATHS = $(addprefix -L,$(LIBPATHS)) # add -L prefix
 #--------------------------------------------------------------------
-LIBPATHS = 
+LIBPATHS = ../dxt/$(BUILD).$(PLATFORM)
 
 ifeq ($(RELEASE),1)
 LIBPATHS += 
@@ -33,7 +34,7 @@ else
 LIBPATHS += 
 endif
 
-LIBS = rt dl pthread
+LIBS = dxt rt dl pthread
 
 STATIC_LIBS = $(ROOT)/xml/$(BUILD).$(PLATFORM)/libtinyxml.a
 STATIC_LIBS += ../libsdk/$(BUILD).$(PLATFORM)/libsdk.a
@@ -44,5 +45,7 @@ STATIC_LIBS += ./zlib/libz.a
 # DEFINES := $(addprefix -D,$(DEFINES)) # add -L prefix
 #--------------------------------------------------------------------
 DEFINES = OS_LINUX LIBHTTP_EXPORTS
+
+NOVERSION := 1
 
 include $(ROOT)/gcc.mk
