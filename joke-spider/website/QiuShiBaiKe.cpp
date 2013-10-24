@@ -1,5 +1,6 @@
 #include "QiuShiBaiKe.h"
 #include "cstringext.h"
+#include "sys/system.h"
 #include "joke-db.h"
 #include <time.h>
 #include <math.h>
@@ -95,6 +96,8 @@ int CQiuShiBaiKe::List()
 		//	const Joke& joke = *it;
 		//	GetComment(joke.id);
 		//}
+
+		system_sleep(5000);
 	}
 
 	return 0;

@@ -72,7 +72,7 @@ int joke_get(const IJokeSpider* spider, const char* uri, const char* req, OnJoke
 	sprintf(name, "joke-%s", spider->GetName());
 	if(!g_config.GetConfig(name, xmlfile)) // xml file
 	{
-		printf("ListJoke: can't find %s xml file.\n", spider->GetName());
+		printf("joke_get: can't find %s xml file.\n", spider->GetName());
 		return ERROR_NOTFOUND;
 	}
 

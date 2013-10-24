@@ -1,5 +1,6 @@
 #include "BaiSiBuDeJie.h"
 #include "cstringext.h"
+#include "sys/system.h"
 #include "joke-db.h"
 #include <time.h>
 
@@ -30,7 +31,7 @@ static int OnList(void* param, const char* id, const char* icon, const char* aut
 int CBaiSiBuDeJie::List()
 {
 	char uri[256] = {0};
-	for(int page=1; page <= 35; page++)
+	for(int page=1; page <= 100; page++)
 	{
 		// latest update
 		if(2 == m_nav)
@@ -58,6 +59,8 @@ int CBaiSiBuDeJie::List()
 		//	const Joke& joke = *it;
 		//	GetComment(joke.id);
 		//}
+
+		system_sleep(5000);
 	}
 
 	return 0;
