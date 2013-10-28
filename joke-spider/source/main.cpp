@@ -9,27 +9,6 @@
 #include "QiuShiBaiKe.h"
 #include "BaiSiBuDeJie.h"
 
-static IJokeSpider* CreateSpider(const char* site)
-{
-	if(strieq(site, "qiushibaike")) return new CQiuShiBaiKe();
-	else if(strieq(site, "baisibudejie")) return new CBaiSiBuDeJie(1);
-	//else if(strieq(site, "luoqiu")) return new CLuoQiu();
-
-	return NULL;
-}
-
-static int JokeList(const char* site)
-{
-	IJokeSpider* spider = CreateSpider(site);
-	if(NULL == spider)
-	{
-		printf("don't find %s\n", site);
-		return ERROR_NOTFOUND;
-	}
-
-	return spider->List();
-}
-
 int main(int argc, char* argv[])
 {
 	socket_init();
@@ -40,7 +19,26 @@ int main(int argc, char* argv[])
 	{
 		if(streq(argv[i], "--list") && i+1<argc)
 		{
-			JokeList(argv[++i]);
+			IJokeSpider* spider = NULL;
+			if(strieq("qiushibaike", argv[i+1]))
+			{
+				spider = new CQiuShibaiKe();
+			}
+			else if(strieq("baisibudejie", argv[i+1]))
+			{
+				int nav = 1;
+				if(argc > i+2)
+				{
+					++i;
+					nav = atoi(argv[i+2])
+				}
+				spider = new CBaiSiBuDeJie(nav);
+			}
+
+			if(spider)
+				spider->List();
+
+			++i;
 		}
 		else
 		{
