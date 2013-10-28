@@ -1,4 +1,5 @@
 #include "joke-comment.h"
+#include "sys/sync.hpp"
 #include "os-timer.h"
 #include "StdCFile.h"
 #include "mmptr.h"
@@ -28,6 +29,7 @@ typedef struct
 
 typedef std::map<unsigned int, Comment> Comments;
 static Comments g_comments;
+static ThreadLocker g_locker;
 
 int Inflate(const void* ptr, size_t len, mmptr& result);
 int Deflate(const void* ptr, size_t len, mmptr& result);
@@ -68,6 +70,7 @@ int jokecomment_init()
 	if(r < 0)
 		return r;
 
+	AutoThreaLocker locker(g_locker);
 	FHeader* header = (FHeader*)ptr.get();
 	FChunk* chunk = (FChunk*)(header+1);
 	while((char*)chunk < (char*)(header+1)+header->len)
@@ -91,17 +94,20 @@ int jokecomment_save()
 	FHeader header2;
 	ptr.append(&header2, sizeof(FHeader));
 
-	Comments::const_iterator it;
-	for(it = g_comments.begin(); it != g_comments.end(); ++it)
 	{
-		const Comment& comment = it->second;
+		Comments::const_iterator it;
+		AutoThreaLocker locker(g_locker);
+		for(it = g_comments.begin(); it != g_comments.end(); ++it)
+		{
+			const Comment& comment = it->second;
 
-		FChunk chunk;
-		chunk.id = it->first;
-		chunk.len = comment.comment.length();
-		chunk.datetime = comment.datetime;
-		ptr.append(&chunk, sizeof(chunk));
-		ptr.append(comment.comment.c_str(), comment.comment.length());
+			FChunk chunk;
+			chunk.id = it->first;
+			chunk.len = comment.comment.length();
+			chunk.datetime = comment.datetime;
+			ptr.append(&chunk, sizeof(chunk));
+			ptr.append(comment.comment.c_str(), comment.comment.length());
+		}
 	}
 
 	FHeader* header = (FHeader*)ptr.get();
@@ -116,6 +122,7 @@ int jokecomment_save()
 int jokecomment_query(unsigned int id, time64_t datetime, std::string& comment)
 {
 	Comments::iterator it;
+	AutoThreaLocker locker(g_locker);
 	it = g_comments.find(id);
 	if(it == g_comments.end())
 		return -1; // not found
@@ -131,6 +138,7 @@ int jokecomment_query(unsigned int id, time64_t datetime, std::string& comment)
 int jokecomment_insert(unsigned int id, time64_t datetime, const std::string& comment)
 {
 	Comments::iterator it;
+	AutoThreaLocker locker(g_locker);
 	it = g_comments.find(id);
 	if(it == g_comments.end())
 	{
