@@ -4,7 +4,7 @@
 	require("php/api.inc");
 
 	$page = php_reqvar("page", "1");
-	$content = php_reqvar("content", "0");
+	$content = php_reqvar("content", "1");
 	$range = php_reqvar("range", "0");
 	$order = php_reqvar("order", "0");
 	$timestamp = php_reqvar("s", time());

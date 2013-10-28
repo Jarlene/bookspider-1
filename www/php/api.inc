@@ -2,18 +2,18 @@
 	/// param[in] page page number, start from 1
 	/// param[in] order 0-order by time, 1-order by approve
 	/// param[in] range time range, 0-all, 1-8hours, 2-daily, 3-monthly, 4-yearly
-	/// param[in] content 0-image and text, 1-text only, 2-image only
+	/// param[in] content 1-text only(default), 2-image only, 3-18+
 	/// param[in] timestamp time measured in the number of seconds since the Unix Epoch (January 1 1970 00:00:00 GMT)
 	function joke_query($page, $order, $range, $content, $timestamp)
 	{
 		// items
-		$sql = "select id,icon,author,datetime,content,image,(approve+user_approve) as _approve, (disapprove+user_disapprove) as _disapprove,comment from joke";
+		$sql = "select id,author,author_icon,datetime,content,image,approve,disapprove,comment from joke";
 
 		// condition
-		if(1 == $content)
-			$sqlcond = "image=''";
-		else if(2 == $content)
-			$sqlcond =  "image != ''";
+		if(2 == $content)
+			$sql = "select id,author,author_icon,datetime,content,image,approve,disapprove,comment from joke_image";
+		else
+			$sql = "select id,author,author_icon,datetime,content,approve,disapprove,comment from joke_text";
 
 		$timeend = date("Y-m-d H:i:s", $timestamp);
 		if(1 == $range)
@@ -47,7 +47,7 @@
 
 		// order
 		if(1 == $order)
-			$sql = $sql . " order by _approve desc";
+			$sql = $sql . " order by approve desc";
 		else
 			$sql = $sql . " order by datetime desc";
 
@@ -77,13 +77,13 @@
 				$joke["comment_uri"] = sprintf("http://budejie.com/detail.php?id=%u&nav=%d", $id % 1000000000, 1);
 			else
 				$joke["comment_uri"] = "";
-			$joke["icon"] = $row["icon"];
+			$joke["icon"] = $row["author_icon"];
 			$joke["author"] = $row["author"];
 			$joke["datetime"] = $row["datetime"];
 			$joke["content"] = $row["content"];
-			$joke["image"] = $row["image"];
-			$joke["approve"] = $row["_approve"];
-			$joke["disapprove"] = $row["_disapprove"];
+			$joke["image"] = (2 == $content) ? $row["image"] : "";
+			$joke["approve"] = $row["approve"];
+			$joke["disapprove"] = $row["disapprove"];
 			$joke["comment"] = $row["comment"];
 			$jokes[] = $joke; // add book
 		}
