@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;..\..\sdk\include;..\..\sdk\xml\include;..\dxt\include;..\dbclient\include;..\libsdk\include"
+				AdditionalIncludeDirectories=".;..\..\sdk\include;..\..\sdk\xml\include;..\dxt\include;..\dbclient\include;..\libsdk\include;..\libhttp\include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -114,7 +114,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories=".;..\..\sdk\include;..\..\sdk\xml\include;..\dxt\include;..\dbclient\include;..\libsdk\include"
+				AdditionalIncludeDirectories=".;..\..\sdk\include;..\..\sdk\xml\include;..\dxt\include;..\dbclient\include;..\libsdk\include;..\libhttp\include"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				WarningLevel="4"
@@ -182,6 +182,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\source\http-proxy.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\source\listfile.c"
 				>
 			</File>
@@ -205,6 +209,10 @@
 			>
 			<File
 				RelativePath=".\source\ChapterManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\source\http-proxy.h"
 				>
 			</File>
 			<File

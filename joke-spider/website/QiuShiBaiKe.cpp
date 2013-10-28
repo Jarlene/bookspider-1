@@ -103,22 +103,9 @@ static int OnGetComment(void* param, const char* icon, const char* user, const c
 	return 0;
 }
 
-int CQiuShiBaiKe::GetComment(unsigned int id)
+int CQiuShiBaiKe::GetComment(Comments& comments, unsigned int id)
 {
 	char uri[256] = {0};
 	snprintf(uri, sizeof(uri)-1, "http://www.qiushibaike.com/article/%u", id%(GetId()*JOKE_SITE_ID));
-
-	Comments comments;
-	int r = joke_comment(this, uri, NULL, OnGetComment, &comments);
-	if(r < 0)
-	{
-		printf("CQiuShiBaiKe::GetComment[%u] error=%d.\n", id, r);
-		return r;
-	}
-
-	r = jokedb_insert_comments(GetName(), id, comments);
-	if(r < 0)
-		printf("CQiuShiBaiKe::GetComment[%u] save comment error=%d\n", id, r);
-
-	return r;
+	return joke_comment(this, uri, NULL, OnGetComment, &comments);
 }

@@ -9,7 +9,7 @@ public:
 	virtual int GetId() const { return 1; }
 	virtual const char* GetName() const { return "qiushibaike"; }
 	virtual int List();
-	virtual int GetComment(unsigned int id);
+	virtual int GetComment(Comments& comments, unsigned int id);
 
 private:
 	int Late();

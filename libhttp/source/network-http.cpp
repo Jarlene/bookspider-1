@@ -7,7 +7,6 @@
 
 int Inflate(const void* ptr, size_t len, mmptr& result);
 
-static char urlpath[1024] = {0};
 int network_http(const char* uri, const char* req, mmptr& reply)
 {
 	assert(uri);

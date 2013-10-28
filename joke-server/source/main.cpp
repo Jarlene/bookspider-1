@@ -1,11 +1,13 @@
+#include "joke-db.h"
 #include "tcpserver.h"
 #include "thread-pool.h"
-#include "WebSession.h"
-#include "http-proxy.h"
+#include "web-session.h"
+#include "joke-comment.h"
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-thread_pool_t g_thdpool;
+static thread_pool_t g_thdpool;
 
 void OnTcpConnected(void* param, socket_t sock, const char* ip, int port)
 {
@@ -35,16 +37,19 @@ int main(int argc, char* argv[])
 	tcphandler.onconnected = OnTcpConnected;
 
 	socket_init();
+	jokedb_init();
+	jokecomment_init();
 	g_thdpool = thread_pool_create(2, 1, 64);
-	tcpserver = tcpserver_start(NULL, 10000, &tcphandler, NULL);
+	tcpserver = tcpserver_start(NULL, 2001, &tcphandler, NULL);
 
-	http_proxy_find(OnFindProxy, NULL);
 	while('q' != getchar())
 	{
 	}
 
 	tcpserver_stop(tcpserver);
 	thread_pool_destroy(g_thdpool);
+	jokecomment_save();
+	jokedb_clean();
 	socket_cleanup();
 	return 0;
 }

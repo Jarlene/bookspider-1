@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="joke-spider"
-	ProjectGUID="{70C67927-664C-48F1-B7B0-D15006C68257}"
-	RootNamespace="jokespider"
+	Name="joke-server"
+	ProjectGUID="{40966DF6-2B80-4053-8B5E-C1AD51445187}"
+	RootNamespace="jokeserver"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="./include;./website;../libsdk/include;../libhttp/include;../dbclient/include;../dxt/include;../../sdk/include;../../sdk/xml/include"
+				AdditionalIncludeDirectories=".;./include;../../sdk/include;../../sdk/xml/include;../libsdk/include;../libhttp/include;../dbclient/include;&quot;../joke-spider/include&quot;;&quot;../joke-spider/website&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -117,7 +117,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="./include;./website;../libsdk/include;../libhttp/include;../dbclient/include;../dxt/include;../../sdk/include;../../sdk/xml/include"
+				AdditionalIncludeDirectories=".;./include;../../sdk/include;../../sdk/xml/include;../libsdk/include;../libhttp/include;../dbclient/include;&quot;../joke-spider/include&quot;;&quot;../joke-spider/website&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -177,19 +177,27 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\source\api-comment.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\libsdk\source\config.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\source\joke-db.cpp"
+				RelativePath=".\source\joke-comment.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\source\joke-spider.cpp"
+				RelativePath="..\joke-spider\source\joke-db.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\source\main.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\web-session.cpp"
 				>
 			</File>
 		</Filter>
@@ -199,11 +207,15 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\include\joke-db.h"
+				RelativePath=".\include\joke-comment.h"
 				>
 			</File>
 			<File
-				RelativePath=".\website\JokeSpider.h"
+				RelativePath="..\joke-spider\include\joke-db.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\web-session.h"
 				>
 			</File>
 		</Filter>
@@ -217,19 +229,27 @@
 			Name="website"
 			>
 			<File
-				RelativePath=".\website\BaiSiBuDeJie.cpp"
+				RelativePath="..\joke-spider\website\BaiSiBuDeJie.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\website\BaiSiBuDeJie.h"
+				RelativePath="..\joke-spider\website\BaiSiBuDeJie.h"
 				>
 			</File>
 			<File
-				RelativePath=".\website\QiuShiBaiKe.cpp"
+				RelativePath="..\joke-spider\source\joke-spider.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\website\QiuShiBaiKe.h"
+				RelativePath="..\joke-spider\website\JokeSpider.h"
+				>
+			</File>
+			<File
+				RelativePath="..\joke-spider\website\QiuShiBaiKe.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\joke-spider\website\QiuShiBaiKe.h"
 				>
 			</File>
 		</Filter>

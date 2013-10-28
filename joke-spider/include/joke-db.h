@@ -36,4 +36,6 @@ int jokedb_settime(const char* website, const char* datetime);
 int jokedb_insert_jokes(const char* website, const Jokes& jokes);
 int jokedb_insert_comments(const char* website, unsigned int id, const Comments& comments);
 
+int jokedb_query_comment(unsigned int id, char datetime[20], std::string& comment);
+
 #endif /* !_joke_db_h_ */

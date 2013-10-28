@@ -13,7 +13,7 @@ public:
 	virtual int GetId() const { return 2; }
 	virtual const char* GetName() const { return "baisibudejie"; }
 	virtual int List();
-	virtual int GetComment(unsigned int id);
+	virtual int GetComment(Comments& comments, unsigned int id);
 
 private:
 	int m_nav;

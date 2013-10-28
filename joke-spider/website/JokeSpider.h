@@ -1,6 +1,8 @@
 #ifndef _IJokeSpider_h_
 #define _IJokeSpider_h_
 
+#include "joke-db.h"
+
 #define JOKE_SITE_ID	1000000000
 
 struct IJokeSpider
@@ -10,7 +12,7 @@ struct IJokeSpider
 	virtual int GetId() const = 0;
 	virtual const char* GetName() const = 0;
 	virtual int List() = 0;
-	virtual int GetComment(unsigned int id) = 0;
+	virtual int GetComment(Comments& comments, unsigned int id) = 0;
 };
 
 typedef int (*OnJoke)(void* param, const char* id, const char* icon, const char* author, const char* datetime, const char* content, const char* image, int approve, int disapprove, int comment);
