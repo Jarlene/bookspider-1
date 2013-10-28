@@ -20,7 +20,7 @@ static int http(const char* uri, const char* req, mmptr& reply)
 		if(r < 0)
 		{
 			printf("get %s error: %d\n", uri, r);
-			system_sleep(1000);
+			system_sleep(5000);
 		}
 	}
 	return r;

@@ -54,12 +54,7 @@ int CQiuShiBaiKe::Late()
 		if(r < 0)
 			printf("CQiuShiBaiKe::List[%d] jokedb_insert=%d.\n", page, r);
 
-		//Jokes::const_iterator it = jokes.begin();
-		//for(size_t i=0; i<jokes.size(); i++, ++it)
-		//{
-		//	const Joke& joke = *it;
-		//	GetComment(joke.id);
-		//}
+		system_sleep(5000);
 	}
 
 	return 0;
@@ -89,13 +84,6 @@ int CQiuShiBaiKe::List()
 		r = jokedb_insert_jokes(GetName(), jokes);
 		if(r < 0)
 			printf("CQiuShiBaiKe::List[%d] jokedb_insert=%d.\n", page, r);
-
-		//Jokes::const_iterator it = jokes.begin();
-		//for(size_t i=0; i<jokes.size(); i++, ++it)
-		//{
-		//	const Joke& joke = *it;
-		//	GetComment(joke.id);
-		//}
 
 		system_sleep(5000);
 	}

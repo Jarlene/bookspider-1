@@ -34,8 +34,7 @@ int network_http(const char* uri, const char* req, mmptr& reply)
 		return r;
 	}
 
-	url_geturlpath(url, urlpath, sizeof(urlpath));
-	r = req?http.Post(urlpath, req, strlen(req), reply):http.Get(urlpath, reply);
+	r = req?http.Post(uri, req, strlen(req), reply):http.Get(uri, reply);
 	if(ERROR_HTTP_REDIRECT == r)
 	{
 	}

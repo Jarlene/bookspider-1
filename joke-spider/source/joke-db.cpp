@@ -31,7 +31,7 @@ int jokedb_settime(const char* website, const char* datetime)
 	return db_update(db, buffer);
 }
 
-int jokedb_insert_jokes(const char* /*website*/, const Jokes& jokes)
+static int jokedb_insert_text_jokes(const char* /*website*/, const Jokes& jokes)
 {
 	int i = 0;
 	std::string sql;
@@ -39,18 +39,59 @@ int jokedb_insert_jokes(const char* /*website*/, const Jokes& jokes)
 	for(it = jokes.begin(); it != jokes.end(); ++it,++i)
 	{
 		const Joke& joke = *it;
+		if(!joke.image.empty())
+			continue; // ignore images
+
 		snprintf(buffer, sizeof(buffer)-1, 
-			"(%u, '%s', '%s', '%s', '%s', '%s', %d, %d, '%d')",
-			joke.id, joke.icon.c_str(), joke.author.c_str(), joke.datetime.c_str(), joke.content.c_str(), joke.image.c_str(), joke.approve, joke.disapprove, joke.comment);
+			"(%u, '%s', '%s', '%s', '%s', %d, %d, '%d')",
+			joke.id, joke.author.c_str(), joke.icon.c_str(), joke.datetime.c_str(), joke.content.c_str(), joke.approve, joke.disapprove, joke.comment);
 
 		if(!sql.empty())
 			sql += ',';
 		sql += buffer;
 	}
 
-	sql.insert(0, "insert into joke (id, icon, author, datetime, content, image, approve, disapprove, comment) values ");
+	if(sql.empty())
+		return 0;
+
+	sql.insert(0, "insert into joke_text (id, author, author_icon, datetime, content, approve, disapprove, comment) values ");
 	sql += " on duplicate key update approve=values(approve), disapprove=values(disapprove), comment=values(comment)";
 	return db_insert(db, sql.c_str());
+}
+
+static int jokedb_insert_image_jokes(const char* /*website*/, const Jokes& jokes)
+{
+	int i = 0;
+	std::string sql;
+	Jokes::const_iterator it;
+	for(it = jokes.begin(); it != jokes.end(); ++it,++i)
+	{
+		const Joke& joke = *it;
+		if(joke.image.empty())
+			continue; // ignore text only joke
+
+		snprintf(buffer, sizeof(buffer)-1, 
+			"(%u, '%s', '%s', '%s', '%s', '%s', %d, %d, '%d')",
+			joke.id, joke.author.c_str(), joke.icon.c_str(), joke.datetime.c_str(), joke.content.c_str(), joke.image.c_str(), joke.approve, joke.disapprove, joke.comment);
+
+		if(!sql.empty())
+			sql += ',';
+		sql += buffer;
+	}
+
+	if(sql.empty())
+		return 0;
+
+	sql.insert(0, "insert into joke_image (id, author, author_icon, datetime, content, image, approve, disapprove, comment) values ");
+	sql += " on duplicate key update approve=values(approve), disapprove=values(disapprove), comment=values(comment)";
+	return db_insert(db, sql.c_str());
+}
+
+int jokedb_insert_jokes(const char* website, const Jokes& jokes)
+{
+	int i = jokedb_insert_text_jokes(website, jokes);
+	i = jokedb_insert_image_jokes(website, jokes);
+	return i;
 }
 
 int jokedb_insert_comments(const char* /*website*/, unsigned int id, const Comments& comments)
