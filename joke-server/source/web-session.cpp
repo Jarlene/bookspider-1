@@ -1,6 +1,7 @@
 #include "web-session.h"
 #include "cstringext.h"
 #include "http-server.h"
+#include "jsonhelper.h"
 #include "dlog.h"
 #include "url.h"
 #include "config.h"
@@ -49,7 +50,7 @@ void WebSession::Run()
 
 void WebSession::OnApi()
 {
-	typedef int (WebSession::*Handler)(jsonobject& reply);
+	typedef void (WebSession::*Handler)();
 	typedef std::map<std::string, Handler> THandlers;
 	static THandlers handlers;
 	if(0 == handlers.size())

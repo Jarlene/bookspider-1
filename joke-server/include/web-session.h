@@ -2,7 +2,6 @@
 #define _WebSession_h_
 
 #include "sys/sock.h"
-#include "jsonhelper.h"
 #include "uri-params.h"
 #include "error.h"
 #include <string>
@@ -17,6 +16,10 @@ public:
 public:
 	static void Run(void *param);
 
+public:
+	void Reply(int code, const char* msg);
+	void Reply(const char* reply);
+
 private:
 	void OnApi();
 	void Run();
@@ -24,8 +27,8 @@ private:
 	int Recv();
 	int Send(int code, const char* contentType, const void* data, int len);
 
-	int OnComment(jsonobject& reply);
-	int OnCleanup(jsonobject& reply);
+	void OnComment();
+	void OnCleanup();
 
 private:
 	std::string m_ip;

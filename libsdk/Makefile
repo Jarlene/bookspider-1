@@ -38,7 +38,7 @@ SOURCE_FILES += $(ROOT)/source/url.c
 SOURCE_FILES += $(ROOT)/source/urlcodec.c
 SOURCE_FILES += $(ROOT)/source/tools.c
 SOURCE_FILES += $(ROOT)/source/unicode.c
-
+SOURCE_FILES += $(ROOT)/source/systimer.c
 
 #-----------------------------Library--------------------------------
 #

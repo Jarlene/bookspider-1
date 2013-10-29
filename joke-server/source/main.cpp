@@ -1,4 +1,5 @@
 #include "joke-db.h"
+#include "systimer.h"
 #include "tcpserver.h"
 #include "thread-pool.h"
 #include "web-session.h"
@@ -24,11 +25,6 @@ void OnTcpError(void* param, int errcode)
 	printf("OnTcpError: %d\n", errcode);
 }
 
-static void OnFindProxy(void* param, const char* ip, int port)
-{
-	printf("ip: %s, port: %d\n", ip, port);
-}
-
 int main(int argc, char* argv[])
 {
 	tcpserver_t tcpserver;
@@ -38,6 +34,7 @@ int main(int argc, char* argv[])
 
 	socket_init();
 	jokedb_init();
+	systimer_init();
 	jokecomment_init();
 	g_thdpool = thread_pool_create(2, 1, 64);
 	tcpserver = tcpserver_start(NULL, 2001, &tcphandler, NULL);
@@ -49,6 +46,7 @@ int main(int argc, char* argv[])
 	tcpserver_stop(tcpserver);
 	thread_pool_destroy(g_thdpool);
 	jokecomment_save();
+	systimer_clean();
 	jokedb_clean();
 	socket_cleanup();
 	return 0;

@@ -1,12 +1,15 @@
 #include "joke-comment.h"
 #include "sys/sync.hpp"
-#include "os-timer.h"
+#include "systimer.h"
 #include "StdCFile.h"
 #include "mmptr.h"
 #include <map>
 
+#define VALID_TIME (60*60*1000)
+
 typedef struct
 {
+	int hot;
 	time64_t datetime;
 	std::string comment;
 } Comment;
@@ -22,14 +25,14 @@ typedef struct
 typedef struct
 {
 	int len; // comment length(don't include FChunk size)
-	int hot;
 	unsigned int id;
 	time64_t datetime;
 } FChunk;
 
 typedef std::map<unsigned int, Comment> Comments;
-static Comments g_comments;
-static ThreadLocker g_locker;
+static Comments s_comments;
+static ThreadLocker s_locker;
+static systimer_t s_timer;
 
 int Inflate(const void* ptr, size_t len, mmptr& result);
 int Deflate(const void* ptr, size_t len, mmptr& result);
@@ -42,7 +45,7 @@ static int jokecomment_read(mmptr& ptr)
 
 	long fsize = file.GetFileSize();
 	void* content = file.Read(fsize);
-	assert(fsize == sizeof(FHeader) + ((FHeader*)ptr.get())->len);
+	assert((size_t)fsize == sizeof(FHeader) + ((FHeader*)ptr.get())->len);
 
 	int r = Deflate(content, fsize, ptr); // uncompress
 	free(content);
@@ -63,6 +66,28 @@ static int jokecomment_write(const mmptr& ptr)
 	return file.Write(result.get(), result.size());
 }
 
+static void jokecomment_recycle()
+{
+	time64_t lt = time64_now();
+	Comments::iterator it, it0;
+
+	AutoThreadLocker locker(s_locker);
+	it = s_comments.begin();
+	while( it != s_comments.end() )
+	{
+		it0 = it++;
+		Comment& comment = it0->second;
+		if(comment.datetime + VALID_TIME < lt)
+			s_comments.erase(it0);
+	}
+}
+
+static void jokecomment_timer(systimer_t /*timer*/, void* /*param*/)
+{
+	jokecomment_recycle();
+	jokecomment_save();
+}
+
 int jokecomment_init()
 {
 	mmptr ptr;
@@ -70,7 +95,7 @@ int jokecomment_init()
 	if(r < 0)
 		return r;
 
-	AutoThreaLocker locker(g_locker);
+	AutoThreadLocker locker(s_locker);
 	FHeader* header = (FHeader*)ptr.get();
 	FChunk* chunk = (FChunk*)(header+1);
 	while((char*)chunk < (char*)(header+1)+header->len)
@@ -78,12 +103,13 @@ int jokecomment_init()
 		Comment comment;
 		comment.datetime = chunk->datetime;
 		comment.comment.assign((const char*)(chunk+1), chunk->len);
-		g_comments.insert(std::make_pair(chunk->id, comment));
+		s_comments.insert(std::make_pair(chunk->id, comment));
 
 		chunk = (FChunk*)((char*)(chunk+1) + chunk->len);
 	}
 
-	return g_comments.size();
+	systimer_start(&s_timer, VALID_TIME, jokecomment_timer, NULL);
+	return s_comments.size();
 }
 
 int jokecomment_save()
@@ -96,8 +122,8 @@ int jokecomment_save()
 
 	{
 		Comments::const_iterator it;
-		AutoThreaLocker locker(g_locker);
-		for(it = g_comments.begin(); it != g_comments.end(); ++it)
+		AutoThreadLocker locker(s_locker);
+		for(it = s_comments.begin(); it != s_comments.end(); ++it)
 		{
 			const Comment& comment = it->second;
 
@@ -122,9 +148,9 @@ int jokecomment_save()
 int jokecomment_query(unsigned int id, time64_t datetime, std::string& comment)
 {
 	Comments::iterator it;
-	AutoThreaLocker locker(g_locker);
-	it = g_comments.find(id);
-	if(it == g_comments.end())
+	AutoThreadLocker locker(s_locker);
+	it = s_comments.find(id);
+	if(it == s_comments.end())
 		return -1; // not found
 
 	Comment& item = it->second;
@@ -138,15 +164,15 @@ int jokecomment_query(unsigned int id, time64_t datetime, std::string& comment)
 int jokecomment_insert(unsigned int id, time64_t datetime, const std::string& comment)
 {
 	Comments::iterator it;
-	AutoThreaLocker locker(g_locker);
-	it = g_comments.find(id);
-	if(it == g_comments.end())
+	AutoThreadLocker locker(s_locker);
+	it = s_comments.find(id);
+	if(it == s_comments.end())
 	{
 		Comment item;
-		item.host = 1;
+		item.hot = 1;
 		item.datetime = datetime;
 		item.comment = comment;
-		g_comments.insert(std::make_pair(id, item));
+		s_comments.insert(std::make_pair(id, item));
 	}
 	else
 	{
