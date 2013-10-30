@@ -71,12 +71,7 @@
 			$id = $row["id"];
 			
 			$joke = array();
-			if(intval($id / 1000000000) == 1)
-				$joke["comment_uri"] = sprintf("http://www.qiushibaike.com/article/%u", $id % 1000000000);
-			else if(intval($id / 1000000000) == 2)
-				$joke["comment_uri"] = sprintf("http://budejie.com/detail.php?id=%u&nav=%d", $id % 1000000000, 1);
-			else
-				$joke["comment_uri"] = "";
+			$joke["id"] = $row["id"];
 			$joke["icon"] = $row["author_icon"];
 			$joke["author"] = $row["author"];
 			$joke["datetime"] = $row["datetime"];
