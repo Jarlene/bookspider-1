@@ -26,7 +26,7 @@ private:
 	int Recv();
 	int Send(int code, const char* contentType, const void* data, int len);
 
-public:
+	int OnProxy();
 	int OnComment();
 	int OnCleanup();
 

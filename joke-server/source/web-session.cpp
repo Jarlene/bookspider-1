@@ -55,6 +55,7 @@ void WebSession::OnApi()
 	static THandlers handlers;
 	if(0 == handlers.size())
 	{
+		handlers.insert(std::make_pair("proxy", &WebSession::OnProxy));
 		handlers.insert(std::make_pair("comment", &WebSession::OnComment));
 		handlers.insert(std::make_pair("cleanup", &WebSession::OnCleanup));
 	}
@@ -77,6 +78,17 @@ void WebSession::OnApi()
 int WebSession::OnCleanup()
 {
 	return 0;
+}
+
+int WebSession::OnProxy()
+{
+	char msg[128] = {0};
+	const char* from = http_server_get_header(m_http, "x-forward-for");
+	if(!from)
+		from = m_ip.c_str();
+	snprintf(msg, sizeof(msg), "Hello Proxy: %s", from);
+
+	return Reply(std::string(msg));
 }
 
 int WebSession::Reply(int code, const char* msg)
@@ -111,6 +123,7 @@ int WebSession::Recv()
 	m_params.Init(url);
 	url_free(url);
 
+	printf("[%s] %s\n", m_ip.c_str(), m_path.c_str());
 	http_server_get_content(m_http, &m_content, &m_contentLength);
 	if(m_contentLength > 0 && m_contentLength < 2*1024)
 	{
