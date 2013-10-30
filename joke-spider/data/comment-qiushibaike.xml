@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="gb2312"?>
+<?xml version="1.0" encoding="utf-8"?>
 <xml>
-  <comments>
     <xsl:for-each select="//div[@class='comments']/div/div">
       <comment>
       	<icon>
@@ -14,5 +13,4 @@
         </content>
       </comment>
     </xsl:for-each>
-  </comments>
 </xml>

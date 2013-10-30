@@ -31,14 +31,11 @@ static int OnList(void* param, const char* id, const char* icon, const char* aut
 
 int CQiuShiBaiKe::Late()
 {
-	time_t v = time(NULL);
-	v = v / (5*60);
-
 	char uri[256] = {0};
 	for(int page=1; page <= 35; page++)
 	{
 		// latest update
-		snprintf(uri, sizeof(uri)-1, "http://www.qiushibaike.com/history/2013/10/22/page/3", page, (unsigned int)v);
+		snprintf(uri, sizeof(uri)-1, "http://www.qiushibaike.com/history/2013/10/22/page/%d", page);
 
 		Jokes jokes;
 		int r = joke_get(this, uri, NULL, OnList, &jokes);

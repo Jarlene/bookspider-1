@@ -4,11 +4,12 @@
 #include "thread-pool.h"
 #include "web-session.h"
 #include "joke-comment.h"
+#include "task-queue.h"
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-static thread_pool_t g_thdpool;
+thread_pool_t g_thdpool;
 
 void OnTcpConnected(void* param, socket_t sock, const char* ip, int port)
 {
@@ -36,7 +37,8 @@ int main(int argc, char* argv[])
 	jokedb_init();
 	systimer_init();
 	jokecomment_init();
-	g_thdpool = thread_pool_create(2, 1, 64);
+	g_thdpool = thread_pool_create(2, 20, 64);
+	task_queue_create(g_thdpool, 20);
 	tcpserver = tcpserver_start(NULL, 2001, &tcphandler, NULL);
 
 	while('q' != getchar())
@@ -44,6 +46,7 @@ int main(int argc, char* argv[])
 	}
 
 	tcpserver_stop(tcpserver);
+	task_queue_destroy();
 	thread_pool_destroy(g_thdpool);
 	jokecomment_save();
 	systimer_clean();

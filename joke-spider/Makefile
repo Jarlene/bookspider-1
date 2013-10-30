@@ -47,6 +47,6 @@ STATIC_LIBS += ../libsdk/$(BUILD).$(PLATFORM)/libsdk.a
 #
 # DEFINES := $(addprefix -D,$(DEFINES)) # add -L prefix
 #--------------------------------------------------------------------
-DEFINES = OS_LINUX
+DEFINES =
 
 include $(ROOT)/gcc.mk

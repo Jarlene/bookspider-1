@@ -9,40 +9,54 @@
 #include "QiuShiBaiKe.h"
 #include "BaiSiBuDeJie.h"
 
+static IJokeSpider* MakeSpider(const char* name)
+{
+	IJokeSpider* spider = NULL;
+	if(strieq("qiushibaike", name))
+	{
+		spider = new CQiuShiBaiKe();
+	}
+	else if(strieq("baisibudejie", name))
+	{
+		spider = new CBaiSiBuDeJie(1);
+	}
+	
+	return spider;
+}
+
 int main(int argc, char* argv[])
 {
+	IJokeSpider* spider = NULL;
+
 	socket_init();
 	if(0 != jokedb_init())
 		return 0;
 
 	for(int i=1; i<argc; i++)
 	{
-		if(streq(argv[i], "--list") && i+1<argc)
+		if(streq(argv[i], "--website") && i+1<argc)
 		{
-			IJokeSpider* spider = NULL;
-			if(strieq("qiushibaike", argv[i+1]))
-			{
-				spider = new CQiuShibaiKe();
-			}
-			else if(strieq("baisibudejie", argv[i+1]))
-			{
-				int nav = 1;
-				if(argc > i+2)
-				{
-					++i;
-					nav = atoi(argv[i+2])
-				}
-				spider = new CBaiSiBuDeJie(nav);
-			}
-
+			spider = MakeSpider(argv[++i]);
+		}
+		else if(streq(argv[i], "--list"))
+		{
 			if(spider)
 				spider->List();
-
-			++i;
+			break;
+		}
+		else if(streq(argv[i], "--comment") && i+1<argc)
+		{
+			int comment = atoi(argv[++i]);
+			if(spider)
+			{
+				Comments comments;
+				spider->GetComment(comments, comment);
+			}
+			break;
 		}
 		else
 		{
-			printf("Joke-Spider --list site\n");
+			printf("Joke-Spider --website [qiushibaike|baisibudejie] [--list] [--comment id]\n");
 			break;
 		}
 	}

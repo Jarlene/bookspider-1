@@ -5,7 +5,6 @@
 #include "uri-params.h"
 #include "error.h"
 #include <string>
-#include <map>
 
 class WebSession
 {
@@ -17,8 +16,8 @@ public:
 	static void Run(void *param);
 
 public:
-	void Reply(int code, const char* msg);
-	void Reply(const char* reply);
+	int Reply(int code, const char* msg);
+	int Reply(const std::string& reply);
 
 private:
 	void OnApi();
@@ -27,8 +26,9 @@ private:
 	int Recv();
 	int Send(int code, const char* contentType, const void* data, int len);
 
-	void OnComment();
-	void OnCleanup();
+public:
+	int OnComment();
+	int OnCleanup();
 
 private:
 	std::string m_ip;

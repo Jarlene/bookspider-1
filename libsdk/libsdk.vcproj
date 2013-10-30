@@ -235,6 +235,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\sdk\source\task-queue.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\sdk\source\tcpserver.c"
 				>
 			</File>

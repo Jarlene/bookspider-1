@@ -3,49 +3,40 @@ ROOT:=../../sdk
 #--------------------------------Output------------------------------
 # OUTTYPE: 0-exe, 1-dll, 2-static
 #--------------------------------------------------------------------
-OUTTYPE = 2
-OUTFILE = libsdk.a
+OUTTYPE = 0
+OUTFILE = joke-server
 
 #-------------------------------Include------------------------------
 #
 # INCLUDES = $(addprefix -I,$(INCLUDES)) # add -I prefix
 #--------------------------------------------------------------------
-INCLUDES = . \
-					./json \
-					$(ROOT)/include 
+INCLUDES = . ./include \
+					$(ROOT)/include \
+					$(ROOT)/xml/include \
+					../dbclient/include \
+					../libhttp/include \
+					../libsdk/include \
+					../libsdk/json \
+					../joke-spider/include \
+					../joke-spider/website
 					
 #-------------------------------Source-------------------------------
 #
 #--------------------------------------------------------------------
-SOURCE_PATHS = json
+SOURCE_PATHS = source ../joke-spider/website
 SOURCE_FILES = $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.cpp))
 SOURCE_FILES += $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.c))
 
-SOURCE_FILES += $(ROOT)/source/http-server.cpp
-SOURCE_FILES += $(ROOT)/source/HttpSocket.cpp
-SOURCE_FILES += $(ROOT)/source/http-upload.c
-SOURCE_FILES += $(ROOT)/source/cookie.cpp
-SOURCE_FILES += $(ROOT)/source/dlog.cpp
-SOURCE_FILES += $(ROOT)/source/log.cpp
-SOURCE_FILES += $(ROOT)/source/sysnetconfig.c
-SOURCE_FILES += $(ROOT)/source/systimeconfig.c
-SOURCE_FILES += $(ROOT)/source/sysprocess.c
-SOURCE_FILES += $(ROOT)/source/tcpserver.c
-SOURCE_FILES += $(ROOT)/source/thread-pool.c
-SOURCE_FILES += $(ROOT)/source/task-queue.c
-SOURCE_FILES += $(ROOT)/source/time64.c
-SOURCE_FILES += $(ROOT)/source/base64.c
-SOURCE_FILES += $(ROOT)/source/url.c
-SOURCE_FILES += $(ROOT)/source/urlcodec.c
-SOURCE_FILES += $(ROOT)/source/tools.c
-SOURCE_FILES += $(ROOT)/source/unicode.c
-SOURCE_FILES += $(ROOT)/source/systimer.c
+SOURCE_FILES += ../libsdk/source/config.cpp
+SOURCE_FILES += ../libhttp/zlib/deflate.cpp
+SOURCE_FILES += ../joke-spider/source/joke-db.cpp
+SOURCE_FILES += ../joke-spider/source/joke-spider.cpp
 
 #-----------------------------Library--------------------------------
 #
 # LIBPATHS = $(addprefix -L,$(LIBPATHS)) # add -L prefix
 #--------------------------------------------------------------------
-LIBPATHS =
+LIBPATHS = ../dxt/$(BUILD).$(PLATFORM) ../libhttp/$(BUILD).$(PLATFORM) ../dbclient/$(BUILD).$(PLATFORM)
 
 ifeq ($(RELEASE),1)
 LIBPATHS += 
@@ -53,14 +44,16 @@ else
 LIBPATHS += 
 endif
 
-LIBS =
+LIBS = dxt http dbclient rt dl pthread
 
-STATIC_LIBS =
+STATIC_LIBS = $(ROOT)/xml/$(BUILD).$(PLATFORM)/libtinyxml.a
+STATIC_LIBS += ../libsdk/$(BUILD).$(PLATFORM)/libsdk.a
+STATIC_LIBS += ../libhttp/zlib/libz.a
 
 #-----------------------------DEFINES--------------------------------
 #
 # DEFINES := $(addprefix -D,$(DEFINES)) # add -L prefix
 #--------------------------------------------------------------------
-DEFINES = OS_LINUX
+DEFINES =
 
 include $(ROOT)/gcc.mk

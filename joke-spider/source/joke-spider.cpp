@@ -22,7 +22,7 @@ static int joke_get_helper(void* param, const char* xml)
 		return ERROR_PARAM;
 
 	TJokeParam* p = (TJokeParam*)param;
-	for(bool i=parser.Foreach("jokes/joke"); i; i=parser.Next())
+	for(bool i=parser.Foreach("joke"); i; i=parser.Next())
 	{
 		int approve = 0;
 		int disapprove = 0;
@@ -93,7 +93,7 @@ static int joke_comment_helper(void* param, const char* xml)
 		return ERROR_PARAM;
 
 	TCommentParam* p = (TCommentParam*)param;
-	for(bool i=parser.Foreach("comments/comment"); i; i=parser.Next())
+	for(bool i=parser.Foreach("comment"); i; i=parser.Next())
 	{
 		std::string icon, user, content;
 		if(!parser.GetValue("content", content))

@@ -12,7 +12,7 @@ typedef struct
 	int hot;
 	time64_t datetime;
 	std::string comment;
-} Comment;
+} TComment;
 
 typedef struct
 {
@@ -29,7 +29,7 @@ typedef struct
 	time64_t datetime;
 } FChunk;
 
-typedef std::map<unsigned int, Comment> Comments;
+typedef std::map<unsigned int, TComment> Comments;
 static Comments s_comments;
 static ThreadLocker s_locker;
 static systimer_t s_timer;
@@ -76,7 +76,7 @@ static void jokecomment_recycle()
 	while( it != s_comments.end() )
 	{
 		it0 = it++;
-		Comment& comment = it0->second;
+		TComment& comment = it0->second;
 		if(comment.datetime + VALID_TIME < lt)
 			s_comments.erase(it0);
 	}
@@ -100,7 +100,7 @@ int jokecomment_init()
 	FChunk* chunk = (FChunk*)(header+1);
 	while((char*)chunk < (char*)(header+1)+header->len)
 	{
-		Comment comment;
+		TComment comment;
 		comment.datetime = chunk->datetime;
 		comment.comment.assign((const char*)(chunk+1), chunk->len);
 		s_comments.insert(std::make_pair(chunk->id, comment));
@@ -125,7 +125,7 @@ int jokecomment_save()
 		AutoThreadLocker locker(s_locker);
 		for(it = s_comments.begin(); it != s_comments.end(); ++it)
 		{
-			const Comment& comment = it->second;
+			const TComment& comment = it->second;
 
 			FChunk chunk;
 			chunk.id = it->first;
@@ -153,7 +153,7 @@ int jokecomment_query(unsigned int id, time64_t datetime, std::string& comment)
 	if(it == s_comments.end())
 		return -1; // not found
 
-	Comment& item = it->second;
+	TComment& item = it->second;
 	item.hot += 1; // visit times
 
 	datetime = item.datetime;
@@ -168,7 +168,7 @@ int jokecomment_insert(unsigned int id, time64_t datetime, const std::string& co
 	it = s_comments.find(id);
 	if(it == s_comments.end())
 	{
-		Comment item;
+		TComment item;
 		item.hot = 1;
 		item.datetime = datetime;
 		item.comment = comment;
@@ -176,7 +176,7 @@ int jokecomment_insert(unsigned int id, time64_t datetime, const std::string& co
 	}
 	else
 	{
-		Comment& item = it->second;
+		TComment& item = it->second;
 		item.datetime = datetime;
 		item.comment = comment;
 	}

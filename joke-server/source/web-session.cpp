@@ -50,7 +50,7 @@ void WebSession::Run()
 
 void WebSession::OnApi()
 {
-	typedef void (WebSession::*Handler)();
+	typedef int (WebSession::*Handler)();
 	typedef std::map<std::string, Handler> THandlers;
 	static THandlers handlers;
 	if(0 == handlers.size())
@@ -59,32 +59,38 @@ void WebSession::OnApi()
 		handlers.insert(std::make_pair("cleanup", &WebSession::OnCleanup));
 	}
 
-	std::string json;
 	if(0 == strncmp(m_path.c_str(), "/api/", 5))
 	{
 		THandlers::iterator it;
 		it = handlers.find(m_path.substr(5));
 		if(it != handlers.end())
 		{
-			jsonobject reply;
-			(this->*(it->second))(reply);
-			json = reply.json();
+			(this->*(it->second))();
+		}
+		else
+		{
+			Reply(ERROR_NOTFOUND, "command not found");
 		}
 	}
-
-	if(json.empty())
-	{
-		jsonobject reply;
-		reply.add("code", -1).add("msg", "command not found");
-		std::string json = reply.json();
-	}
-
-	Send(200, "application/json", json.c_str(), json.length());
 }
 
-int WebSession::OnCleanup(jsonobject& reply)
+int WebSession::OnCleanup()
 {
 	return 0;
+}
+
+int WebSession::Reply(int code, const char* msg)
+{
+	jsonobject json;
+	json.add("code", code);
+	json.add("msg", msg);
+	std::string reply = json.json();
+	return Reply(reply);
+}
+
+int WebSession::Reply(const std::string& reply)
+{
+	return Send(200, "application/json", reply.c_str(), reply.length());
 }
 
 int WebSession::Recv()
