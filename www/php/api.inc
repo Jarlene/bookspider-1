@@ -15,31 +15,42 @@
 		else
 			$sql = "select id,author,author_icon,datetime,content,approve,disapprove,comment from joke_text";
 
+		$sqlcond = "";
 		$timeend = date("Y-m-d H:i:s", $timestamp);
-		if(1 == $range)
-			$timefrom = date("Y-m-d H:i:s", $timestamp-8*60*60);
-		else if(2 == $range)
-			$timefrom = date("Y-m-d H:i:s", $timestamp-24*60*60);
-		else if(3 == $range)
+		if(1 != $order)
 		{
-			$timefrom = date_create($timeend);
-			date_sub($timefrom, date_interval_create_from_date_string('1 month'));
-			$timefrom = date_format($timefrom, "Y-m-d H:i:s");
-		}
-		else if(4 == $range)
-		{
-			$timefrom = date_create($timeend);
-			date_sub($timefrom, date_interval_create_from_date_string('1 year'));
-			$timefrom = date_format($timefrom, "Y-m-d H:i:s");
-		}
-		else
-			$timefrom = $timeend;
-
-		if(0 != strcmp($timefrom, $timeend))
-		{
+			// update by time don't limit time range
 			if(strlen($sqlcond) > 0)
 				$sqlcond = $sqlcond . " and ";
-			$sqlcond = sprintf("(datetime>='%s' and datetime<='%s')", $timefrom, $timeend);
+			$sqlcond = sprintf("datetime<='%s'", $timeend);
+		}
+		else
+		{
+			if(1 == $range)
+				$timefrom = date("Y-m-d H:i:s", $timestamp-8*60*60);
+			else if(2 == $range)
+				$timefrom = date("Y-m-d H:i:s", $timestamp-24*60*60);
+			else if(3 == $range)
+			{
+				$timefrom = date_create($timeend);
+				date_sub($timefrom, date_interval_create_from_date_string('1 month'));
+				$timefrom = date_format($timefrom, "Y-m-d H:i:s");
+			}
+			else if(4 == $range)
+			{
+				$timefrom = date_create($timeend);
+				date_sub($timefrom, date_interval_create_from_date_string('1 year'));
+				$timefrom = date_format($timefrom, "Y-m-d H:i:s");
+			}
+			else
+				$timefrom = $timeend;
+
+			if(0 != strcmp($timefrom, $timeend))
+			{
+				if(strlen($sqlcond) > 0)
+					$sqlcond = $sqlcond . " and ";
+				$sqlcond = sprintf("(datetime>='%s' and datetime<='%s')", $timefrom, $timeend);
+			}
 		}
 
 		if(strlen($sqlcond) > 0)
