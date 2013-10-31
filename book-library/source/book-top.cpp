@@ -3,10 +3,9 @@
 #include "libct/auto_ptr.h"
 #include "utf8codec.h"
 #include "XMLParser.h"
-#include "http.h"
 #include "config.h"
-#include "dxt.h"
 #include "tools.h"
+#include "http-translate.h"
 
 static int GetBookId(const char* uri)
 {
@@ -14,13 +13,22 @@ static int GetBookId(const char* uri)
 	return p ? atoi(p+1) : atoi(uri);
 }
 
-static int ParseXml(IBookSite* site, const char* xml, book_site_spider_fcb callback, void* param)
+struct TParam
 {
+	IBookSite* site;
+	book_site_spider_fcb callback;
+	void* param;
+};
+
+static int OnListBook(void* param, const char* xml)
+{
+	TParam *p = (TParam*)param;
+
 	XMLParser parser(xml);
 	if(!parser.Valid())
 		return -1;
 
-	for(bool i=parser.Foreach("books/book"); i; i=parser.Next())
+	for(bool i=parser.Foreach("book"); i; i=parser.Next())
 	{
 		std::string name, author, uri, category, chapter, datetime;
 		if(!parser.GetValue("name", name) 
@@ -53,7 +61,7 @@ static int ParseXml(IBookSite* site, const char* xml, book_site_spider_fcb callb
 
 		book_t book;
 		parser.GetValue("vote", book.vote);
-		book.id = site->GetId() * BOOK_ID + GetBookId(uri.c_str());
+		book.id = p->site->GetId() * BOOK_ID + GetBookId(uri.c_str());
 
 		// to utf-8
 		strcpy(book.name, UTF8Encode(name.c_str(), encoding));
@@ -64,26 +72,11 @@ static int ParseXml(IBookSite* site, const char* xml, book_site_spider_fcb callb
 		strcpy(book.datetime, UTF8Encode(datetime.c_str(), encoding));
 
 		// call-back
-		int r = callback(param, &book);
+		int r = p->callback(p->param, &book);
 		if(r)
 			return r;
 	}
 	return 0;
-}
-
-static int Http(const char* uri, void** reply)
-{
-	int r = -1;
-	for(int i=0; r < 0 && i<10; i++)
-	{
-		r = http_request(uri, NULL, reply);
-		if(r < 0)
-		{
-			printf("get %s error: %d\n", uri, r);
-			system_sleep(10);
-		}
-	}
-	return r;
 }
 
 int ListBook(IBookSite* site, int top, book_site_spider_fcb callback, void* param)
@@ -99,29 +92,12 @@ int ListBook(IBookSite* site, int top, book_site_spider_fcb callback, void* para
 	}
 
 	int r = 0;
+	TParam p = {site, callback, param};
 	const char* pattern = site->GetUri(top);
 	for(int page = 1; 0 == r; page++)
 	{
 		sprintf(uri, pattern, page);
-
-		libct::auto_ptr<char> reply;
-		r = Http(uri, (void**)&reply);
-		if(r < 0)
-		{
-			printf("TopBook[%s]: load page: %d error: %d.\n", site->GetName(), page, r);
-			return r;
-		}
-
-		libct::auto_ptr<char> result;
-		r = DxTransformHtml(&result, reply, xmlfile.c_str());
-		if(r < 0)
-		{
-			tools_write("e:\\a.html", reply, strlen(reply));
-			printf("TopBook[%s]: dxt page %d error: %d.\n", site->GetName(), page, r);
-			return r;
-		}
-
-		r = ParseXml(site, result, callback, param);
+		r = http_translate(uri, NULL, xmlfile.c_str(), OnListBook, &p);
 		printf("TopBook[%s]: parse page %d: %d.\n", site->GetName(), page, r);
 	}
 

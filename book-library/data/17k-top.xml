@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<top>
-  <books>
-    <xsl:for-each select="/html/body/div[2]/div[4]/div">
+<xml>
+    <xsl:for-each select="//div[class='search-list']/div">
       <book>
         <name>
           <xsl:value-of select="div[3]/dl/dt/a" />
@@ -26,5 +25,4 @@
         </vote>
       </book>
     </xsl:for-each>
-  </books>
-</top>
+</xml>

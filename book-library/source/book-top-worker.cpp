@@ -9,6 +9,38 @@
 
 #define MAX_TOP_BOOK	500
 
+#if 0
+#include "../libsdk/json/jsonhelper.h"
+#include "time64.h"
+static void SaveBook(const BookManager::Books& books)
+{
+	jsonarray jarr;
+	BookManager::Books::const_iterator it;
+	for(it = books.begin(); it != books.end(); ++it)
+	{
+		const BookManager::Book& book = *it;
+		assert(0 != book.id);
+
+		jsonobject json;
+		json.add("name", book.name);
+		json.add("author", book.author);
+		json.add("category", book.category);
+		json.add("count", book.vote);
+		jarr.add(json);
+	}
+
+	char date[12] = {0};
+	time64_format(time64_now(), "%04Y-%02M-%02D", date);
+	char filename[128]= {0};
+	snprintf(filename, sizeof(filename), "%s-%d-%s.json", site->GetName(), types[i], date);
+
+	FILE* fp = fopen(filename, "w");
+	std::string json = jarr.json();
+	fwrite(json.c_str(), json.length(), 1, fp);
+	fclose(fp);
+}
+#endif
+
 static int OnBook(void* param, const book_t* book)
 {
 	BookManager::Books* books = (BookManager::Books*)param;
@@ -45,14 +77,6 @@ static int OnThread(void* param)
 			printf("%s:%d save site[%s], top[%d] books error: %d\n", __FILE__, __LINE__, site->GetName(), i, r);
 			continue;
 		}
-
-		//char filename[128]= {0};
-		//snprintf(filename, sizeof(filename), "%s-%d-%s", site->name, types[i], date);
-
-		//FILE* fp = fopen(filename, "w");
-		//std::string json = p.json.json();
-		//fwrite(json.c_str(), json.length(), 1, fp);
-		//fclose(fp);
 	}
 
 	return 0;
