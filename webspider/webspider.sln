@@ -58,6 +58,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "joke-spider", "..\joke-spid
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "joke-server", "..\joke-server\joke-server.vcproj", "{40966DF6-2B80-4053-8B5E-C1AD51445187}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4E7D9510-3E28-468E-A2EC-0B3E0AF2F3DA} = {4E7D9510-3E28-468E-A2EC-0B3E0AF2F3DA}
+		{27BAE77C-389B-407C-9CE2-D03326ED9379} = {27BAE77C-389B-407C-9CE2-D03326ED9379}
+		{5AB5E6BA-4230-4528-AB2A-A499F8ED6892} = {5AB5E6BA-4230-4528-AB2A-A499F8ED6892}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
