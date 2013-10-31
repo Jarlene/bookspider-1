@@ -1,7 +1,7 @@
 #include "network-http.h"
+#include "http-pool.h"
 #include "url.h"
 #include "error.h"
-#include "HttpSocket.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -11,36 +11,33 @@ int network_http(const char* uri, const char* req, mmptr& reply)
 {
 	assert(uri);
 
-	HttpSocket http;
-	http.SetConnTimeout(30*1000); // 30sec(s)
-	http.SetRecvTimeout(30*1000); // 30sec(s)
-	http.SetHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-	http.SetHeader("Accept-Encoding", "gzip, deflate");
-	http.SetHeader("Accept-Language", "en-us,en;q=0.5");
-	http.SetHeader("Connection", "keep-alive");
-	http.SetHeader("User-Agent", "WebSpider 1.0");
-	//http.SetHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:14.0) Gecko/20100101 Firefox/14.0.1");
-
+	HttpSocket *http;
+	
 	void* url = url_parse(uri);
 	if(!url)
 		return ERROR_PARAM;
 
 	int port = url_getport(url);
-	int r = http.Connect(url_gethost(url), port?port:80);
+	http = http_pool_fetch(url_gethost(url), port?port:80);
+	if(!http)
+		return ERROR_OS_RESOURCE;
+
+	int r = http->Connect("114.80.136.112", 7780);
 	if(r)
 	{
 		assert(r < 0);
+		http_pool_release(http);
 		return r;
 	}
 
-	r = req?http.Post(uri, req, strlen(req), reply):http.Get(uri, reply);
+	r = req?http->Post(uri, req, strlen(req), reply):http->Get(uri, reply);
 	if(ERROR_HTTP_REDIRECT == r)
 	{
 	}
 	else if(0==r && reply.size()>0)
 	{
 		std::string contentEncoding;
-		http.GetResponse().GetContentEncoding(contentEncoding);
+		http->GetResponse().GetContentEncoding(contentEncoding);
 		if(contentEncoding.size())
 		{
 			mmptr result;
@@ -58,6 +55,7 @@ int network_http(const char* uri, const char* req, mmptr& reply)
 	}
 
 	assert(r <= 0);
+	http_pool_release(http);
 	url_free(url);
 	return r;
 }

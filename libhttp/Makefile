@@ -44,7 +44,7 @@ STATIC_LIBS += ./zlib/libz.a
 #
 # DEFINES := $(addprefix -D,$(DEFINES)) # add -L prefix
 #--------------------------------------------------------------------
-DEFINES = OS_LINUX LIBHTTP_EXPORTS
+DEFINES = LIBHTTP_EXPORTS
 
 NOVERSION := 1
 
