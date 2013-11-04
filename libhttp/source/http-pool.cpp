@@ -60,7 +60,8 @@ static void http_pool_ontimer(sys_timer_t id, void* param)
 		while(j != sockets.end())
 		{
 			socket_context_t* ctx = *j;
-			if(ctx->time != 0 && ctx->time + TIMEOUT < tnow)
+			assert(0 != ctx->time);
+			if(ctx->time + TIMEOUT < tnow)
 			{
 				// release connection
 				http_destroy(ctx);
@@ -75,12 +76,11 @@ static void http_pool_ontimer(sys_timer_t id, void* param)
 	}
 }
 
-static HttpSocket* http_pool_pop(const std::string& host)
+static socket_context_t* http_pool_pop(const std::string& host)
 {
-	HttpSocket* http;
-	socket_context_t* ctx;
 	TPool::iterator i;
 	TSockets::iterator j;
+	socket_context_t* ctx;
 
 	AutoThreadLocker locker(s_locker);
 	i  = s_pool.find(host);
@@ -92,8 +92,8 @@ static HttpSocket* http_pool_pop(const std::string& host)
 			ctx = *j;
 			if(0 != (*j)->time)
 			{
-				ctx->time = 0; // flag for pop
-				return ctx->http;
+				sockets.erase(j); // delete from sockets
+				return ctx;
 			}
 		}
 	}
@@ -107,25 +107,29 @@ HttpSocket* http_pool_fetch(const char* host, int port)
 	char id[128] = {0};
 	snprintf(id, sizeof(id), "%s:%d", host, port);
 
-	HttpSocket* http = http_pool_pop(id);
-	if(http)
+	socket_context_t* ctx;
+	ctx = http_pool_pop(id);
+	if(ctx)
 	{
-		if(!http->IsConnected())
-			r = http->Connect();
+		if(!ctx->http->IsConnected())
+			r = ctx->http->Connect();
 
 		if(0 == r)
-			return http;
+			return ctx->http;
+
+		strcpy(ctx->proxy, "");
 	}
+	else
+	{
+		ctx = (socket_context_t*)malloc(sizeof(socket_context_t));
+		if(!ctx)
+			return NULL;
+		memset(ctx, 0, sizeof(socket_context_t));
 
-	socket_context_t* ctx;
-	ctx = (socket_context_t*)malloc(sizeof(socket_context_t));
-	if(!ctx)
-		return NULL;
-	memset(ctx, 0, sizeof(socket_context_t));
-
-	strcpy(ctx->host, id);
-	ctx->http = http_create();
-
+		strcpy(ctx->host, id);
+		ctx->http = http_create();
+	}
+	
 	// check proxy
 	int proxyPort;
 	host_t proxyHost;
@@ -151,8 +155,7 @@ HttpSocket* http_pool_fetch(const char* host, int port)
 
 	if(0 != r)
 	{
-		http_destroy(ctx->http);
-		free(ctx);
+		http_destroy(ctx);
 		return NULL;
 	}
 	return ctx->http;
@@ -163,23 +166,15 @@ int http_pool_release(HttpSocket* http, int time)
 	TPool::iterator i;
 	TSockets::iterator j;
 	socket_context_t* ctx;
-	ctx = (socket_context_t*)((char*)http - (unsigned long)(&((socket_context_t*)0)->http));
 
+	ctx = (socket_context_t*)((char*)http - (unsigned long)(&((socket_context_t*)0)->http));
 	if(-1 == time)
 	{
-		{
-			AutoThreadLocker locker(s_locker);
-			i = s_pool.find(ctx->host);
-			if(i != s_pool.end())
-				s_pool.erase(i);
-		}
-
 		http_destroy(ctx);
-		sockets.erase(j);
 		return 0;
 	}
 
-	ctx->time = time;
+	ctx->time = time64_now();
 
 	AutoThreadLocker locker(s_locker);
 	i = s_pool.find(ctx->host);
@@ -189,20 +184,7 @@ int http_pool_release(HttpSocket* http, int time)
 	}
 
 	TSockets& sockets = i->second;
-	for(j = sockets.begin(); j != sockets.end(); ++j)
-	{
-		if((*j)->http == http)
-			return 0; // exist
-	}
-
 	sockets.push_back(ctx); // new
-	return 0;
-}
-
-int http_pool_action(const char* host, int port, const char* uri, const char* req, mmptr& reply)
-{
-	HttpSocket* http = http_pool_fetch(host, port);
-	int r = (req&&*req)?http->Post(uri, req, strlen(req), reply):http->Get(uri, reply);
 	return 0;
 }
 
