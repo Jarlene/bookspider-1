@@ -14,9 +14,13 @@
         <datetime>
           <xsl:attr-of select="div[class='content']" attr='title' />
         </datetime>
-        <content>
-          <xsl:value-of select="div[class='content']" />
-        </content>
+        <contents>
+          <xsl:for-each select="div[class='content']/$">
+        	<content>
+        		<xsl:value-of select="." />
+        	</content>
+          </xsl:for-each>
+        </contents>
         <image>
         	<xsl:attr-of select="div[class='thumb']/a/img" attr='src' />
         </image>

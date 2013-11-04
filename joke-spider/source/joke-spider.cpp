@@ -29,10 +29,21 @@ static int joke_get_helper(void* param, const char* xml)
 		int comment = 0;
 		std::string id, icon, author, datetime, content, image;
 		if(!parser.GetValue("id", id)
-			|| !parser.GetValue("content", content)
+//			|| !parser.GetValue("content", content)
 			|| !parser.GetValue("approve", approve)
 			|| !parser.GetValue("disapprove", disapprove))
 			continue;
+
+		for(bool j=parser.Foreach("contents"); j; j=parser.Next())
+		{
+			std::string value;
+			if(parser.GetValue("content", value))
+			{
+				if(!content.empty())
+					content += "\r\n";
+				content += value;
+			}
+		}
 
 		// check valid
 		if(id.empty() || content.empty())

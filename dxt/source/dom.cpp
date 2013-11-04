@@ -105,6 +105,17 @@ static const domnode_t* DOMFindElement(const domnode_t* node, const char* name, 
 	{
 		return node->prev;
 	}
+	else if(0 == strcmp("$", name)) // text node
+	{
+		const domnode_t* child = node->child;
+		while(child)
+		{
+			if(NULL==child->name)
+				return child;
+			child = (child->next==node->child)?NULL:child->next;
+		}
+		return NULL;
+	}
 	else
 	{
 		int idx = 0;

@@ -11,9 +11,13 @@
         <datetime>
           <xsl:value-of select="//div[class='web_msg']/p/span" />
         </datetime>
-        <content>
-          <xsl:value-of select="//p[class='web_size']" />
-        </content>
+        <contents>
+          <xsl:for-each select="//p[class='web_size']/$">
+        	<content>
+        		<xsl:value-of select="." />
+        	</content>
+          </xsl:for-each>
+        </contents>
         <image>
         	<xsl:attr-of select="//p[class='web_pic']/a/img" attr='src' />
         </image>
