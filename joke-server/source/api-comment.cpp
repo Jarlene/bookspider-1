@@ -1,19 +1,25 @@
 #include "web-session.h"
 #include "sys/sync.hpp"
 #include "joke-comment.h"
-#include "task-queue.h"
+#include "sys-task-queue.h"
 #include "JokeSpider.h"
 #include "QiuShiBaiKe.h"
 #include "BaiSiBuDeJie.h"
-#include "error.h"
-#include "jsonhelper.h"
+#include "libct/auto_ptr.h"
 #include <map>
 #include <list>
+
+extern sys_task_queue_t g_taskQ;
 
 typedef std::list<WebSession*> TSessions;
 typedef std::map<unsigned int, TSessions> TComments;
 static ThreadLocker s_locker;
 static TComments s_comments;
+
+struct TCommentArgs
+{
+	unsigned int id;
+};
 
 static void JsonEncode(const Comments& comments, std::string& comment)
 {
@@ -86,18 +92,20 @@ static bool PopSession(unsigned int id, TSessions& sessions)
 	return true;
 }
 
-static void OnAction(task_t id, void* param)
+static void OnAction(void* param)
 {
+	libct::auto_ptr<TCommentArgs> args((TCommentArgs*)param);
+
 	std::string comment;
-	int r = GetComment(id, comment);
+	int r = GetComment(args->id, comment);
 	if(0 == r)
 	{
-		jokecomment_insert(id, time64_now(), comment); // update database
+		jokecomment_insert(args->id, time64_now(), comment); // update database
 	}
 
 	TSessions sessions;
 	TSessions::iterator it;
-	PopSession(id, sessions);
+	PopSession(args->id, sessions);
 	for(it = sessions.begin(); it != sessions.end(); ++it)
 	{
 		WebSession* session = *it;
@@ -127,9 +135,14 @@ int WebSession::OnComment()
 	// update from website
 	if(PushSession(id, this))
 	{
-		r = task_queue_post(id, OnAction, this);
+		TCommentArgs* args = (TCommentArgs*)malloc(sizeof(TCommentArgs));
+		args->id = id;
+		r = sys_task_queue_post(g_taskQ, OnAction, args);
 		if(0 != r)
+		{
+			free(args);
 			return Reply(r, "post queue error.");
+		}
 	}
 	return 0;
 }

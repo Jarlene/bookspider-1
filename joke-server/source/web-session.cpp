@@ -1,7 +1,6 @@
 #include "web-session.h"
 #include "cstringext.h"
 #include "http-server.h"
-#include "jsonhelper.h"
 #include "dlog.h"
 #include "url.h"
 #include "config.h"
@@ -58,6 +57,9 @@ void WebSession::OnApi()
 		handlers.insert(std::make_pair("proxy", &WebSession::OnProxy));
 		handlers.insert(std::make_pair("comment", &WebSession::OnComment));
 		handlers.insert(std::make_pair("cleanup", &WebSession::OnCleanup));
+		handlers.insert(std::make_pair("addproxy", &WebSession::OnAddProxy));
+		handlers.insert(std::make_pair("delproxy", &WebSession::OnDelProxy));
+		handlers.insert(std::make_pair("listproxy", &WebSession::OnListProxy));
 	}
 
 	if(0 == strncmp(m_path.c_str(), "/api/", 5))
@@ -78,17 +80,6 @@ void WebSession::OnApi()
 int WebSession::OnCleanup()
 {
 	return 0;
-}
-
-int WebSession::OnProxy()
-{
-	char msg[128] = {0};
-	const char* from = http_server_get_header(m_http, "x-forward-for");
-	if(!from)
-		from = m_ip.c_str();
-	snprintf(msg, sizeof(msg), "Hello Proxy: %s", from);
-
-	return Reply(std::string(msg));
 }
 
 int WebSession::Reply(int code, const char* msg)

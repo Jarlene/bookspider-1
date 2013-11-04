@@ -1,13 +1,7 @@
 #ifndef _http_h_
 #define _http_h_
 
-#include "dllexport.h"
-
-#if defined(LIBHTTP_EXPORTS)
-	#define LIBHTTP_API DLL_EXPORT_API
-#else
-	#define LIBHTTP_API DLL_IMPORT_API
-#endif
+#include "libhttp.h"
 
 #ifdef  __cplusplus
 extern "C" {

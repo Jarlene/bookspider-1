@@ -12,6 +12,7 @@ OUTFILE = libhttp.so
 #--------------------------------------------------------------------
 INCLUDES = . ./include ./zlib \
 					$(ROOT)/include \
+					$(ROOT)/libsys/include \
 					../dxt/include
 					
 #-------------------------------Source-------------------------------

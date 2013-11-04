@@ -2,6 +2,7 @@
 #define _WebSession_h_
 
 #include "sys/sock.h"
+#include "jsonhelper.h"
 #include "uri-params.h"
 #include "error.h"
 #include <string>
@@ -27,6 +28,9 @@ private:
 	int Send(int code, const char* contentType, const void* data, int len);
 
 	int OnProxy();
+	int OnAddProxy();
+	int OnDelProxy();
+	int OnListProxy();
 	int OnComment();
 	int OnCleanup();
 
