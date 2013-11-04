@@ -9,6 +9,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef OS_LINUX
+#include <signal.h>
+#endif
+
 int config_proxy_load();
 
 void OnTcpConnected(void* param, socket_t sock, const char* ip, int port)

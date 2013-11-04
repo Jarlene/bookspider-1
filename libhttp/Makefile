@@ -27,7 +27,8 @@ SOURCE_FILES += $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.c))
 #
 # LIBPATHS = $(addprefix -L,$(LIBPATHS)) # add -L prefix
 #--------------------------------------------------------------------
-LIBPATHS = ../dxt/$(BUILD).$(PLATFORM)
+LIBPATHS =  $(ROOT)/libsys/$(BUILD).$(PLATFORM) 
+LIBPATHS += ../dxt/$(BUILD).$(PLATFORM)
 
 ifeq ($(RELEASE),1)
 LIBPATHS += 
@@ -35,7 +36,7 @@ else
 LIBPATHS += 
 endif
 
-LIBS = dxt rt dl pthread
+LIBS = sys dxt rt dl pthread
 
 STATIC_LIBS = $(ROOT)/xml/$(BUILD).$(PLATFORM)/libtinyxml.a
 STATIC_LIBS += ../libsdk/$(BUILD).$(PLATFORM)/libsdk.a

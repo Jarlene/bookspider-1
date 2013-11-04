@@ -30,7 +30,7 @@ SOURCE_FILES += ../libsdk/source/config.cpp
 #
 # LIBPATHS = $(addprefix -L,$(LIBPATHS)) # add -L prefix
 #--------------------------------------------------------------------
-LIBPATHS = ../dxt/$(BUILD).$(PLATFORM) ../libhttp/$(BUILD).$(PLATFORM) ../dbclient/$(BUILD).$(PLATFORM)
+LIBPATHS = $(ROOT)/libsys/$(BUILD).$(PLATFORM) ../dxt/$(BUILD).$(PLATFORM) ../libhttp/$(BUILD).$(PLATFORM) ../dbclient/$(BUILD).$(PLATFORM)
 
 ifeq ($(RELEASE),1)
 LIBPATHS += 
@@ -38,7 +38,7 @@ else
 LIBPATHS += 
 endif
 
-LIBS = dxt http dbclient rt dl pthread
+LIBS = sys dxt http dbclient rt dl pthread
 
 STATIC_LIBS = $(ROOT)/xml/$(BUILD).$(PLATFORM)/libtinyxml.a
 STATIC_LIBS += ../libsdk/$(BUILD).$(PLATFORM)/libsdk.a
