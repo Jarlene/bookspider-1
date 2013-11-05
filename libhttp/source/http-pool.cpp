@@ -1,4 +1,5 @@
 #include "http-pool.h"
+#include "http-proxy.h"
 #include "time64.h"
 #include "sys-timer.h"
 #include "sys/sync.hpp"
@@ -27,7 +28,7 @@ static HttpSocket* http_create()
 	HttpSocket *http = new HttpSocket();
 
 	http->SetConnTimeout(2000);
-	http->SetRecvTimeout(30*1000); // 30sec(s)
+	http->SetRecvTimeout(10000); // 10sec(s)
 	http->SetHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 	http->SetHeader("Accept-Encoding", "gzip, deflate");
 	http->SetHeader("Accept-Language", "en-us,en;q=0.5");
@@ -56,27 +57,19 @@ static void http_pool_ontimer(sys_timer_t id, void* param)
 	{
 		TSockets& sockets = it->second;
 
-		j = sockets.begin();
-		while(j != sockets.end())
+		for(j = sockets.begin(); j != sockets.end(); ++j)
 		{
 			socket_context_t* ctx = *j;
-			assert(0 != ctx->time);
-			if(ctx->time + TIMEOUT < tnow)
+			if(0!=ctx->time && ctx->time + TIMEOUT < tnow)
 			{
 				// release connection
-				http_destroy(ctx);
-				sockets.erase(j);
-				j = sockets.begin();
-			}
-			else
-			{
-				++j;
+				ctx->http->Disconnect();
 			}
 		}
 	}
 }
 
-static socket_context_t* http_pool_pop(const std::string& host)
+static socket_context_t* http_pool_get(const std::string& host)
 {
 	TPool::iterator i;
 	TSockets::iterator j;
@@ -92,9 +85,68 @@ static socket_context_t* http_pool_pop(const std::string& host)
 			ctx = *j;
 			if(0 != (*j)->time)
 			{
-				sockets.erase(j); // delete from sockets
+				ctx->time = 0;
 				return ctx;
 			}
+		}
+	}
+
+	return NULL;
+}
+
+static void http_pool_add(socket_context_t* ctx)
+{
+	TPool::iterator i;
+	AutoThreadLocker locker(s_locker);
+	i = s_pool.find(ctx->host);
+	if(i == s_pool.end())
+	{
+		i = s_pool.insert(std::make_pair(std::string(ctx->host), TSockets())).first;
+	}
+
+	TSockets& sockets = i->second;
+	sockets.push_back(ctx);
+}
+
+static void http_pool_delete(socket_context_t* ctx)
+{
+	TPool::iterator i;
+	TSockets::iterator j;
+
+	{
+		AutoThreadLocker locker(s_locker);
+		i = s_pool.find(ctx->host);
+		assert(i != s_pool.end());
+		if(i == s_pool.end())
+			return;
+
+		TSockets& sockets = i->second;
+		for(j = sockets.begin(); j != sockets.end(); ++j)
+		{
+			if(ctx == *j)
+			{
+				sockets.erase(j);
+				break;
+			}
+		}
+	}
+
+	http_destroy(ctx);
+}
+
+static socket_context_t* http_pool_find(HttpSocket* http)
+{
+	TPool::iterator i;
+	TSockets::iterator j;
+
+	AutoThreadLocker locker(s_locker);
+	for(i = s_pool.begin(); i != s_pool.end(); ++i)
+	{
+		TSockets& sockets = i->second;
+		for(j = sockets.begin(); j != sockets.end(); ++j)
+		{
+			if(http == (*j)->http)
+				return *j;
 		}
 	}
 
@@ -108,7 +160,7 @@ HttpSocket* http_pool_fetch(const char* host, int port)
 	snprintf(id, sizeof(id), "%s:%d", host, port);
 
 	socket_context_t* ctx;
-	ctx = http_pool_pop(id);
+	ctx = http_pool_get(id);
 	if(ctx)
 	{
 		if(!ctx->http->IsConnected())
@@ -128,13 +180,14 @@ HttpSocket* http_pool_fetch(const char* host, int port)
 
 		strcpy(ctx->host, id);
 		ctx->http = http_create();
+		http_pool_add(ctx);
 	}
-	
+
 	// check proxy
 	int proxyPort;
 	host_t proxyHost;
 	host_t proxy = {0};
-	for(int i=0; i<10 && 0==http_proxy_get(host, proxy); i++)
+	for(int i=0; i<http_proxy_count() && 0==http_proxy_get(host, proxy); i++)
 	{
 		host_parse(proxy, proxyHost, &proxyPort);
 		r = ctx->http->Connect(proxyHost, proxyPort);
@@ -147,18 +200,13 @@ HttpSocket* http_pool_fetch(const char* host, int port)
 		http_proxy_release(proxy);
 	}
 
-	if(0 != ctx->proxy[0])
+	if(0 == ctx->proxy[0])
 	{
 		// don't use proxy
 		r = ctx->http->Connect(host, port);
 	}
 
-	if(0 != r)
-	{
-		http_destroy(ctx);
-		return NULL;
-	}
-	return ctx->http;
+	return 0==r? ctx->http : NULL;
 }
 
 int http_pool_release(HttpSocket* http, int time)
@@ -167,24 +215,35 @@ int http_pool_release(HttpSocket* http, int time)
 	TSockets::iterator j;
 	socket_context_t* ctx;
 
-	ctx = (socket_context_t*)((char*)http - (unsigned long)(&((socket_context_t*)0)->http));
-	if(-1 == time)
+	ctx = http_pool_find(http);
+	assert(ctx);
+
+#if defined(_DEBUG) || defined(DEBUG)
+	int port;
+	std::string ip;
+	ctx->http->GetHost(ip, port);
+	if(ctx->proxy[0])
 	{
-		http_destroy(ctx);
+		assert(0==strnicmp(ip.c_str(), ctx->proxy, ip.length()));
+		printf("[%s-%s]: %d\n", ctx->host, ctx->proxy, time);
+	}
+	else
+	{
+		assert(0==strnicmp(ip.c_str(), ctx->host, ip.length()));
+		printf("[%s]: %d\n", ctx->host, time);
+	}
+#endif
+
+	if(time < 0)
+	{
+		http_proxy_release(ctx->proxy);
+		http_pool_delete(ctx);
 		return 0;
 	}
-
-	ctx->time = time64_now();
-
-	AutoThreadLocker locker(s_locker);
-	i = s_pool.find(ctx->host);
-	if(i == s_pool.end())
+	else
 	{
-		i = s_pool.insert(std::make_pair(std::string(ctx->host), TSockets())).first;
+		ctx->time = time64_now();
 	}
-
-	TSockets& sockets = i->second;
-	sockets.push_back(ctx); // new
 	return 0;
 }
 

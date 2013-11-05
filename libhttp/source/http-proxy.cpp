@@ -81,6 +81,11 @@ int http_proxy_list(http_proxy_proc proc, void* param)
 	return 0;
 }
 
+int http_proxy_count()
+{
+	return s_proxies.size();
+}
+
 static int http_proxy_check_pattern(const char* host)
 {
 	TPatterns::const_iterator it;

@@ -16,6 +16,8 @@ int LIBHTTP_API http_proxy_delete(const host_t proxy);
 
 int LIBHTTP_API http_proxy_list(http_proxy_proc proc, void* param);
 
+int LIBHTTP_API http_proxy_count();
+
 int LIBHTTP_API http_proxy_add_pattern(const char* pattern);
 
 int LIBHTTP_API http_proxy_delete_pattern(const char* pattern);

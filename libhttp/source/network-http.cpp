@@ -1,6 +1,7 @@
 #include "network-http.h"
 #include "http-pool.h"
 #include "http-proxy.h"
+#include "time64.h"
 #include "url.h"
 #include "error.h"
 #include <stdlib.h>
@@ -11,10 +12,17 @@ int Inflate(const void* ptr, size_t len, mmptr& result);
 static int ReqHttp(HttpSocket* http, const char* uri, const char* req, mmptr& reply)
 {
 	int r = (req&&*req)?http->Post(uri, req, strlen(req), reply):http->Get(uri, reply);
-	if(ERROR_HTTP_REDIRECT == r)
-	{
-	}
-	else if(0==r && reply.size()>0)
+	if(r < 0)
+		return r;
+
+	int code = http->GetResponse().GetStatusCode();
+	if(code >= 300 && code < 400)
+		return ERROR_HTTP_REDIRECT;
+	else if(200 != code)
+		return -code;
+
+	assert(200 == code);
+	if(reply.size()>0)
 	{
 		std::string contentEncoding;
 		http->GetResponse().GetContentEncoding(contentEncoding);
@@ -56,9 +64,11 @@ int network_http(const char* uri, const char* req, mmptr& reply)
 		return ERROR_OS_RESOURCE;
 	}
 
+	time64_t t0 = time64_now();
 	int r = ReqHttp(http, uri, req, reply);
+	time64_t t1 = time64_now();
 	assert(r <= 0);
-	http_pool_release(http, r);
+	http_pool_release(http, r<0?-1:int(t1-t0));
 	url_free(url);
 	return r;
 }
