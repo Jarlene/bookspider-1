@@ -2,6 +2,7 @@
 #include "cppstringext.h"
 #include <string>
 #include <stdio.h>
+#include <errno.h>
 
 int config_proxy_load()
 {

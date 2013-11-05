@@ -14,15 +14,7 @@
 #define MAX_PROXY 100
 #define TIMEOUT 5000
 
-typedef struct _proxy_object_t
-{
-	host_t proxy;
-	int delay;
-	int rank;
-	int ref;
-} proxy_object_t;
-
-typedef std::list<proxy_object_t> TProxies;
+typedef std::list<proxy_object_t*> TProxies;
 typedef std::list<std::string> TPatterns;
 
 static ThreadLocker s_locker;
@@ -42,11 +34,16 @@ static int check_pattern(const char* value, const char* pattern)
 
 int http_proxy_add(const char* proxy)
 {
-	proxy_object_t obj;
-	memset(&obj, 0, sizeof(obj));
-	strncpy(obj.proxy, proxy, sizeof(obj.proxy)-1);
-	obj.delay = 0; // not sure
-	obj.rank = 0; // normal
+	proxy_object_t *obj;
+	obj = (proxy_object_t*)malloc(sizeof(proxy_object_t));
+	if(!obj)
+		return ERROR_MEMORY;
+
+	memset(obj, 0, sizeof(proxy_object_t));
+	strncpy(obj->proxy, proxy, sizeof(obj->proxy)-1);
+	obj->delay = 0; // not sure
+	obj->rank = 0; // normal
+	obj->ref = 1;
 
 	AutoThreadLocker locker(s_locker);
 	if(s_proxies.size() >= MAX_PROXY)
@@ -62,8 +59,11 @@ int http_proxy_delete(const char* proxy)
 	AutoThreadLocker locker(s_locker);
 	for(it = s_proxies.begin(); it != s_proxies.end(); ++it)
 	{
-		if(0 == stricmp(proxy, it->proxy))
+		proxy_object_t *obj = *it;
+		if(0 == stricmp(proxy, obj->proxy))
 		{
+			if(0 == InterlockedDecrement(&obj->ref))
+				free(obj);
 			s_proxies.erase(it);
 			return 0;
 		}
@@ -77,7 +77,10 @@ int http_proxy_list(http_proxy_proc proc, void* param)
 	TProxies::iterator it;
 	AutoThreadLocker locker(s_locker);
 	for(it = s_proxies.begin(); it != s_proxies.end(); ++it)
-		proc(param, it->proxy);
+	{
+		proxy_object_t *obj = *it;
+		proc(param, obj->proxy);
+	}
 	return 0;
 }
 
@@ -164,26 +167,17 @@ int http_proxy_list_allow_pattern(http_proxy_proc proc, void* param)
 	return 0;
 }
 
-static int http_proxy_set_delay(const host_t proxy, int delay)
+static int http_proxy_set_delay(proxy_object_t* proxy, int delay)
 {
-	TProxies::iterator it;
-	AutoThreadLocker locker(s_locker);
-	for(it = s_proxies.begin(); it != s_proxies.end(); ++it)
-	{
-		if(0 == stricmp(it->proxy, proxy))
-		{
-			it->rank = delay > 0 ? 0 : (it->rank-1);
-			it->delay = delay;
-			return 0;
-		}
-	}
-	return ERROR_NOTFOUND;
+	proxy->rank = delay > 0 ? 0 : (proxy->rank-1);
+	proxy->delay = delay;
+	return 0;
 }
 
 struct TProxyKeepAlive
 {
+	proxy_object_t* proxy;
 	socket_t socket;
-	host_t proxy;
 	int delay;
 };
 
@@ -198,7 +192,7 @@ static void http_proxy_keepalive(sys_timer_t id, void* param)
 		{
 			TProxyKeepAlive proxy;
 			memset(&proxy, 0, sizeof(TProxyKeepAlive));
-			strcpy(proxy.proxy, it->proxy);
+			proxy.proxy = *it;
 			proxies.push_back(proxy);
 		}
 	}
@@ -209,7 +203,7 @@ static void http_proxy_keepalive(sys_timer_t id, void* param)
 
 	for(int i=(int)proxies.size()-1; i>=0; i--)
 	{
-		host_parse(proxies[i].proxy, host, &port);
+		host_parse(proxies[i].proxy->proxy, host, &port);
 
 		proxies[i].socket = socket_tcp();
 		r = socket_setnonblock(proxies[i].socket, 1);
@@ -276,7 +270,7 @@ static void http_proxy_keepalive(sys_timer_t id, void* param)
 		{
 			TProxyKeepAlive proxy;
 			memset(&proxy, 0, sizeof(TProxyKeepAlive));
-			strcpy(proxy.proxy, it->proxy);
+			proxy.proxy = *it;
 			proxies.push_back(proxy);
 		}
 	}
@@ -285,7 +279,7 @@ static void http_proxy_keepalive(sys_timer_t id, void* param)
 	host_t host;
 	for(size_t i=0; i<proxies.size(); i++)
 	{
-		host_parse(proxies[i].proxy, host, &port);
+		host_parse(proxies[i].proxy->proxy, host, &port);
 
 		proxies[i].socket = socket_tcp();
 		r = socket_setnonblock(proxies[i].socket, 1);
@@ -349,7 +343,7 @@ static void http_proxy_keepalive(sys_timer_t id, void* param)
 
 #endif
 
-int http_proxy_get(const char* uri, host_t proxy)
+proxy_object_t* http_proxy_get(const char* uri)
 {
 	static int s_idx = 0;
 
@@ -365,7 +359,7 @@ int http_proxy_get(const char* uri, host_t proxy)
 		std::vector<TProxies::iterator> iters;
 		for(it = s_proxies.begin(); it != s_proxies.end(); ++it)
 		{
-			if(it->delay > 0)
+			if((*it)->delay > 0)
 				iters.push_back(it);
 		}
 
@@ -376,30 +370,28 @@ int http_proxy_get(const char* uri, host_t proxy)
 		}
 
 		if(iters.empty())
-			return -1;
+			return NULL;
 
 		it = iters[(s_idx++) % iters.size()];
-		strcpy(proxy, it->proxy);
-		++it->ref;
-		return 0;
+		++(*it)->ref;
+		return (*it);
 	}
 
 	// don't need proxy
-	return -1;
+	return NULL;
 }
 
-int http_proxy_release(host_t proxy)
+int http_proxy_release(proxy_object_t* proxy)
 {
-	TProxies::iterator it;
-	for(it = s_proxies.begin(); it != s_proxies.end(); ++it)
+	if(0 == InterlockedDecrement(&proxy->ref))
 	{
-		if(0 == stricmp(it->proxy, proxy))
-		{
-			--it->rank;
-			return 0;
-		}
+		free(proxy);
+		return 0;
 	}
-	return ERROR_NOTFOUND;
+
+	assert(proxy->ref > 0);
+	--proxy->rank;
+	return 0;
 }
 
 static sys_timer_t timerId;

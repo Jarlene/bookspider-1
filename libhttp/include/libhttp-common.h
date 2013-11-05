@@ -5,8 +5,16 @@
 
 typedef char host_t[64];
 
-int http_proxy_get(const char* uri, host_t proxy);
-int http_proxy_release(host_t proxy);
+typedef struct _proxy_object_t
+{
+	host_t proxy;
+	int delay;
+	int rank;
+	long ref;
+} proxy_object_t;
+
+proxy_object_t* http_proxy_get(const char* uri);
+int http_proxy_release(proxy_object_t* proxy);
 
 inline void host_parse(const char* proxy, host_t host, int *port)
 {

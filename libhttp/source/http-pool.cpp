@@ -12,9 +12,9 @@
 
 struct socket_context_t
 {
+	proxy_object_t* proxy;
 	HttpSocket* http;
 	host_t host;
-	host_t proxy;
 	time64_t time;	// 0-using, other-idle
 };
 
@@ -40,8 +40,10 @@ static HttpSocket* http_create()
 
 static void http_destroy(socket_context_t* ctx)
 {
-	http_proxy_release(ctx->proxy);
-	delete ctx->http;
+	if(ctx->proxy)
+		http_proxy_release(ctx->proxy);
+	if(ctx->http)
+		delete ctx->http;
 	free(ctx);
 }
 
@@ -163,13 +165,21 @@ HttpSocket* http_pool_fetch(const char* host, int port)
 	ctx = http_pool_get(id);
 	if(ctx)
 	{
-		if(!ctx->http->IsConnected())
-			r = ctx->http->Connect();
+		if(ctx->proxy && ctx->proxy->ref < 2)
+		{
+			// proxy deleted
+			http_proxy_release(ctx->proxy);
+		}
+		else
+		{
+			if(!ctx->http->IsConnected())
+				r = ctx->http->Connect();
 
-		if(0 == r)
-			return ctx->http;
+			if(0 == r)
+				return ctx->http;
+		}
 
-		strcpy(ctx->proxy, "");
+		ctx->proxy = NULL;
 	}
 	else
 	{
@@ -186,21 +196,25 @@ HttpSocket* http_pool_fetch(const char* host, int port)
 	// check proxy
 	int proxyPort;
 	host_t proxyHost;
-	host_t proxy = {0};
-	for(int i=0; i<http_proxy_count() && 0==http_proxy_get(host, proxy); i++)
+	proxy_object_t* proxy;
+	for(int i=0; i<http_proxy_count(); i++)
 	{
-		host_parse(proxy, proxyHost, &proxyPort);
+		proxy = http_proxy_get(host);
+		if(!proxy)
+			break;
+
+		host_parse(proxy->proxy, proxyHost, &proxyPort);
 		r = ctx->http->Connect(proxyHost, proxyPort);
 		if(0 == r)
 		{
-			strcpy(ctx->proxy, proxy);
+			ctx->proxy = proxy;
 			break;
 		}
 
 		http_proxy_release(proxy);
 	}
 
-	if(0 == ctx->proxy[0])
+	if(!ctx->proxy)
 	{
 		// don't use proxy
 		r = ctx->http->Connect(host, port);
@@ -222,10 +236,10 @@ int http_pool_release(HttpSocket* http, int time)
 	int port;
 	std::string ip;
 	ctx->http->GetHost(ip, port);
-	if(ctx->proxy[0])
+	if(ctx->proxy)
 	{
-		assert(0==strnicmp(ip.c_str(), ctx->proxy, ip.length()));
-		printf("[%s-%s]: %d\n", ctx->host, ctx->proxy, time);
+		assert(0==strnicmp(ip.c_str(), ctx->proxy->proxy, ip.length()));
+		printf("[%s-%s]: %d\n", ctx->host, ctx->proxy->proxy, time);
 	}
 	else
 	{
@@ -236,7 +250,6 @@ int http_pool_release(HttpSocket* http, int time)
 
 	if(time < 0)
 	{
-		http_proxy_release(ctx->proxy);
 		http_pool_delete(ctx);
 		return 0;
 	}
