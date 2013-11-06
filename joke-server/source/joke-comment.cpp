@@ -145,7 +145,7 @@ int jokecomment_save()
 	return jokecomment_write(ptr);
 }
 
-int jokecomment_query(unsigned int id, time64_t datetime, std::string& comment)
+int jokecomment_query(unsigned int id, time64_t& datetime, std::string& comment)
 {
 	Comments::iterator it;
 	AutoThreadLocker locker(s_locker);
