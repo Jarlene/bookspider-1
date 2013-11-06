@@ -129,7 +129,7 @@ int WebSession::OnComment()
 	time64_t datetime = 0;
 	std::string comment;
 	int r = jokecomment_query(id, datetime, comment);
-	if(0 == r && datetime + 10*60 > time64_now())
+	if(0 == r && datetime + 10*60*1000 > time64_now())
 		return Reply(comment); // valid if in 10-minutes
 
 	// update from website
