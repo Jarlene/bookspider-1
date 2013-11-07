@@ -20,7 +20,7 @@ static int OnList(void* param, const char* id, const char* icon, const char* aut
 	joke.author = author;
 	joke.datetime.assign(datetime, 19);
 	joke.content = content;
-	joke.image = image;
+	joke.image = strstr(image, "1px.jpg")?"":image;
 	joke.approve = approve;
 	joke.disapprove = disapprove;
 	joke.comment = comment;
