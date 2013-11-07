@@ -88,7 +88,7 @@ int CBaiSiBuDeJie::GetComment(Comments& comments, unsigned int id)
 	char uri[256] = {0};
 	for(int i=1; 1; i++)
 	{
-		int n = comments.size();
+		size_t n = comments.size();
 		snprintf(uri, sizeof(uri)-1, "http://www.budejie.com/detail.php?id=%u&nav=%d&page=%d", id%(GetId()*JOKE_SITE_ID), m_nav, i);
 		int r = joke_comment(this, uri, NULL, OnGetComment, &comments);
 		if(r < 0 || comments.size()==n)
