@@ -6,9 +6,6 @@
 	/// param[in] timestamp time measured in the number of seconds since the Unix Epoch (January 1 1970 00:00:00 GMT)
 	function joke_query($page, $order, $range, $content, $timestamp)
 	{
-		// items
-		$sql = "select id,author,author_icon,datetime,content,image,approve,disapprove,comment from joke";
-
 		// condition
 		if(2 == $content)
 			$sql = "select id,author,author_icon,datetime,content,image,approve,disapprove,comment from joke_image";
