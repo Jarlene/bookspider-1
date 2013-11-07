@@ -1,6 +1,6 @@
 #include "web-session.h"
 #include "sys/sync.hpp"
-#include "joke-comment.h"
+#include "joke-comment-db.h"
 #include "sys-task-queue.h"
 #include "JokeSpider.h"
 #include "QiuShiBaiKe.h"

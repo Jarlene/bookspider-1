@@ -10,6 +10,7 @@ int http_request(const char* uri, const char* req, void** reply)
 	if(r < 0)
 		return r;
 
+	r = (int)ptr.size();
 	*reply = ptr.detach();
 	return r;
 }

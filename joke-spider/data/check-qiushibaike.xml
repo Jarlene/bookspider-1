@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xml>
+	<author>
+		<xsl:value-of select="//div[class='author']/a" />
+	</author>
+
+	<author_icon>
+		<xsl:attr-of select="//div[class='author']/img" attr='src' />
+	</author_icon>
+
+	<approve>
+		<xsl:value-of select="//div[class='bar']/ul/li/a" />
+	</approve>
+
+	<disapprove>
+		<xsl:value-of select="//div[class='bar']/ul/li[2]/a" />
+	</disapprove>
+
+	<contents>
+      <xsl:for-each select="//div[class='content']/$">
+    	<content>
+    		<xsl:value-of select="." />
+    	</content>
+      </xsl:for-each>
+    </contents>
+
+	<comments>
+	    <xsl:for-each select="//div[@class='comments']/div/div">
+	      <comment>
+	      	<icon>
+	      	  <xsl:attr-of select="div/img" attr='src' />
+	      	</icon>
+	        <user>
+	          <xsl:value-of select="div[2]/a" />
+	        </user>
+	        <content>
+	          <xsl:value-of select="div[2]/span" />
+	        </content>
+	      </comment>
+	    </xsl:for-each>
+    </comments>
+</xml>

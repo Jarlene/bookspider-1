@@ -3,7 +3,7 @@
 #include "sys-thread-pool.h"
 #include "sys-task-queue.h"
 #include "web-session.h"
-#include "joke-comment.h"
+#include "joke-comment-db.h"
 #include "http-proxy.h"
 #include "config.h"
 #include <stdio.h>

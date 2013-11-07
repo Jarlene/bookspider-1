@@ -28,6 +28,13 @@ static int OnList(void* param, const char* id, const char* icon, const char* aut
 	return 0;
 }
 
+int CBaiSiBuDeJie::Check()
+{
+	int r = joke_check(this, "http://www.budejie.com/detail.php?id=3630394&nav=1#main_conter", NULL);
+	printf("CBaiSiBuDeJie::Check=%d.\n", r);
+	return r;
+}
+
 int CBaiSiBuDeJie::List()
 {
 	char uri[256] = {0};
@@ -35,12 +42,12 @@ int CBaiSiBuDeJie::List()
 	{
 		// latest update
 		if(2 == m_nav)
-			snprintf(uri, sizeof(uri)-1, "http://budejie.com/xcs.php?page=%d", page);
+			snprintf(uri, sizeof(uri)-1, "http://www.budejie.com/xcs.php?page=%d", page);
 		else
-			snprintf(uri, sizeof(uri)-1, "http://budejie.com/index.php?page=%d", page);
+			snprintf(uri, sizeof(uri)-1, "http://www.budejie.com/index.php?page=%d", page);
 
 		Jokes jokes;
-		int r = joke_get(this, uri, NULL, OnList, &jokes);
+		int r = joke_list(this, uri, NULL, OnList, &jokes);
 		printf("CBaiSiBuDeJie::List[%d] joke_get=%d.\n", page, r);
 		if(0 != r)
 			return r;
@@ -59,6 +66,11 @@ int CBaiSiBuDeJie::List()
 	return 0;
 }
 
+int CBaiSiBuDeJie::Hot()
+{
+	return 0;
+}
+
 static int OnGetComment(void* param, const char* icon, const char* user, const char* content)
 {
 	Comments* comments = (Comments*)param;
@@ -74,6 +86,14 @@ static int OnGetComment(void* param, const char* icon, const char* user, const c
 int CBaiSiBuDeJie::GetComment(Comments& comments, unsigned int id)
 {
 	char uri[256] = {0};
-	snprintf(uri, sizeof(uri)-1, "http://budejie.com/detail.php?id=%u&nav=%d", id%(GetId()*JOKE_SITE_ID), m_nav);
-	return joke_comment(this, uri, NULL, OnGetComment, &comments);
+	for(int i=1; 1; i++)
+	{
+		int n = comments.size();
+		snprintf(uri, sizeof(uri)-1, "http://www.budejie.com/detail.php?id=%u&nav=%d&page=%d", id%(GetId()*JOKE_SITE_ID), m_nav, i);
+		int r = joke_comment(this, uri, NULL, OnGetComment, &comments);
+		if(r < 0 || comments.size()==n)
+			break;
+	}
+
+	return 0;
 }

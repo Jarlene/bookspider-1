@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+ <xml>   
+    <xsl:for-each select="//div[class='budejie_comment']/div/div">
+      <comment>
+        <icon>
+      	  <xsl:attr-of select="p/img" attr='src' />
+      	</icon>
+        <user>
+          <xsl:value-of select="div/p/span" />
+        </user>
+        <content>
+          <xsl:value-of select="div/p[2]" />
+        </content>
+      </comment>
+    </xsl:for-each>
+</xml>

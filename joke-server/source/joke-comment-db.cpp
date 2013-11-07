@@ -1,4 +1,4 @@
-#include "joke-comment.h"
+#include "joke-comment-db.h"
 #include "sys/sync.hpp"
 #include "systimer.h"
 #include "StdCFile.h"

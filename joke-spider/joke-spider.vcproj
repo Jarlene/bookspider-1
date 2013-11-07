@@ -177,11 +177,23 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\joke-server\source\config-proxy.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\libsdk\source\config.cpp"
 				>
 			</File>
 			<File
+				RelativePath=".\source\joke-comment.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\source\joke-db.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\joke-list.cpp"
 				>
 			</File>
 			<File
@@ -190,6 +202,10 @@
 			</File>
 			<File
 				RelativePath=".\source\main.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\libsdk\source\web-translate.cpp"
 				>
 			</File>
 		</Filter>

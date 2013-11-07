@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;./include;../../sdk/include;../../sdk/xml/include;../libsdk/include;../libsdk/json;../libhttp/include;../dbclient/include;&quot;../joke-spider/include&quot;;&quot;../joke-spider/website&quot;;../../sdk/libsys/include"
+				AdditionalIncludeDirectories=".;./include;../../sdk/include;../../sdk/xml/include;../libsdk/include;../libsdk/json;../libhttp/include;../dbclient/include;&quot;../joke-spider/include&quot;;&quot;../joke-spider/website&quot;;../../sdk/libsys/include;../dxt/include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -117,7 +117,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories=".;./include;../../sdk/include;../../sdk/xml/include;../libsdk/include;../libsdk/json;../libhttp/include;../dbclient/include;&quot;../joke-spider/include&quot;;&quot;../joke-spider/website&quot;;../../sdk/libsys/include"
+				AdditionalIncludeDirectories=".;./include;../../sdk/include;../../sdk/xml/include;../libsdk/include;../libsdk/json;../libhttp/include;../dbclient/include;&quot;../joke-spider/include&quot;;&quot;../joke-spider/website&quot;;../../sdk/libsys/include;../dxt/include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -197,7 +197,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\source\joke-comment.cpp"
+				RelativePath=".\source\joke-comment-db.cpp"
 				>
 			</File>
 			<File
@@ -212,6 +212,10 @@
 				RelativePath=".\source\web-session.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\libsdk\source\web-translate.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -219,7 +223,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\include\joke-comment.h"
+				RelativePath=".\include\joke-comment-db.h"
 				>
 			</File>
 			<File
@@ -246,6 +250,14 @@
 			</File>
 			<File
 				RelativePath="..\joke-spider\website\BaiSiBuDeJie.h"
+				>
+			</File>
+			<File
+				RelativePath="..\joke-spider\source\joke-comment.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\joke-spider\source\joke-list.cpp"
 				>
 			</File>
 			<File

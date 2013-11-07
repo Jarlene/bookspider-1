@@ -29,16 +29,26 @@ static int OnList(void* param, const char* id, const char* icon, const char* aut
 	return 0;
 }
 
-int CQiuShiBaiKe::Late()
+int CQiuShiBaiKe::Check()
 {
+	int r = joke_check(this, "http://www.qiushibaike.com/article/49527264", NULL);
+	printf("CQiuShiBaiKe::Check=%d.\n", r);
+	return r;
+}
+
+int CQiuShiBaiKe::List()
+{
+	time_t v = time(NULL);
+	v = v / (5*60);
+
 	char uri[256] = {0};
-	for(int page=1; page <= 35; page++)
+	for(int page=1; page <= 50; page++)
 	{
 		// latest update
-		snprintf(uri, sizeof(uri)-1, "http://www.qiushibaike.com/history/2013/10/22/page/%d", page);
+		snprintf(uri, sizeof(uri)-1, "http://www.qiushibaike.com/late/page/%d?s=%d", page, (unsigned int)v);
 
 		Jokes jokes;
-		int r = joke_get(this, uri, NULL, OnList, &jokes);
+		int r = joke_list(this, uri, NULL, OnList, &jokes);
 		printf("CQiuShiBaiKe::List[%d] joke_get=%d.\n", page, r);
 		if(0 != r)
 			return r;
@@ -57,7 +67,7 @@ int CQiuShiBaiKe::Late()
 	return 0;
 }
 
-int CQiuShiBaiKe::List()
+int CQiuShiBaiKe::Hot()
 {
 	time_t v = time(NULL);
 	v = v / (5*60);
@@ -69,8 +79,8 @@ int CQiuShiBaiKe::List()
 		snprintf(uri, sizeof(uri)-1, "http://www.qiushibaike.com/8hr/page/%d?s=%u", page, (unsigned int)v);
 
 		Jokes jokes;
-		int r = joke_get(this, uri, NULL, OnList, &jokes);
-		printf("CQiuShiBaiKe::List[%d] joke_get=%d.\n", page, r);
+		int r = joke_list(this, uri, NULL, OnList, &jokes);
+		printf("CQiuShiBaiKe::Hot[%d] joke_get=%d.\n", page, r);
 		if(0 != r)
 			return r;
 
@@ -80,7 +90,7 @@ int CQiuShiBaiKe::List()
 		// save
 		r = jokedb_insert_jokes(GetName(), jokes);
 		if(r < 0)
-			printf("CQiuShiBaiKe::List[%d] jokedb_insert=%d.\n", page, r);
+			printf("CQiuShiBaiKe::Hot[%d] jokedb_insert=%d.\n", page, r);
 
 		system_sleep(5000);
 	}

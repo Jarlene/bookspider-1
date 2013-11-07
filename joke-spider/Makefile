@@ -15,7 +15,8 @@ INCLUDES = . ./include ./website \
 					$(ROOT)/xml/include \
 					../dbclient/include \
 					../libhttp/include \
-					../libsdk/include
+					../libsdk/include \
+					../dxt/include
 					
 #-------------------------------Source-------------------------------
 #
@@ -25,6 +26,8 @@ SOURCE_FILES = $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.cpp))
 SOURCE_FILES += $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.c))
 
 SOURCE_FILES += ../libsdk/source/config.cpp
+SOURCE_FILES += ../libsdk/source/web-translate.cpp
+SOURCE_FILES += ../joke-server/source/config-proxy.cpp
 
 #-----------------------------Library--------------------------------
 #

@@ -5,4 +5,7 @@
 	
 	<comment-qiushibaike>data/comment-qiushibaike.xml</comment-qiushibaike>
 	<comment-baisibudejie>data/comment-baisibudejie.xml</comment-baisibudejie>
+	
+	<check-qiushibaike>data/check-qiushibaike.xml</check-qiushibaike>
+	<check-baisibudejie>data/check-baisibudejie.xml</check-baisibudejie>
 </xml>

@@ -13,11 +13,12 @@ OUTFILE = joke-server
 INCLUDES = . ./include \
 					$(ROOT)/include \
 					$(ROOT)/xml/include \
-                                        $(ROOT)/libsys/include \
+					$(ROOT)/libsys/include \
 					../dbclient/include \
 					../libhttp/include \
 					../libsdk/include \
 					../libsdk/json \
+					../dxt/include \
 					../joke-spider/include \
 					../joke-spider/website
 					
@@ -29,9 +30,12 @@ SOURCE_FILES = $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.cpp))
 SOURCE_FILES += $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.c))
 
 SOURCE_FILES += ../libsdk/source/config.cpp
+SOURCE_FILES += ../libsdk/source/web-translate.cpp
 SOURCE_FILES += ../libhttp/zlib/deflate.cpp
 SOURCE_FILES += ../joke-spider/source/joke-db.cpp
+SOURCE_FILES += ../joke-spider/source/joke-list.cpp
 SOURCE_FILES += ../joke-spider/source/joke-spider.cpp
+SOURCE_FILES += ../joke-spider/source/joke-comment.cpp
 
 #-----------------------------Library--------------------------------
 #

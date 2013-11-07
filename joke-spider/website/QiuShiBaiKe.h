@@ -8,7 +8,9 @@ class CQiuShiBaiKe : public IJokeSpider
 public:
 	virtual int GetId() const { return 1; }
 	virtual const char* GetName() const { return "qiushibaike"; }
+	virtual int Check();
 	virtual int List();
+	virtual int Hot();
 	virtual int GetComment(Comments& comments, unsigned int id);
 
 private:

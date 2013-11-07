@@ -6,6 +6,7 @@
 #include "time64.h"
 #include "error.h"
 #include "libhttp-common.h"
+#include <stdlib.h>
 #include <string>
 #include <vector>
 #include <list>
@@ -345,7 +346,12 @@ static void http_proxy_keepalive(sys_timer_t id, void* param)
 
 proxy_object_t* http_proxy_get(const char* uri)
 {
-	static int s_idx = 0;
+	static unsigned int s_idx = (unsigned int)(-1);
+	if((unsigned int)(-1) == s_idx)
+	{
+		srand((unsigned int)time64_now());
+		s_idx = rand();
+	}
 
 	TProxies::iterator it;
 	AutoThreadLocker locker(s_locker);

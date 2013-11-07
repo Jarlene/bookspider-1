@@ -12,8 +12,7 @@ OUTFILE = libhttp.so
 #--------------------------------------------------------------------
 INCLUDES = . ./include ./zlib \
 					$(ROOT)/include \
-					$(ROOT)/libsys/include \
-					../dxt/include
+					$(ROOT)/libsys/include
 					
 #-------------------------------Source-------------------------------
 #
@@ -36,10 +35,9 @@ else
 LIBPATHS += 
 endif
 
-LIBS = sys dxt rt dl pthread
+LIBS = sys rt dl pthread
 
-STATIC_LIBS = $(ROOT)/xml/$(BUILD).$(PLATFORM)/libtinyxml.a
-STATIC_LIBS += ../libsdk/$(BUILD).$(PLATFORM)/libsdk.a
+STATIC_LIBS = ../libsdk/$(BUILD).$(PLATFORM)/libsdk.a
 STATIC_LIBS += ./zlib/libz.a
 
 #-----------------------------DEFINES--------------------------------

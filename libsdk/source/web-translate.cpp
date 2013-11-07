@@ -1,11 +1,12 @@
-#include "http-translate.h"
+#include "web-translate.h"
 #include "cstringext.h"
 #include "sys/system.h"
 #include "libct/auto_ptr.h"
 #include "tools.h"
 #include "error.h"
 #include "dxt.h"
-#include "network-http.h"
+#include "http.h"
+#include "mmptr.h"
 #include <stdio.h>
 
 static int http(const char* uri, const char* req, mmptr& reply)
@@ -13,20 +14,26 @@ static int http(const char* uri, const char* req, mmptr& reply)
 	int r = -1;
 	for(int i=0; r<0 && i<30; i++)
 	{
-		r = network_http(uri, req, reply);
+		void* response;
+		r = http_request(uri, req, &response);
 		for(int j=0; ERROR_HTTP_REDIRECT==r && j<5; j++)
-			r = network_http(uri, req, reply);
+			r = http_request(uri, req, &response);
 
 		if(r < 0)
 		{
 			printf("get %s error: %d\n", uri, r);
 			system_sleep(5000);
 		}
+		else
+		{
+			reply.attach(response, (size_t)r);
+			return 0;
+		}
 	}
 	return r;
 }
 
-int http_translate(const char* uri, const char* req, const char* xml, OnTranslated callback, void* param)
+int web_translate(const char* uri, const char* req, const char* xml, OnTranslated callback, void* param)
 {
 	mmptr reply;
 	int r = http(uri, req, reply);

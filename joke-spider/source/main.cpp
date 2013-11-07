@@ -4,10 +4,17 @@
 #include "error.h"
 #include "utf8codec.h"
 #include "joke-db.h"
+#include "http-proxy.h"
 #include <stdio.h>
+
+#ifdef OS_LINUX
+#include <signal.h>
+#endif
 
 #include "QiuShiBaiKe.h"
 #include "BaiSiBuDeJie.h"
+
+int config_proxy_load();
 
 static IJokeSpider* MakeSpider(const char* name)
 {
@@ -20,13 +27,30 @@ static IJokeSpider* MakeSpider(const char* name)
 	{
 		spider = new CBaiSiBuDeJie(1);
 	}
+	else if(strieq("baisibudejie-xcs", name))
+	{
+		spider = new CBaiSiBuDeJie(2);
+	}
 	
 	return spider;
 }
 
 int main(int argc, char* argv[])
 {
+#if defined(OS_LINUX)
+	/* ignore pipe signal */
+	struct sigaction sa;
+	sa.sa_handler = SIG_IGN;
+	sigaction(SIGCHLD, &sa, 0);
+	sigaction(SIGPIPE, &sa, 0);
+#endif
+
 	IJokeSpider* spider = NULL;
+
+	// use proxy
+	config_proxy_load();
+	http_proxy_add_pattern("*.budejie.com");
+	http_proxy_add_pattern("*.qiushibaike.com");
 
 	socket_init();
 	if(0 != jokedb_init())
@@ -44,6 +68,20 @@ int main(int argc, char* argv[])
 				spider->List();
 			break;
 		}
+		else if(streq(argv[i], "--hot"))
+		{
+			if(spider)
+				spider->Hot();
+			break;
+		}
+		else if(streq(argv[i], "--check"))
+		{
+			if(spider)
+			{
+				spider->Check();
+			}
+			break;
+		}
 		else if(streq(argv[i], "--comment") && i+1<argc)
 		{
 			int comment = atoi(argv[++i]);
@@ -56,7 +94,7 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			printf("Joke-Spider --website [qiushibaike|baisibudejie] [--list] [--comment id]\n");
+			printf("Joke-Spider --website [qiushibaike|baisibudejie|baisibudejie-xcs] [--list | --hot | --check | --comment id]\n");
 			break;
 		}
 	}

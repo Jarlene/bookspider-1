@@ -12,7 +12,9 @@ public:
 public:
 	virtual int GetId() const { return 2; }
 	virtual const char* GetName() const { return "baisibudejie"; }
+	virtual int Check();
 	virtual int List();
+	virtual int Hot();
 	virtual int GetComment(Comments& comments, unsigned int id);
 
 private:
