@@ -7,28 +7,62 @@
 #include "dxt.h"
 #include "http.h"
 #include "mmptr.h"
+#include "url.h"
 #include <stdio.h>
+#include <assert.h>
+
+static void uri_format(char* uri, const char* from, const char* to)
+{
+	void* toUri = url_parse(to);
+	assert(toUri);
+
+	if(url_gethost(toUri))
+	{
+		strcpy(uri, to);
+	}
+	else
+	{
+		void* fromUri = url_parse(from);
+		assert(fromUri && url_gethost(fromUri));
+
+		int port = url_getport(fromUri);
+		sprintf(uri, "%s://%s:%d%s", url_getscheme(fromUri), url_gethost(fromUri), 0==port?80:port, to);
+
+		url_free(fromUri);
+	}
+
+	url_free(toUri);
+}
 
 static int http(const char* uri, const char* req, mmptr& reply)
 {
 	int r = -1;
-	for(int i=0; r<0 && i<30; i++)
+	char newUri[256] = {0};
+	for(int i=0; r<0 && i<20; i++)
 	{
-		void* response;
-		r = http_request(uri, req, &response);
+		int len = 0;
+		void* response = NULL;
+		r = http_request(uri, req, &response, &len);
 		if(ERROR_HTTP_REDIRECT == r)
 		{
-			printf("get %s error: %d\n", uri, r);
-			break;
+			assert(response && len > 0);
+			uri_format(newUri, uri, (char*)response);
+			printf("Http Redirect:\n[From]: %s\n[To]:%s\n[URI]:%s\n", uri, (char*)response, newUri);
+			free(response);
+			response = NULL;
+			len = 0;
+			r = http_request(newUri, req, &response, &len);
 		}
-		else if(r < 0)
+
+		if(r < 0)
 		{
+			assert(NULL == response && 0 == len);
 			printf("get %s error: %d\n", uri, r);
 			system_sleep(5000);
 		}
 		else
 		{
-			reply.attach(response, (size_t)r);
+			reply.attach(response, len);
 			return 0;
 		}
 	}

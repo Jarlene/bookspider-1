@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-LIBHTTP_API int http_request(const char* uri, const char* req, void** reply);
+LIBHTTP_API int http_request(const char* uri, const char* req, void** reply, int *len);
 
 #ifdef  __cplusplus
 }

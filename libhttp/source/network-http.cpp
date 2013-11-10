@@ -55,6 +55,8 @@ int network_http(const char* uri, const char* req, mmptr& reply)
 
 	int port = url_getport(url);
 	const char* host = url_gethost(url);
+	if(!host)
+		return ERROR_PARAM; // url: http://www.host.com/path?param
 
 	HttpSocket *http = NULL;
 	http = http_pool_fetch(host, port?port:80);
