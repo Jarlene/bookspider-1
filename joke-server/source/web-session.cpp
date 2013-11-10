@@ -44,7 +44,7 @@ void WebSession::Run()
 	}
 
 	dlog_log("\n[%d] client %s.%d disconnect[%d].\n", (int)time(NULL), m_ip.c_str(), m_port, r);
-	delete this;
+	release();
 }
 
 void WebSession::OnApi()

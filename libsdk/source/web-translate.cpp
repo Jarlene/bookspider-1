@@ -16,10 +16,12 @@ static int http(const char* uri, const char* req, mmptr& reply)
 	{
 		void* response;
 		r = http_request(uri, req, &response);
-		for(int j=0; ERROR_HTTP_REDIRECT==r && j<5; j++)
-			r = http_request(uri, req, &response);
-
-		if(r < 0)
+		if(ERROR_HTTP_REDIRECT == r)
+		{
+			printf("get %s error: %d\n", uri, r);
+			break;
+		}
+		else if(r < 0)
 		{
 			printf("get %s error: %d\n", uri, r);
 			system_sleep(5000);

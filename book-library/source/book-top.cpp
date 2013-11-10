@@ -5,7 +5,7 @@
 #include "XMLParser.h"
 #include "config.h"
 #include "tools.h"
-#include "http-translate.h"
+#include "web-translate.h"
 
 static int GetBookId(const char* uri)
 {
@@ -97,7 +97,7 @@ int ListBook(IBookSite* site, int top, book_site_spider_fcb callback, void* para
 	for(int page = 1; 0 == r; page++)
 	{
 		sprintf(uri, pattern, page);
-		r = http_translate(uri, NULL, xmlfile.c_str(), OnListBook, &p);
+		r = web_translate(uri, NULL, xmlfile.c_str(), OnListBook, &p);
 		printf("TopBook[%s]: parse page %d: %d.\n", site->GetName(), page, r);
 	}
 

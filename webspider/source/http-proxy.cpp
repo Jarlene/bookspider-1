@@ -1,6 +1,6 @@
 #include "http-proxy.h"
 #include "cstringext.h"
-#include "http-translate.h"
+#include "web-translate.h"
 #include "http.h"
 #include "XMLParser.h"
 
@@ -56,7 +56,7 @@ int http_proxy_find(http_proxy_onfind callback, void* param)
 	for(int i=1; i<=8; i++)
 	{
 		snprintf(uri, sizeof(uri), "http://www.cnproxy.com/proxy%d.html", i);
-		r = http_translate(uri, NULL, "data/proxyhttp.xml", OnFindProxy, &p);
+		r = web_translate(uri, NULL, "data/proxyhttp.xml", OnFindProxy, &p);
 		if(0 != r)
 			break;
 	}

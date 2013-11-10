@@ -113,6 +113,7 @@ static void OnAction(void* param)
 			session->Reply(r, "Get comment failed.");
 		else
 			session->Reply(comment);
+		session->release();
 	}
 }
 
@@ -131,6 +132,8 @@ int WebSession::OnComment()
 	int r = jokecomment_query(id, datetime, comment);
 	if(0 == r && datetime + 10*60*1000 > time64_now())
 		return Reply(comment); // valid if in 10-minutes
+
+	addref();
 
 	// update from website
 	if(PushSession(id, this))

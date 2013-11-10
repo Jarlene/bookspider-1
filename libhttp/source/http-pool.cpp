@@ -16,6 +16,7 @@ struct socket_context_t
 	HttpSocket* http;
 	host_t host;
 	time64_t time;	// 0-using, other-idle
+	int count;
 };
 
 typedef std::list<socket_context_t*> TSockets;
@@ -172,7 +173,7 @@ HttpSocket* http_pool_fetch(const char* host, int port)
 		}
 		else
 		{
-			if(!ctx->http->IsConnected())
+			if(!ctx->http->IsConnected() && ctx->count<5)
 				r = ctx->http->Connect();
 
 			if(0 == r)
@@ -180,6 +181,7 @@ HttpSocket* http_pool_fetch(const char* host, int port)
 		}
 
 		ctx->proxy = NULL;
+		ctx->count = 0;
 	}
 	else
 	{
@@ -256,6 +258,7 @@ int http_pool_release(HttpSocket* http, int time)
 	else
 	{
 		ctx->time = time64_now();
+		ctx->count += 1;
 	}
 	return 0;
 }

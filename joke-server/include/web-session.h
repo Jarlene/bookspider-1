@@ -2,12 +2,14 @@
 #define _WebSession_h_
 
 #include "sys/sock.h"
+#include "libct/object.h"
+#include "libct/auto_obj.h"
 #include "jsonhelper.h"
 #include "uri-params.h"
 #include "error.h"
 #include <string>
 
-class WebSession
+class WebSession : public libct::object
 {
 public:
 	WebSession(socket_t sock, const char* ip, int port);
