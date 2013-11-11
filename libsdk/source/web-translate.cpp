@@ -41,28 +41,27 @@ static int http(const char* uri, const char* req, mmptr& reply)
 	for(int i=0; r<0 && i<20; i++)
 	{
 		int len = 0;
-		void* response = NULL;
-		r = http_request(uri, req, &response, &len);
+		libct::auto_ptr<char> response;
+		r = http_request(uri, req, (void**)&response, &len);
 		if(ERROR_HTTP_REDIRECT == r)
 		{
 			assert(response && len > 0);
 			uri_format(newUri, uri, (char*)response);
 			printf("Http Redirect:\n[From]: %s\n[To]:%s\n[URI]:%s\n", uri, (char*)response, newUri);
-			free(response);
-			response = NULL;
+			
 			len = 0;
-			r = http_request(newUri, req, &response, &len);
+			response.attach(NULL);
+			r = http_request(newUri, req, (void**)&response, &len);
 		}
 
 		if(r < 0)
 		{
-			assert(NULL == response && 0 == len);
 			printf("get %s error: %d\n", uri, r);
 			system_sleep(5000);
 		}
 		else
 		{
-			reply.attach(response, len);
+			reply.attach(response.detach(), len);
 			return 0;
 		}
 	}
