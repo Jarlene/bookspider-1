@@ -80,13 +80,13 @@ const char* domutil_tokenvalue(const char* p)
 		++p;
 		while(*p && '\'' != *p)
 			++p;
-		return p;
+		return '\''==*p ? p+1 : p;
 
 	case '\"':
 		++p;
 		while(*p && '\"' != *p)
 			++p;
-		return p;
+		return '\"'==*p ? p+1 : p;
 
 	default:
 		while(*p && !strchr(" \t\r\n>", *p))
