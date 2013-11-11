@@ -8,9 +8,13 @@
 	{
 		// condition
 		if(2 == $content)
+		{
 			$sql = "select id,author,author_icon,datetime,content,image,approve,disapprove,comment from joke_image";
+		}
 		else
+		{
 			$sql = "select id,author,author_icon,datetime,content,approve,disapprove,comment from joke_text";
+		}
 
 		$sqlcond = "";
 		$timeend = date("Y-m-d H:i:s", $timestamp);
@@ -62,7 +66,7 @@
 		// page
 		$page = $page < 1 ? 1 : $page;
 		$sql = $sql . sprintf(" limit %d,50", ($page-1)*50);
-
+		
 		// query
 		$db = dbopen("joke");
 		if($db->connect_errno)
@@ -91,6 +95,75 @@
 			$jokes[] = $joke; // add book
 		}
 		$res->free();
+		return $jokes;
+	}
+
+	function joke_query_hot($page, $order, $range, $content, $timestamp)
+	{
+		// create temprary table
+		if(2 == $content)
+		{
+			$sql2 = sprintf("create temporary table joke_image_temp (select * from joke_image where datetime < '%s' order by datetime desc limit 0, 500)", date("Y-m-d H:i:s", $timestamp));
+		}
+		else
+		{
+			$sql2 = sprintf("create temporary table joke_text_temp (select * from joke_text where datetime < '%s' order by datetime desc limit 0, 500)", date("Y-m-d H:i:s", $timestamp));
+		}
+		
+		// query
+		$db = dbopen("joke");
+		if($db->connect_errno)
+		{
+			echo "mysql error " . $db->connect->error;
+			return;
+		}
+
+		$res = $db->query($sql2);
+		if(!$res)
+		{
+			echo "mysql create temporary table error" . $db->connect->error;
+			return;
+		}
+
+		// condition
+		if(2 == $content)
+		{
+			$sql = "select id,author,author_icon,datetime,content,image,approve,disapprove,comment from joke_image_temp";
+		}
+		else
+		{
+			$sql = "select id,author,author_icon,datetime,content,approve,disapprove,comment from joke_text_temp";
+		}
+		
+		// order
+		$sql = $sql . " order by approve desc";
+
+		// page
+		$page = $page < 1 ? 1 : $page;
+		$sql = $sql . sprintf(" limit %d,50", ($page-1)*50);
+
+		$res = $db->query($sql);
+
+		$jokes = array();
+		while($row = $res->fetch_assoc())
+		{
+			$id = $row["id"];
+			
+			$joke = array();
+			$joke["id"] = $row["id"];
+			$joke["icon"] = $row["author_icon"];
+			$joke["author"] = $row["author"];
+			$joke["datetime"] = $row["datetime"];
+			$joke["content"] = $row["content"];
+			$joke["image"] = (2 == $content) ? $row["image"] : "";
+			$joke["approve"] = $row["approve"];
+			$joke["disapprove"] = $row["disapprove"];
+			$joke["comment"] = $row["comment"];
+			$jokes[] = $joke; // add book
+		}
+		$res->free();
+		
+		dbclose($db);
 		return $jokes;
 	}
 ?>

@@ -31,7 +31,10 @@
 	$timestamp = php_reqvar("s", time());
 	$limit = php_reqvar("limit", 50);
 	
-	$jokes = joke_query($page, $order, $range, $content, $timestamp);
+	if(1==$order && 1==$range)
+		$jokes = joke_query_hot($page, $order, $range, $content, $timestamp);
+	else
+		$jokes = joke_query($page, $order, $range, $content, $timestamp);
 	
 	for($i=0; $i<count($jokes); $i++)
 	{
@@ -52,25 +55,5 @@
 	//$db->close();
 ?>
 </div>
-
-<div id="pages" align="right" style="margin:20px;">
-<?php
-	autopage($db, $sort, $page);
-	$gotoform = sprintf("<form method=\"post\" action=\"books.php?sort=%s\">", $sort);
-	echo $gotoform;
-?>
-
-	goto:
-	<input type="text" name="page" style="vertical-align:text-center; width:30px"/>
-	<?php
-	echo "/" . (int)((dbcount($db, "joke")+49)/50);
-	?>
-	<input type="submit" value="Go" />
-</form>
-</div>
-
-<?php
-$db->close();
-?>
 </body>
 </html>

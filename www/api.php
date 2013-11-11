@@ -10,6 +10,9 @@
 	$timestamp = php_reqvar("s", time());
 	$limit = php_reqvar("limit", 50);
 	
-	$jokes = joke_query($page, $order, $range, $content, $timestamp);
+	if(1==$order && 1==$range)
+		$jokes = joke_query_hot($page, $order, $range, $content, $timestamp);
+	else
+		$jokes = joke_query($page, $order, $range, $content, $timestamp);
 	echo json_encode($jokes);
 ?>
