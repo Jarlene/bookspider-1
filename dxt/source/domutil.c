@@ -53,6 +53,7 @@ const char* domutil_skipbom(const char* p)
 // => p = "='def'"
 const char* domutil_tokenname(const char* p)
 {
+	assert(p);
 	// <?xml:ns ?>
 	// <?php?>
 	// <!-- -->
@@ -63,20 +64,29 @@ const char* domutil_tokenname(const char* p)
 	return p;
 }
 
+// valid token value:
+// style="xxx"
+// href=http://host:port/path?param
+//
 // tokenvalue("<body onload='OnLoad()'>") 
 // => value ='OnLoad'
 // => p = ">"
 const char* domutil_tokenvalue(const char* p)
 {
+	assert(p);
 	switch(*p)
 	{
 	case '\'':
-		p = strchr(p+1, '\'');
-		return p ? p+1 : NULL;
+		++p;
+		while(*p && '\'' != *p)
+			++p;
+		return p;
 
 	case '\"':
-		p = strchr(p+1, '\"');
-		return p ? p+1 : NULL;
+		++p;
+		while(*p && '\"' != *p)
+			++p;
+		return p;
 
 	default:
 		while(*p && !strchr(" \t\r\n>", *p))
