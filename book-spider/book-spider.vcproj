@@ -233,6 +233,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\book-site\biquge.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\book-site\biquge.h"
+				>
+			</File>
+			<File
 				RelativePath=".\book-site\luoqiu.cpp"
 				>
 			</File>

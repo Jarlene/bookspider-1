@@ -13,6 +13,7 @@
 
 #include "QiuShiBaiKe.h"
 #include "BaiSiBuDeJie.h"
+#include "YaoYao.h"
 
 int config_proxy_load();
 
@@ -30,6 +31,10 @@ static IJokeSpider* MakeSpider(const char* name)
 	else if(strieq("baisibudejie-xcs", name))
 	{
 		spider = new CBaiSiBuDeJie(2);
+	}
+	else if(strieq("yaoyao", name))
+	{
+		spider = new CYaoYao();
 	}
 	
 	return spider;

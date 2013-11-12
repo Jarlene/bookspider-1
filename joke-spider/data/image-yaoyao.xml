@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xml>
+	<title><xsl:value-of select="//div[class='title']/h1" /></title>
+	<datetime><xsl:value-of select="//div[class='info']" /></datetime>
+	
+	<images>
+    <xsl:for-each select="//div[id='content']/div/img">
+      <image><xsl:attr-of select="." attr='src' /></image>
+    </xsl:for-each>
+  </images>
+  
+  <text><xsl:value-of select="//div[id='content']/div[2]/span" /></text>
+  <texts>
+    <xsl:for-each select="//div[id='content']/div[2]/span/span">
+      <text><xsl:value-of select="." /></text>
+    </xsl:for-each>
+  </texts>
+</xml>
