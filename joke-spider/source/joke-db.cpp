@@ -142,7 +142,8 @@ int jokedb_insert_comics(const char* /*website*/, const Comics& comics)
 	if(sql.empty())
 		return 0;
 
-	sql.insert(0, "insert into joke_comic (id, title, image, text, datetime) values ");
+	sql.insert(0, "insert into joke_18plus (id, title, image, text, datetime) values ");
+	sql += " on duplicate key update text=values(text)";
 	return db_insert(db, sql.c_str());
 }
 

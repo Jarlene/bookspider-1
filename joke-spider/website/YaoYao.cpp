@@ -4,6 +4,7 @@
 #include "error.h"
 #include "config.h"
 #include "XMLParser.h"
+#include "utf8codec.h"
 #include "web-translate.h"
 
 static int image_parser(void* param, const char* xml)
@@ -12,24 +13,36 @@ static int image_parser(void* param, const char* xml)
 	if(!parser.Valid())
 		return ERROR_PARAM;
 
-	Comic comic;
-	if(!parser.GetValue("title", comic.title)
-		|| !parser.GetValue("datetime", comic.datetime))
+	const char* encoding = parser.GetEncoding();
+
+	std::string title, datetime, text;
+	if(!parser.GetValue("title", title)
+		|| !parser.GetValue("datetime", datetime))
 		return ERROR_PARAM;
+
+	Comic comic;
+	comic.title.assign((const char*)UTF8Encode(title.c_str(), encoding));
+	comic.datetime.assign((const char*)UTF8Encode(datetime.c_str(), encoding));
+	comic.datetime += ":00";
+
+	const char *p = comic.title.c_str();
+	while('0'>*p || *p > '9' ) ++p;
+	comic.id = atoi(p);
 
 	size_t n = comic.title.find('-');
 	if(std::string::npos != n)
 		comic.title = comic.title.substr(n+1);
 
-	parser.GetValue("text", comic.text);
-	
+	parser.GetValue("text", text);
+	comic.text.assign((const char*)UTF8Encode(text.c_str(), encoding));
+
 	for(bool i=parser.Foreach("images/image"); i; i=parser.Next())
 	{
 		std::string uri;
 		parser.GetValue(".", uri);
 
 		if(!uri.empty())
-			comic.images.push_back(uri);
+			comic.images.push_back(std::string("http://www.yyxj8.com")+(const char*)UTF8Encode(uri.c_str(), encoding));
 	}
 	
 	for(bool i=parser.Foreach("texts/text"); i; i=parser.Next())
@@ -38,7 +51,7 @@ static int image_parser(void* param, const char* xml)
 		parser.GetValue(".", v);
 
 		if(!v.empty())
-			comic.text += v;
+			comic.text += (const char*)UTF8Encode(v.c_str(), encoding);
 	}
 
 	if(!comic.images.empty())
@@ -107,6 +120,8 @@ int CYaoYao::List()
 
 		system_sleep(5000);
 	}
+
+	return 0;
 }
 
 int CYaoYao::Hot()
