@@ -51,7 +51,8 @@
 			}
 
 			var html = "";
-			var reply  = eval("(" + http.responseText + ")");
+			var response  = eval("(" + http.responseText + ")");
+			var reply = response.data;
 			for(var i=0; i<reply.length; i++)
 			{
 				var div = "<div>";

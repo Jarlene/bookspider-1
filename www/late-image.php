@@ -10,6 +10,6 @@
 
 	$reply["code"] = 0;
 	$reply["msg"] = "ok";
-	$reply["jokes"] = joke_query($page, 0, 0, 2, $timestamp);
+	$reply["data"] = joke_query($page, 0, 0, 2, $timestamp);
 	echo json_encode($reply);
 ?>

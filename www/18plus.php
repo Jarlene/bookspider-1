@@ -48,7 +48,7 @@
 			$comic = array();
 			$comic["id"] = $row["id"];
 			$comic["title"] = $row["title"];
-			$comic["text"] = $row["text"];
+			$comic["content"] = $row["text"];
 			$comic["images"] = split(",", $row["image"]);
 			$comic["datetime"] = $row["datetime"];
 			$comics[] = $comic; // add book
