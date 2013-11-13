@@ -1,0 +1,109 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Joke</title>
+<link rel="stylesheet" type="text/css" href="css/style.css" /> 
+<script src="js/xml.js" type="text/javascript"></script>
+</head>
+
+<body onload="OnLoad()">
+<table id="jokes" align="center" width="98%">
+	<tr style="background-color: #CCCCCC">
+		<td width="100px" align="center"><a href="#">作者</a></td>
+		<td width="160px" align="center"><a href="#">时间</a></td>
+		<td width="40px" align="center"><a href="#">赞成</a></td>
+		<td width="40px" align="center"><a href="#">反对</a></td>
+		<td width="40px" align="center"><a href="#">评论</a></td>
+		<td align="center"><a href="#">笑话</a></td>
+		<td width="300px" align="center"><a href="#">图片</a></td>
+	</tr>
+</table>
+</body>
+
+<script languge="javascript">
+	var http = HttpRequest();
+	
+	function getQueryVariable(variable) {
+	    var query = window.location.search.substring(1);
+	    var vars = query.split('&');
+	    for (var i = 0; i < vars.length; i++) {
+	        var pair = vars[i].split('=');
+	        if (decodeURIComponent(pair[0]) == variable) {
+	            return decodeURIComponent(pair[1]);
+	        }
+	    }
+	    return "";
+	}
+
+	function OnLoad()
+	{
+		var uri;
+		var page = getQueryVariable("page");
+		var content = getQueryVariable("content");
+		if(1 == content)
+			uri = "/joke/late-text.php?";
+		else if(2 == content)
+			uri = "/joke/late-image.php?";
+		else if(3 == content)
+			uri = "/joke/hot-text.php?";
+		else if(4 == content)
+			uri = "/joke/hot-image.php?";
+		else
+			uri = "/joke/hot-text.php?";
+		
+		if("" == page)
+			page = 1;
+		uri += "page=" + page;
+	
+		http.open("GET", uri, true);
+		http.onreadystatechange = OnResponse;
+		http.send("");
+	}
+	
+	function OnResponse()
+	{
+		if(http.readyState==4)
+		{
+			if(http.status != 200)
+			{
+				alert("error");
+				return;
+			}
+
+			var content = getQueryVariable("content");
+			var table = document.getElementById("jokes");
+			
+			var html = "";
+			var response  = eval("(" + http.responseText + ")");
+			var reply = response.data;
+			for(var i=0; i<reply.length; i++)
+			{
+				var tr = "<tr>";
+
+				tr += "<td>";
+				if(reply[i]["icon"].length > 0)
+					tr += "<image src=\"" + reply[i]["icon"] + "\" />";
+				tr += reply[i]["author"] + "</td>";
+				tr += "<td>" + reply[i]["datetime"] + "</td>";
+				tr += "<td>" + reply[i]["approve"] + "</td>";
+				tr += "<td>" + reply[i]["disapprove"] +"</td>";
+				tr += "<td><a href=\"/joke/comment.html?id=" + reply[i]["id"] + "\">" + reply[i]["comment"] + "</a></td>";
+				tr += "<td>" + reply[i]["content"] + "</td>";
+				var page = getQueryVariable("page");
+				if(2 == content || 4 == content)
+					tr += "<td>" + reply[i]["image"] + "</td>";
+				else
+					tr += "<td></td>";
+
+				tr += "</tr>";
+
+				var row = table.insertRow(table.rows.length);
+				row.innerHTML = tr;
+				//html += tr;
+			}
+
+			//document.getElementById("jokes").innerHTML=html;
+		}
+	}
+</script>
+</html>

@@ -112,7 +112,7 @@ static void OnAction(void* param)
 		if(0 != r)
 			session->Reply(r, "Get comment failed.");
 		else
-			session->Reply(comment);
+			session->ReplyArrary("data", comment);
 		session->release();
 	}
 }
@@ -131,7 +131,7 @@ int WebSession::OnComment()
 	std::string comment;
 	int r = jokecomment_query(id, datetime, comment);
 	if(0 == r && datetime + 10*60*1000 > time64_now())
-		return Reply(comment); // valid if in 10-minutes
+		return ReplyArrary("data", comment); // valid if in 10-minutes
 
 	addref();
 

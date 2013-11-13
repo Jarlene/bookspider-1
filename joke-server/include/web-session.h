@@ -19,6 +19,7 @@ public:
 	static void Run(void *param);
 
 public:
+	int ReplyArrary(const char* name, const std::string& value);
 	int Reply(int code, const char* msg);
 	int Reply(const std::string& reply);
 

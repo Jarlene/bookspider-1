@@ -82,6 +82,14 @@ int WebSession::OnCleanup()
 	return 0;
 }
 
+int WebSession::ReplyArrary(const char* name, const std::string& value)
+{
+	std::string reply = "{ \"code\" : 0, \"msg\" : \"ok\", \"data\" :";
+	reply += value;
+	reply += "}";
+	return Reply(reply);
+}
+
 int WebSession::Reply(int code, const char* msg)
 {
 	jsonobject json;
