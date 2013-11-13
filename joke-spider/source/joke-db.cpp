@@ -106,6 +106,46 @@ int jokedb_insert_jokes(const char* website, const Jokes& jokes)
 	return i;
 }
 
+int jokedb_insert_comics(const char* /*website*/, const Comics& comics)
+{
+	AutoThreadLocker locker(g_locker);
+
+	int i = 0;
+	std::string sql;
+	Comics::const_iterator it;
+	for(it = comics.begin(); it != comics.end(); ++it,++i)
+	{
+		const Comic& comic = *it;
+		assert(!comic.images.empty());
+
+		std::string image;
+		std::vector<std::string>::const_iterator j;
+		for(j = comic.images.begin(); j != comic.images.end(); ++j)
+		{
+			if(!image.empty())
+				image += ",";
+			image += *j;
+		}
+		
+		if(image.empty())
+			continue;
+
+		snprintf(buffer, sizeof(buffer)-1, 
+			"(%u, '%s', '%s', '%s', '%s')",
+			comic.id, comic.title.c_str(), image.c_str(), comic.text.c_str(), comic.datetime.c_str());
+
+		if(!sql.empty())
+			sql += ',';
+		sql += buffer;
+	}
+
+	if(sql.empty())
+		return 0;
+
+	sql.insert(0, "insert into joke_comic (id, title, image, text, datetime) values ");
+	return db_insert(db, sql.c_str());
+}
+
 int jokedb_insert_comments(const char* /*website*/, unsigned int id, const Comments& comments)
 {
 	AutoThreadLocker locker(g_locker);

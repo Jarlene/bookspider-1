@@ -248,6 +248,14 @@
 				RelativePath=".\website\QiuShiBaiKe.h"
 				>
 			</File>
+			<File
+				RelativePath=".\website\YaoYao.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\website\YaoYao.h"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

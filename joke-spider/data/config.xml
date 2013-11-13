@@ -8,4 +8,7 @@
 	
 	<check-qiushibaike>data/check-qiushibaike.xml</check-qiushibaike>
 	<check-baisibudejie>data/check-baisibudejie.xml</check-baisibudejie>
+		
+	<index-yaoyao>data/index-yaoyao.xml</index-yaoyao>
+	<image-yaoyao>data/image-yaoyao.xml</image-yaoyao>
 </xml>
