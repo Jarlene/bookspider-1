@@ -9,6 +9,7 @@
 
 	$reply["code"] = 0;
 	$reply["msg"] = "ok";
+	$reply["timestamp"] = $timestamp;
 	$reply["data"] = joke_query_comic($page, $timestamp);
 	echo json_encode($reply);
 

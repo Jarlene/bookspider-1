@@ -9,6 +9,7 @@
 
 	$reply["code"] = 0;
 	$reply["msg"] = "ok";
+	$reply["timestamp"] = $timestamp;
 	$reply["data"] = joke_query_hot($page, 1, 1, 1, $timestamp);
 	echo json_encode($reply);
 ?>
