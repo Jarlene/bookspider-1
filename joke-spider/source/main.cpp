@@ -56,6 +56,7 @@ int main(int argc, char* argv[])
 	config_proxy_load();
 	http_proxy_add_pattern("*.budejie.com");
 	http_proxy_add_pattern("*.qiushibaike.com");
+	http_proxy_add_pattern("*.yyxj8.com");
 
 	socket_init();
 	if(0 != jokedb_init())
