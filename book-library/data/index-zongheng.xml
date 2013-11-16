@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xml>
+    <xsl:for-each select="//div[class='chapter']/h2">
+    	<section>
+    		<name><xsl:value-of select="." /></name>
+    		<chapters>
+    			<xsl:for-each select="./+/+/+/table/tbody/tr">
+    				<xsl:for-each select="td">
+    					<chapter>
+    						<name><xsl:value-of select="a" /></name>
+    						<uri><xsl:attr-of select="a" attr='href' /></uri>
+    						<datetime><xsl:attr-of select="a" attr='title' /></datetime>
+    					</chapter>
+    				</xsl:for-each>
+    			</xsl:for-each>
+    		</chapters>
+    	</section>
+    </xsl:for-each>
+</xml>

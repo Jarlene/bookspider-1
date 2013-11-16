@@ -27,3 +27,13 @@ const char* C17K::GetUri(int top) const
 	}
 	return NULL;
 }
+
+int C17K::ReadBook(const char* uri, book_info& book)
+{
+	return 0;
+}
+
+int C17K::ReadChapter(const char* uri, std::string& chapter)
+{
+	return 0;
+}

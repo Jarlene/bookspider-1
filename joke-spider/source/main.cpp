@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			printf("Joke-Spider --website [qiushibaike|baisibudejie|baisibudejie-xcs] [--list | --hot | --check | --comment id]\n");
+			printf("Joke-Spider --website [yaoyao|qiushibaike|baisibudejie|baisibudejie-xcs] [--list | --hot | --check | --comment id]\n");
 			break;
 		}
 	}

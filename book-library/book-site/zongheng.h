@@ -10,6 +10,9 @@ public:
 	virtual const char* GetName() const { return "zongheng"; }
 	virtual const char* GetUri(int top) const;
 	virtual int GetCount() const { return 5000; }
+
+	virtual int ReadBook(const char* uri, book_info& book);
+	virtual int ReadChapter(const char* uri, std::string& chapter);
 };
 
 #endif /* !_zongheng_h_ */

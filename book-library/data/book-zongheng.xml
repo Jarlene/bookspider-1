@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xml>
+	<name><xsl:value-of select="//div[class='status']/h1/a/span" /></name>
+	<uri><xsl:attr-of select="//div[class='status']/h1/a" attr='href' /></uri>
+	<author><xsl:value-of select="//p[class='author']/em/a" /></author>
+	<category><xsl:value-of select="//div[class='status']/p[4]/a/span" /></category>
+	<click><xsl:value-of select="//div[class='status']/p[5]" /></click>
+	<wordcount><xsl:value-of select="//div[class='status']/p[6]/span" /></wordcount>
+	<datetime><xsl:value-of select="//div[class='status']/p[7]" /></datetime>
+</xml>

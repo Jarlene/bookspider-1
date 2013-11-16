@@ -25,3 +25,17 @@ const char* CZongHeng::GetUri(int top) const
 	}
 	return NULL;
 }
+
+int CZongHeng::ReadBook(const char* uri, book_info& book)
+{
+//	int r = read_book(this, uri, NULL, book);
+
+	int r = read_index(this, uri, NULL, book);
+
+	return r;
+}
+
+int CZongHeng::ReadChapter(const char* uri, std::string& chapter)
+{
+	return read_chapter(this, uri, NULL, chapter);
+}

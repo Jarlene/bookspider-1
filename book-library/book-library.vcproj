@@ -181,6 +181,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\source\book-read-book.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\book-read-chapter.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\book-read-index.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\source\book-top-worker.cpp"
 				>
 			</File>

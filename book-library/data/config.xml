@@ -1,7 +1,25 @@
 <xml>
 	<top>
-		<web-qidian>data/qidian-top.xml</web-qidian>
-		<web-zongheng>data/zongheng-top.xml</web-zongheng>
-		<web-17k>data/17k-top.xml</web-17k>
+		<web-qidian>data/top-qidian.xml</web-qidian>
+		<web-zongheng>data/top-zongheng.xml</web-zongheng>
+		<web-17k>data/top-17k.xml</web-17k>
 	</top>
+	
+	<book>
+		<web-qidian>data/book-qidian.xml</web-qidian>
+		<web-zongheng>data/book-zongheng.xml</web-zongheng>
+		<web-17k>data/book-17k.xml</web-17k>
+	</book>
+	
+	<index>
+		<web-qidian>data/index-qidian.xml</web-qidian>
+		<web-zongheng>data/index-zongheng.xml</web-zongheng>
+		<web-17k>data/index-17k.xml</web-17k>
+	</index>
+	
+	<chapter>
+		<web-qidian>data/chapter-qidian.xml</web-qidian>
+		<web-zongheng>data/chapter-zongheng.xml</web-zongheng>
+		<web-17k>data/chapter-17k.xml</web-17k>
+	</chapter>
 </xml>
