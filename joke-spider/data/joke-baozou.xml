@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xml>
+    <xsl:for-each select="//ul[id='entry-list-ul']/li">
+      <joke>
+      	<id>
+      	  <xsl:attr-of select="." attr='data-id' />
+      	</id>
+  	    <author>
+          <xsl:value-of select="//div[class='user-login']/a" />
+        </author>
+        <datetime>
+          <xsl:attr-of select="." attr='data-published-at' />
+        </datetime>
+        <contents>
+          <content>
+        	</content>
+        </contents>
+        <image>
+        	<xsl:attr-of select="//div[class='img-wrap']/a/img" attr='src' />
+        </image>
+        <approve>
+        	<xsl:value-of select="//div[class='up']/a/span" />
+        </approve>
+        <disapprove>
+        	<xsl:value-of select="//div[class='down']/a/span" />
+        </disapprove>
+        <comment>
+        	<xsl:attr-of select="." attr='data-url' />
+        </comment>
+      </joke>
+    </xsl:for-each>
+</xml>

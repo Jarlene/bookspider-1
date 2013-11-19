@@ -241,6 +241,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\website\BaoZou.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\website\BaoZou.h"
+				>
+			</File>
+			<File
 				RelativePath=".\website\QiuShiBaiKe.cpp"
 				>
 			</File>

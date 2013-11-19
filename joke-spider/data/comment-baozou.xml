@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xml>
+    <xsl:for-each select="//div[@class='comment_list']/div">
+      <comment>
+      	<icon>
+      	  <xsl:attr-of select="a/img" attr='src' />
+      	</icon>
+        <user>
+          <xsl:attr-of select="a/img" attr='alt' />
+        </user>
+        <content>
+          <xsl:value-of select="//div[@class='c-body']" />
+        </content>
+      </comment>
+    </xsl:for-each>
+</xml>
