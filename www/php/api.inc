@@ -103,7 +103,7 @@
 		// create temprary table
 		if(2 == $content)
 		{
-			$sql2 = sprintf("create temporary table joke_image_temp (select * from joke_image where datetime < '%s' order by datetime desc limit 0, 500)", date("Y-m-d H:i:s", $timestamp));
+			$sql2 = sprintf("create temporary table joke_image_temp (select * from joke_image where datetime < '%s' order by datetime desc limit 0, 800)", date("Y-m-d H:i:s", $timestamp));
 		}
 		else
 		{
