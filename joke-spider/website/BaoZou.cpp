@@ -1,6 +1,7 @@
 #include "BaoZou.h"
 #include "cstringext.h"
 #include "sys/system.h"
+#include "time64.h"
 #include "error.h"
 #include "config.h"
 #include "XMLParser.h"
@@ -18,11 +19,17 @@ static int OnList(void* param, const char* id, const char* icon, const char* aut
 	else
 		p = id;
 
+	char str[24] = {0};
+	time64_t t = 0;
+	t = time64_from("%Y-%M-%D %h:%m:%s", datetime);
+	t += 8 * 60 * 60 * 1000;
+	time64_format(t, "%04Y-%02M-%02D %02h:%02m:%02s", str);
+
 	Joke joke;
 	joke.id = (unsigned int)atoi(p) + 4 * JOKE_SITE_ID;
 	joke.icon = icon;
 	joke.author = author;
-	joke.datetime.assign(datetime, 19);
+	joke.datetime = str;
 	joke.content = content;
 	joke.image = image;
 	joke.approve = approve;
