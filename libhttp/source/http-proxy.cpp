@@ -28,7 +28,7 @@ static int check_pattern(const char* value, const char* pattern)
 	if('*' == pattern[0])
 	{
 		assert('.' == pattern[1]);
-		return 0 != strstr(value, pattern+1);
+		return 0 != strstr(value, pattern+2);
 	}
 	return 0 == stricmp(value, pattern);
 }

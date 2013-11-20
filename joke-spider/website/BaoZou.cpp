@@ -37,7 +37,7 @@ int CBaoZou::List()
 	char uri[256] = {0};
 	for(int page=1; page <= 48; page++)
 	{
-		snprintf(uri, sizeof(uri)-1, "http://www.baozoumanhua.com/groups/1/hottest/8hr/page/%d", page);
+		snprintf(uri, sizeof(uri)-1, "http://baozoumanhua.com/groups/1/hottest/8hr/page/%d", page);
 
 		Jokes jokes;
 		int r = joke_list(this, uri, NULL, OnList, &jokes);
@@ -98,7 +98,7 @@ int CBaoZou::GetComment(Comments& comments, unsigned int id)
 	for(int i=1; i>0; i++)
 	{
 		size_t n = comments.size();
-		snprintf(uri, sizeof(uri)-1, "http://www.baozoumanhua.com/articles/%u/comments.html?page=%d", id%(GetId()*JOKE_SITE_ID), i);
+		snprintf(uri, sizeof(uri)-1, "http://baozoumanhua.com/articles/%u/comments.html?page=%d", id%(GetId()*JOKE_SITE_ID), i);
 		int r = joke_comment(this, uri, NULL, OnGetComment, &comments);
 		if(r < 0 || comments.size()<=n+10) // filter hot comment
 			break;
