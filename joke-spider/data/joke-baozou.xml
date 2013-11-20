@@ -5,6 +5,9 @@
       	<id>
       	  <xsl:attr-of select="." attr='data-id' />
       	</id>
+      	<icon>
+      	  <xsl:attr-of select="//a[class='poshytip']/img" attr='src' />
+      	</icon>
   	    <author>
           <xsl:value-of select="//div[class='user-login']/a" />
         </author>
@@ -13,7 +16,8 @@
         </datetime>
         <contents>
           <content>
-        	</content>
+          	<xsl:attr-of select="." attr='data-text' />
+          </content>
         </contents>
         <image>
         	<xsl:attr-of select="//div[class='img-wrap']/a/img" attr='src' />
@@ -25,7 +29,7 @@
         	<xsl:value-of select="//div[class='down']/a/span" />
         </disapprove>
         <comment>
-        	<xsl:attr-of select="." attr='data-url' />
+        	<xsl:value-of select="//a[class='qiushi_comments']/span" />
         </comment>
       </joke>
     </xsl:for-each>

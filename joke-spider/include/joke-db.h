@@ -22,6 +22,7 @@ typedef struct _Comment
 	std::string icon;
 	std::string user;
 	std::string content;
+	int floor;
 } Comment;
 
 typedef struct _Comic

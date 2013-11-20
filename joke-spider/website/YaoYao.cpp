@@ -95,7 +95,7 @@ int CYaoYao::List()
 	}
 
 	char uri[256] = {0};
-	for(int page=1; page >0; page++)
+	for(int page=1; page > 3; page++)
 	{
 		// latest update
 		snprintf(uri, sizeof(uri)-1, "http://www.yyxj8.com/yj/list_3_%d.html", page);

@@ -2,9 +2,11 @@
 <xml>
 	<joke-qiushibaike>data/joke-qiushibaike.xml</joke-qiushibaike>
 	<joke-baisibudejie>data/joke-baisibudejie.xml</joke-baisibudejie>
+	<joke-baozou>data/joke-baozou.xml</joke-baozou>
 	
 	<comment-qiushibaike>data/comment-qiushibaike.xml</comment-qiushibaike>
 	<comment-baisibudejie>data/comment-baisibudejie.xml</comment-baisibudejie>
+	<comment-baozou>data/comment-baozou.xml</comment-baozou>
 	
 	<check-qiushibaike>data/check-qiushibaike.xml</check-qiushibaike>
 	<check-baisibudejie>data/check-baisibudejie.xml</check-baisibudejie>

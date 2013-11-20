@@ -37,7 +37,11 @@ public:
 		TPairs::const_iterator it = m_params.find(key);
 		if(it == m_params.end())
 			return false;
-		v = atoi(it->second.c_str());
+		//v = atoi(it->second.c_str());
+		v = 0;
+		const char *p = it->second.c_str();
+		while(isdigit(*p)) 
+			v = v*10 + (*p++ - '0');
 		return true;
 	}
 

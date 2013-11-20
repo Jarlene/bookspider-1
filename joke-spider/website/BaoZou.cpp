@@ -6,6 +6,7 @@
 #include "XMLParser.h"
 #include "utf8codec.h"
 #include "web-translate.h"
+#include <algorithm>
 
 static int OnList(void* param, const char* id, const char* icon, const char* author, const char* datetime, const char* content, const char* image, int approve, int disapprove, int comment)
 {
@@ -18,14 +19,14 @@ static int OnList(void* param, const char* id, const char* icon, const char* aut
 		p = id;
 
 	Joke joke;
-	joke.id = (unsigned int)atoi(p) + 2 * JOKE_SITE_ID;
+	joke.id = (unsigned int)atoi(p) + 4 * JOKE_SITE_ID;
 	joke.icon = icon;
 	joke.author = author;
 	joke.datetime.assign(datetime, 19);
 	joke.content = content;
-	joke.image = strstr(image, "1px.jpg")?"":image;
+	joke.image = image;
 	joke.approve = approve;
-	joke.disapprove = disapprove;
+	joke.disapprove = abs(disapprove);
 	joke.comment = comment;
 	jokes->push_back(joke);
 	return 0;
@@ -68,28 +69,45 @@ int CBaoZou::Check()
 	return 0;
 }
 
-static int OnGetComment(void* param, const char* icon, const char* user, const char* content)
+static int OnGetComment(void* param, const char* icon, const char* user, const char* content, int floor)
 {
 	Comments* comments = (Comments*)param;
 
 	Comment comment;
 	comment.icon = icon;
 	comment.user = user;
+	comment.floor = floor;
 	comment.content = content;
 	comments->push_back(comment);
 	return 0;
 }
 
+static bool comment_lt(Comment& i, Comment& j)
+{
+	return i.floor < j.floor;
+}
+
+static bool comment_eq(Comment& i, Comment& j)
+{
+	return i.floor == j.floor;
+}
+
 int CBaoZou::GetComment(Comments& comments, unsigned int id)
 {
 	char uri[256] = {0};
-	for(int i=1; 1; i++)
+	for(int i=1; i>0; i++)
 	{
 		size_t n = comments.size();
-		snprintf(uri, sizeof(uri)-1, "http://baozoumanhua.com/articles/%u.html", id%(GetId()*JOKE_SITE_ID), m_nav, i);
+		snprintf(uri, sizeof(uri)-1, "http://baozoumanhua.com/articles/%u/comments.html?page=%d", id%(GetId()*JOKE_SITE_ID), i);
 		int r = joke_comment(this, uri, NULL, OnGetComment, &comments);
-		if(r < 0 || comments.size()==n)
+		if(r < 0 || comments.size()<=n+10)
 			break;
 	}
+
+	std::sort(comments.begin(), comments.end(), comment_lt);
+
+	Comments::iterator it;
+	it = std::unique(comments.begin(), comments.end(), comment_eq);
+	comments.resize( std::distance(comments.begin(), it) );
 	return 0;
 }

@@ -98,13 +98,14 @@ int CQiuShiBaiKe::Hot()
 	return 0;
 }
 
-static int OnGetComment(void* param, const char* icon, const char* user, const char* content)
+static int OnGetComment(void* param, const char* icon, const char* user, const char* content, int floor)
 {
 	Comments* comments = (Comments*)param;
 
 	Comment comment;
 	comment.icon = icon;
 	comment.user = user;
+	comment.floor = floor;
 	comment.content = content;
 	comments->push_back(comment);
 	return 0;

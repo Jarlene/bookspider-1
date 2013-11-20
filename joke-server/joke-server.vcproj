@@ -253,6 +253,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\joke-spider\website\BaoZou.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\joke-spider\website\BaoZou.h"
+				>
+			</File>
+			<File
 				RelativePath="..\joke-spider\source\joke-comment.cpp"
 				>
 			</File>
@@ -274,6 +282,14 @@
 			</File>
 			<File
 				RelativePath="..\joke-spider\website\QiuShiBaiKe.h"
+				>
+			</File>
+			<File
+				RelativePath="..\joke-spider\website\YaoYao.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\joke-spider\website\YaoYao.h"
 				>
 			</File>
 		</Filter>

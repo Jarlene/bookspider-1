@@ -11,6 +11,9 @@
         <content>
           <xsl:value-of select="//div[@class='c-body']" />
         </content>
+        <floor>
+          <xsl:attr-of select="em" attr='data-floor' />
+        </floor>
       </comment>
     </xsl:for-each>
 </xml>

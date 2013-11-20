@@ -5,6 +5,7 @@
 #include "JokeSpider.h"
 #include "QiuShiBaiKe.h"
 #include "BaiSiBuDeJie.h"
+#include "BaoZou.h"
 #include "libct/auto_ptr.h"
 #include <map>
 #include <list>
@@ -46,6 +47,8 @@ static int GetComment(unsigned int id, std::string& comment)
 		spider = new CQiuShiBaiKe();
 	else if(id / JOKE_SITE_ID == 2)
 		spider = new CBaiSiBuDeJie(1);
+	else if(id / JOKE_SITE_ID == 4)
+		spider = new CBaoZou();
 	else
 		return ERROR_PARAM;
 

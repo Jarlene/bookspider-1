@@ -23,6 +23,7 @@ static int joke_comment_helper(void* param, const char* xml)
 	TCommentParam* p = (TCommentParam*)param;
 	for(bool i=parser.Foreach("comment"); i; i=parser.Next())
 	{
+		int floor = 0;
 		std::string icon, user, content;
 		if(!parser.GetValue("content", content))
 			continue;
@@ -33,13 +34,15 @@ static int joke_comment_helper(void* param, const char* xml)
 
 		parser.GetValue("icon", icon);
 		parser.GetValue("user", user);
+		parser.GetValue("floor", floor);
 
 		// to utf-8
 		const char* encoding = parser.GetEncoding();
 		p->callback(p->param, 
 			UTF8Encode(icon.c_str(), encoding), 
 			UTF8Encode(user.c_str(), encoding), 
-			UTF8Encode(content.c_str(), encoding));
+			UTF8Encode(content.c_str(), encoding),
+			floor);
 	}
 
 	return 0;

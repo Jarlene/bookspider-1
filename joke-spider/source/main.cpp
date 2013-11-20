@@ -14,6 +14,7 @@
 #include "QiuShiBaiKe.h"
 #include "BaiSiBuDeJie.h"
 #include "YaoYao.h"
+#include "BaoZou.h"
 
 int config_proxy_load();
 
@@ -35,6 +36,10 @@ static IJokeSpider* MakeSpider(const char* name)
 	else if(strieq("yaoyao", name))
 	{
 		spider = new CYaoYao();
+	}
+	else if(strieq("baozou", name))
+	{
+		spider = new CBaoZou();
 	}
 	
 	return spider;
@@ -100,7 +105,7 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			printf("Joke-Spider --website [yaoyao|qiushibaike|baisibudejie|baisibudejie-xcs] [--list | --hot | --check | --comment id]\n");
+			printf("Joke-Spider --website [baozou|yaoyao|qiushibaike|baisibudejie|baisibudejie-xcs] [--list | --hot | --check | --comment id]\n");
 			break;
 		}
 	}
