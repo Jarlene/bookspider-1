@@ -133,8 +133,12 @@ int WebSession::OnComment()
 	time64_t datetime = 0;
 	std::string comment;
 	int r = jokecomment_query(id, datetime, comment);
-	if(0 == r && datetime + 10*60*1000 > time64_now())
-		return ReplyArrary("data", comment); // valid if in 10-minutes
+	if(0 == r)
+		r = ReplyArrary("data", comment);
+
+	// valid if in 10-minutes
+	if(datetime + 10*60*1000 > time64_now())
+		return r;
 
 	addref();
 
