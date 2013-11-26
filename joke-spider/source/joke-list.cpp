@@ -8,6 +8,8 @@
 #include <assert.h>
 #include <string>
 
+extern void escape_nbsp(std::string& src);
+
 struct TJokeParam
 {
 	OnJoke callback;
@@ -40,6 +42,8 @@ static int joke_list_parser(void* param, const char* xml)
 			{
 				if(value.empty())
 					continue;
+
+				escape_nbsp(value);
 				if(!content.empty())
 					content += "\r\n";
 				content += value;

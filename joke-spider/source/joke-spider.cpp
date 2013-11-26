@@ -9,6 +9,17 @@
 #include <assert.h>
 #include <string>
 
+void escape_nbsp(std::string& src)
+{
+	std::string::size_type n = 0;
+	n = src.find("&nbsp;", n);
+	while(std::string::npos != n)
+	{
+		src.replace(n, 6, 1, ' ');
+		n = src.find("&nbsp;", n+1);
+	}
+}
+
 static int joke_check_helper(void* param, const char* xml)
 {
 	//XMLParser parser(xml);

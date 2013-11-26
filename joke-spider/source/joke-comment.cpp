@@ -8,6 +8,8 @@
 #include <assert.h>
 #include <string>
 
+extern void escape_nbsp(std::string& src);
+
 struct TCommentParam
 {
 	OnComment callback;
@@ -35,6 +37,8 @@ static int joke_comment_helper(void* param, const char* xml)
 		parser.GetValue("icon", icon);
 		parser.GetValue("user", user);
 		parser.GetValue("floor", floor);
+
+		escape_nbsp(content);
 
 		// to utf-8
 		const char* encoding = parser.GetEncoding();
