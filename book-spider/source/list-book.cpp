@@ -1,23 +1,26 @@
 #include "book-spider.h"
 #include "cstringext.h"
-#include "sys/system.h"
-#include "libct/auto_ptr.h"
-#include "http.h"
-#include "dxt.h"
+#include "web-translate.h"
 #include "XMLParser.h"
 #include "utf8codec.h"
 #include "error.h"
 #include "config.h"
-#include "tools.h"
 #include <assert.h>
 #include <string>
 
-static int Parse(const char* xml, IBookSpider::OnBook callback, void* param)
+struct TListParam
+{
+	IBookSpider::OnBook callback;
+	void* param;
+};
+
+static int Parse(void* param, const char* xml)
 {
 	XMLParser parser(xml);
 	if(!parser.Valid())
 		return ERROR_PARAM;
 
+	TListParam* p = (TListParam*)param;
 	for(bool i=parser.Foreach("books/book"); i; i=parser.Next())
 	{
 		std::string name, author, uri, chapter, datetime;
@@ -40,7 +43,7 @@ static int Parse(const char* xml, IBookSpider::OnBook callback, void* param)
 
 		// to utf-8
 		const char* encoding = parser.GetEncoding();
-		callback(param, 
+		p->callback(p->param, 
 			UTF8Encode(name.c_str(), encoding), 
 			UTF8Encode(author.c_str(), encoding),
 			UTF8Encode(uri.c_str(), encoding),
@@ -49,21 +52,6 @@ static int Parse(const char* xml, IBookSpider::OnBook callback, void* param)
 	}
 
 	return 0;
-}
-
-static int Http(const char* uri, const char* req, void** reply)
-{
-	int r = -1;
-	for(int i=0; r<0 && i<20; i++)
-	{
-		r = http_request(uri, req, reply);
-		if(r < 0)
-		{
-			printf("get %s error: %d\n", uri, r);
-			system_sleep(10);
-		}
-	}
-	return r;
 }
 
 int ListBook(const IBookSpider* spider, const char* uri, const char* req, IBookSpider::OnBook callback, void* param)
@@ -77,22 +65,6 @@ int ListBook(const IBookSpider* spider, const char* uri, const char* req, IBookS
 		return ERROR_NOTFOUND;
 	}
 
-	libct::auto_ptr<char> reply;
-	int r = Http(uri, req, (void**)&reply);
-	if(r < 0)
-	{
-		printf("Check update error: %d\n", r);
-		return r;
-	}
-
-	libct::auto_ptr<char> result;
-	r = DxTransformHtml(&result, reply, xmlfile.c_str());
-	if(r < 0)
-	{
-		tools_write("e:\\a.html", reply, strlen(reply));
-		printf("SearchBook[%s]: error: %d.\n", spider->GetName(), r);
-		return r;
-	}
-
-	return Parse(result, callback, param);
+	TListParam p = {callback, param};
+	return web_translate(uri, req, xmlfile.c_str(), Parse, &p);
 }

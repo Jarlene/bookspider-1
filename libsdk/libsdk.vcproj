@@ -191,6 +191,10 @@
 			Name="util"
 			>
 			<File
+				RelativePath="..\..\sdk\source\aio-socket-iocp.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\sdk\source\base64.c"
 				>
 			</File>
@@ -236,10 +240,6 @@
 			</File>
 			<File
 				RelativePath="..\..\sdk\source\task-queue.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\sdk\source\tcpserver.c"
 				>
 			</File>
 			<File

@@ -15,8 +15,7 @@ public:
 	WebSession(socket_t sock, const char* ip, int port);
 	~WebSession();
 
-public:
-	static void Run(void *param);
+	void Run();
 
 public:
 	int ReplyArrary(const char* name, const std::string& value);
@@ -25,7 +24,6 @@ public:
 
 private:
 	void OnApi();
-	void Run();
 
 	int Recv();
 	int Send(int code, const char* contentType, const void* data, int len);

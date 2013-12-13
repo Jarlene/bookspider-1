@@ -40,7 +40,7 @@ static int OnBook(void* param, const book_t* book)
 	return --*n > 0 ? 0 : 1;
 }
 
-static int OnThread(void* param)
+static int STDCALL OnThread(void* param)
 {
 	IBookSite* site = (IBookSite*)param;
 	EBookTop types[] = { ETT_ALL_VIEW, ETT_ALL_MARK, ETT_ALL_VOTE, };

@@ -24,12 +24,6 @@ WebSession::~WebSession()
 	dlog_log("client[%s.%d] disconnected.\n", m_ip.c_str(), m_port);
 }
 
-void WebSession::Run(void* param)
-{
-	WebSession* session = (WebSession*)param;
-	session->Run();
-}
-
 void WebSession::Run()
 {
 	int r = 0;
@@ -109,11 +103,7 @@ int WebSession::Recv()
 	m_content = NULL;
 	m_contentLength = 0;
 
-	int r = socket_select_read(m_sock, SERVER_TIMEOUT);
-	if(r <= 0)
-		return 0==r ? ERROR_RECV_TIMEOUT : r;
-
-	r = http_server_recv(m_http);
+	r = http_server_recv(m_http, SERVER_TIMEOUT);
 	if(r < 0)
 		return r;
 
