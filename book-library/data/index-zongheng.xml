@@ -4,7 +4,7 @@
     	<section>
     		<name><xsl:value-of select="." /></name>
     		<chapters>
-    			<xsl:for-each select="./+/+/+/table/tbody/tr">
+    			<xsl:for-each select="./+/+/+/table/tr">
     				<xsl:for-each select="td">
     					<chapter>
     						<name><xsl:value-of select="a" /></name>

@@ -2,7 +2,6 @@
 #include "cstringext.h"
 #include "sys/sock.h"
 #include "sys/sync.hpp"
-#include "sys-timer.h"
 #include "time64.h"
 #include "error.h"
 #include "libhttp-common.h"
@@ -183,7 +182,7 @@ struct TProxyKeepAlive
 };
 
 #if defined(OS_LINUX)
-static void http_proxy_keepalive(sys_timer_t id, void* param)
+void http_proxy_keepalive()
 {
 	std::vector<TProxyKeepAlive> proxies;
 	{
@@ -261,7 +260,7 @@ static void http_proxy_keepalive(sys_timer_t id, void* param)
 
 #else
 
-static void http_proxy_keepalive(sys_timer_t id, void* param)
+void http_proxy_keepalive()
 {
 	std::vector<TProxyKeepAlive> proxies;
 	{
@@ -359,7 +358,6 @@ proxy_object_t* http_proxy_get(const char* uri)
 		&& 0 == http_proxy_check_allow_pattern(uri))
 	{
 		// need proxy
-		TProxies::iterator it;
 
 		// delay
 		std::vector<TProxies::iterator> iters;
@@ -399,6 +397,3 @@ int http_proxy_release(proxy_object_t* proxy)
 	--proxy->rank;
 	return 0;
 }
-
-static sys_timer_t timerId;
-static int v = sys_timer_start(&timerId, 30*60*1000, http_proxy_keepalive, NULL);

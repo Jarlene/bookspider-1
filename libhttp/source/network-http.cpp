@@ -1,4 +1,5 @@
 #include "network-http.h"
+#include "sys-timer.h"
 #include "http-pool.h"
 #include "http-proxy.h"
 #include "time64.h"
@@ -74,3 +75,19 @@ int network_http(const char* uri, const char* req, mmptr& reply)
 	url_free(url);
 	return r;
 }
+
+//static void http_timer(sys_timer_t id, void* param)
+//{
+//	http_proxy_keepalive();
+//}
+//
+//static sys_timer_t timerId;
+//static int v = sys_timer_start(&timerId, 30*60*1000, http_timer, NULL);
+
+static void http_timer(sys_timer_t id, void* param)
+{
+	http_pool_gc();
+}
+
+static sys_timer_t timerId;
+static int v = sys_timer_start(&timerId, HTTP_POOL_TIMEOUT/2, http_timer, NULL);

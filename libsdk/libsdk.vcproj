@@ -203,6 +203,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\sdk\source\html-entities.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\sdk\source\http-server.cpp"
 				>
 			</File>

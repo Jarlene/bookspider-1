@@ -40,6 +40,7 @@ SOURCE_FILES += $(ROOT)/source/urlcodec.c
 SOURCE_FILES += $(ROOT)/source/tools.c
 SOURCE_FILES += $(ROOT)/source/unicode.c
 SOURCE_FILES += $(ROOT)/source/systimer.c
+SOURCE_FILES += $(ROOT)/source/html-entities.c
 SOURCE_FILES += $(ROOT)/encoding/nls_cp936.c
 
 #-----------------------------Library--------------------------------

@@ -15,6 +15,7 @@ typedef struct _proxy_object_t
 
 proxy_object_t* http_proxy_get(const char* uri);
 int http_proxy_release(proxy_object_t* proxy);
+void http_proxy_keepalive(); // check proxy alive
 
 inline void host_parse(const char* proxy, host_t host, int *port)
 {

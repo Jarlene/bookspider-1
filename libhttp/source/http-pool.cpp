@@ -1,14 +1,11 @@
 #include "http-pool.h"
 #include "http-proxy.h"
-#include "time64.h"
-#include "sys-timer.h"
-#include "sys/sync.hpp"
 #include "libhttp-common.h"
+#include "sys/sync.hpp"
+#include "time64.h"
 #include <string>
 #include <list>
 #include <map>
-
-#define TIMEOUT (5*60*1000) // 5-minutes
 
 struct socket_context_t
 {
@@ -48,7 +45,7 @@ static void http_destroy(socket_context_t* ctx)
 	free(ctx);
 }
 
-static void http_pool_ontimer(sys_timer_t id, void* param)
+void http_pool_gc()
 {
 	TPool::iterator it;
 	TSockets::iterator j;
@@ -63,7 +60,7 @@ static void http_pool_ontimer(sys_timer_t id, void* param)
 		for(j = sockets.begin(); j != sockets.end(); ++j)
 		{
 			socket_context_t* ctx = *j;
-			if(0!=ctx->time && ctx->time + TIMEOUT < tnow)
+			if(0!=ctx->time && ctx->time + HTTP_POOL_TIMEOUT < tnow)
 			{
 				// release connection
 				ctx->http->Disconnect();
@@ -76,7 +73,7 @@ static socket_context_t* http_pool_get(const std::string& host)
 {
 	TPool::iterator i;
 	TSockets::iterator j;
-	socket_context_t* ctx;
+	socket_context_t* ctx = NULL;
 
 	AutoThreadLocker locker(s_locker);
 	i  = s_pool.find(host);
@@ -85,12 +82,17 @@ static socket_context_t* http_pool_get(const std::string& host)
 		TSockets& sockets = i->second;
 		for(j = sockets.begin(); j != sockets.end(); ++j)
 		{
-			ctx = *j;
 			if(0 != (*j)->time)
 			{
-				ctx->time = 0;
-				return ctx;
+				if(!ctx || (*j)->time < ctx->time)
+					ctx = *j; // use the oldest socket
 			}
+		}
+
+		if(ctx)
+		{
+			ctx->time = 0;
+			return ctx;
 		}
 	}
 
@@ -262,6 +264,3 @@ int http_pool_release(HttpSocket* http, int time)
 	}
 	return 0;
 }
-
-static sys_timer_t timerId;
-static int v = sys_timer_start(&timerId, TIMEOUT/2, http_pool_ontimer, NULL);

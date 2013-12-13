@@ -28,10 +28,10 @@ const char* CQiDian::GetUri(int top) const
 
 int CQiDian::ReadBook(const char* uri, book_info& book)
 {
-	return 0;
+	return -1;
 }
 
 int CQiDian::ReadChapter(const char* uri, std::string& chapter)
 {
-	return 0;
+	return -1;
 }

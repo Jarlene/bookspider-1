@@ -22,15 +22,20 @@ static int OnReadIndex(void* param, const char* xml)
 			continue;
 
 		Chapters chapters;
-		for(bool i=parser.Foreach("chapter"); i; i=parser.Next())
+		for(bool i=parser.Foreach("chapters/chapter"); i; i=parser.Next())
 		{
-			std::string name, uri, datetime;
-			parser.GetValue("name", name);
+			std::string chapter, uri, datetime;
+			parser.GetValue("chapter", chapter);
 			parser.GetValue("uri", uri);
 			parser.GetValue("datetime", datetime);
 
-			if(name.empty() || uri.empty())
+			if(chapter.empty() || uri.empty())
 				continue;
+
+			if(0 == p->begintime[0] || strcmp(p->begintime, datetime.c_str() > 0))
+				strncpy(p->begintime, datetime.c_str(), 10);
+			if(0 == p->endtime[0] || strcmp(p->endtime, datetime.c_str() < 0))
+				strncpy(p->endtime, datetime.c_str(), 10);
 
 			chapters.push_back(name);
 		}
