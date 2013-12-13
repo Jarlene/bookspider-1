@@ -50,7 +50,7 @@ static int OnBook(void* param, const book_t* book)
 	return books->size() >= MAX_TOP_BOOK ? 1 : 0;
 }
 
-static int OnThread(void* param)
+static int STDCALL OnThread(void* param)
 {
 	IBookSite* site = (IBookSite*)param;
 	BookManager* bookmgr = BookManager::FetchBookManager();

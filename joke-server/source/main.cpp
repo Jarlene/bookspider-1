@@ -1,11 +1,14 @@
-#include "joke-db.h"
+#include "sys/sock.h"
+#include "sys/system.h"
 #include "tcpserver.h"
+#include "aio-socket.h"
 #include "sys-thread-pool.h"
 #include "sys-task-queue.h"
 #include "web-session.h"
 #include "joke-comment-db.h"
 #include "http-proxy.h"
 #include "config.h"
+#include "joke-db.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -13,24 +16,54 @@
 #include <signal.h>
 #endif
 
+static int s_workers = 0;
+static aio_socket_t s_webserver;
+sys_task_queue_t g_taskQ;
+
 int config_proxy_load();
 
-void OnTcpConnected(void* param, socket_t sock, const char* ip, int port)
+void OnWorker(void* param)
 {
-	WebSession* session = new WebSession(sock, ip, port);
-	if(0 != sys_thread_pool_push(WebSession::Run, session))
+	while(1)
 	{
-		printf("thread pool push error[%s.%d].\n", ip, port);
-		delete session;
+		int r = aio_socket_process();
+		if(0 != r)
+		{
+			printf("aio socket error: %d\n", r);
+		}
 	}
 }
 
-void OnTcpError(void* param, int errcode)
+void OnAccept(void*, int code, socket_t socket, const char* ip, int port)
 {
-	printf("OnTcpError: %d\n", errcode);
+	if(0 != code)
+	{
+		printf("aio socket accept error: %d/%d.\n", code, socket_geterror());
+		exit(1);
+	}
+
+	printf("aio socket accept %s.%d\n", ip, port);
+
+	// listen
+	aio_socket_accept(s_webserver, OnAccept, NULL);
+
+	WebSession* session = new WebSession(socket, ip, port);
+	session->Run();
 }
 
-sys_task_queue_t g_taskQ;
+static int InitWebServer(const char* ip, int port)
+{
+	socket_t server = tcpserver_create(ip, port, 256);
+	if(0 == server)
+	{
+		printf("server listen at %s.%d error: %d\n", ip?ip:"127.0.0.1", port, socket_geterror());
+		return -1;
+	}
+
+	s_webserver = aio_socket_create(server, 1);
+	return aio_socket_accept(s_webserver, OnAccept, NULL); // start server
+}
+
 int main(int argc, char* argv[])
 {
 #if defined(OS_LINUX)
@@ -41,10 +74,7 @@ int main(int argc, char* argv[])
 	sigaction(SIGPIPE, &sa, 0);
 #endif
 
-	tcpserver_t tcpserver;
-	tcpserver_handler_t tcphandler;
-	tcphandler.onerror = OnTcpError;
-	tcphandler.onconnected = OnTcpConnected;
+	s_workers = system_getcpucount() * 2;
 
 	// use proxy
 	config_proxy_load();
@@ -56,14 +86,21 @@ int main(int argc, char* argv[])
 	socket_init();
 	jokedb_init();
 	jokecomment_init();
-	g_taskQ = sys_task_queue_create(20);
-	tcpserver = tcpserver_start(NULL, 2001, &tcphandler, NULL);
 
-	while('q' != getchar())
+	g_taskQ = sys_task_queue_create(20); // task queue
+
+	aio_socket_init(s_workers, 2*60*1000);
+	for(int i=0; i<s_workers; i++)
+		sys_thread_pool_push(OnWorker, NULL); // start worker
+
+	InitWebServer(NULL, 2001); // start web server
+
+	for(char c = getchar(); 'q' != c ; c = getchar())
 	{
 	}
 
-	tcpserver_stop(tcpserver);
+	aio_socket_destroy(s_webserver);
+	aio_socket_clean();
 	sys_task_queue_destroy(g_taskQ);
 	jokecomment_save();
 	jokedb_clean();

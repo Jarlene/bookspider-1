@@ -21,6 +21,7 @@ SOURCE_PATHS = json
 SOURCE_FILES = $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.cpp))
 SOURCE_FILES += $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.c))
 
+SOURCE_FILES += $(ROOT)/source/aio-socket-epoll.c
 SOURCE_FILES += $(ROOT)/source/http-server.cpp
 SOURCE_FILES += $(ROOT)/source/HttpSocket.cpp
 SOURCE_FILES += $(ROOT)/source/http-upload.c
@@ -30,7 +31,6 @@ SOURCE_FILES += $(ROOT)/source/log.cpp
 SOURCE_FILES += $(ROOT)/source/sysnetconfig.c
 SOURCE_FILES += $(ROOT)/source/systimeconfig.c
 SOURCE_FILES += $(ROOT)/source/sysprocess.c
-SOURCE_FILES += $(ROOT)/source/tcpserver.c
 SOURCE_FILES += $(ROOT)/source/thread-pool.c
 SOURCE_FILES += $(ROOT)/source/task-queue.c
 SOURCE_FILES += $(ROOT)/source/time64.c
