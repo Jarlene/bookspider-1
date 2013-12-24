@@ -1,5 +1,4 @@
 #include "web-session.h"
-#include "http-server.h"
 #include "http-proxy.h"
 #include "cppstringext.h"
 
@@ -8,7 +7,7 @@ int config_proxy_save();
 int WebSession::OnProxy()
 {
 	char msg[128] = {0};
-	const char* from = http_server_get_header(m_http, "x-forward-for");
+	const char* from = http_get_header_by_name(m_http, "x-forward-for");
 	if(!from)
 		from = m_ip.c_str();
 	snprintf(msg, sizeof(msg), "Hello Proxy: %s", from);

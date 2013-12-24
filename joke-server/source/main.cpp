@@ -22,7 +22,7 @@ sys_task_queue_t g_taskQ;
 
 int config_proxy_load();
 
-void OnWorker(void* param)
+void AioWorker(void* param)
 {
 	while(1)
 	{
@@ -74,8 +74,6 @@ int main(int argc, char* argv[])
 	sigaction(SIGPIPE, &sa, 0);
 #endif
 
-	s_workers = system_getcpucount() * 2;
-
 	// use proxy
 	config_proxy_load();
 	http_proxy_add_pattern("*.budejie.com");
@@ -87,11 +85,12 @@ int main(int argc, char* argv[])
 	jokedb_init();
 	jokecomment_init();
 
-	g_taskQ = sys_task_queue_create(20); // task queue
+	s_workers = system_getcpucount() * 2;
+	g_taskQ = sys_task_queue_create(s_workers); // task queue
 
 	aio_socket_init(s_workers, 2*60*1000);
 	for(int i=0; i<s_workers; i++)
-		sys_thread_pool_push(OnWorker, NULL); // start worker
+		sys_thread_pool_push(AioWorker, NULL); // start worker
 
 	InitWebServer(NULL, 2001); // start web server
 

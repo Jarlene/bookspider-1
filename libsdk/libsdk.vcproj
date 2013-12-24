@@ -195,6 +195,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\sdk\source\aio.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\sdk\include\aio.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\sdk\source\base64.c"
 				>
 			</File>
@@ -211,7 +219,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\sdk\source\http-server.cpp"
+				RelativePath="..\..\sdk\source\http-parser.c"
 				>
 			</File>
 			<File

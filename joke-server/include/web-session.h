@@ -2,6 +2,8 @@
 #define _WebSession_h_
 
 #include "sys/sock.h"
+#include "aio-socket.h"
+#include "http-parser.h"
 #include "libct/object.h"
 #include "libct/auto_obj.h"
 #include "jsonhelper.h"
@@ -25,7 +27,8 @@ public:
 private:
 	void OnApi();
 
-	int Recv();
+	static void OnRecv(void* param, int code, int bytes);
+	static void OnSend(void* param, int code, int bytes);
 	int Send(int code, const char* contentType, const void* data, int len);
 
 	int OnProxy();
@@ -36,8 +39,10 @@ private:
 	int OnCleanup();
 
 private:
-	std::string m_ip;
-	socket_t m_sock;
+	char m_buffer[2*1024];
+	char m_buffer2[2*1024];
+	aio_socket_t m_sock;
+	std::string m_ip;	
 	int m_port;
 
 	std::string m_path;

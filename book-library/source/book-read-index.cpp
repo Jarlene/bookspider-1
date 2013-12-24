@@ -32,9 +32,9 @@ static int OnReadIndex(void* param, const char* xml)
 			if(chapter.empty() || uri.empty())
 				continue;
 
-			if(0 == p->begintime[0] || strcmp(p->begintime, datetime.c_str() > 0))
+			if(0 == p->begintime[0] || strcmp(p->begintime, datetime.c_str()) > 0)
 				strncpy(p->begintime, datetime.c_str(), 10);
-			if(0 == p->endtime[0] || strcmp(p->endtime, datetime.c_str() < 0))
+			if(0 == p->endtime[0] || strcmp(p->endtime, datetime.c_str()) < 0)
 				strncpy(p->endtime, datetime.c_str(), 10);
 
 			chapters.push_back(name);

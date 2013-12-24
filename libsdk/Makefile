@@ -22,8 +22,8 @@ SOURCE_FILES = $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.cpp))
 SOURCE_FILES += $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.c))
 
 SOURCE_FILES += $(ROOT)/source/aio-socket-epoll.c
-SOURCE_FILES += $(ROOT)/source/http-server.cpp
 SOURCE_FILES += $(ROOT)/source/HttpSocket.cpp
+SOURCE_FILES += $(ROOT)/source/http-parser.c
 SOURCE_FILES += $(ROOT)/source/http-upload.c
 SOURCE_FILES += $(ROOT)/source/cookie.cpp
 SOURCE_FILES += $(ROOT)/source/dlog.cpp

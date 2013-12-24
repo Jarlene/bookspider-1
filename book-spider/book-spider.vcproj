@@ -192,6 +192,10 @@
 				RelativePath=".\source\search-book.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\libsdk\source\web-translate.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
