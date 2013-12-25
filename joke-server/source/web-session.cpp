@@ -28,13 +28,15 @@ WebSession::~WebSession()
 void WebSession::OnRecv(void* param, int code, int bytes)
 {
 	WebSession *self = (WebSession*)param;
-	if(0 == code)
+	if(0 == code && bytes > 0)
 	{
-		assert(bytes >= 0);
-		code = http_parser_input(self->m_http, self->m_buffer, &bytes);
+		int remain = bytes;
+		code = http_parser_input(self->m_http, self->m_buffer, &remain);
 		if(0 == code)
 		{
 			self->OnApi();
+
+			http_parser_clear(self->m_http);
 		}
 		else if(1 == code)
 		{
@@ -42,10 +44,10 @@ void WebSession::OnRecv(void* param, int code, int bytes)
 		}
 	}
 
-	if(code < 0)
+	if(code < 0 || 0 == bytes)
 	{
 		self->release();
-		dlog_log("\n[%d] WebSession::OnRecv error: %d\n", (int)time(NULL), code);
+		dlog_log("\n[%d] WebSession::OnRecv error: %d\n", (int)time(NULL), 0==bytes ? 0 : code);
 	}
 }
 
