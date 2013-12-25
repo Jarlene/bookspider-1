@@ -177,7 +177,19 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\source\api-18plus.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\source\api-comment.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\api-joke-image.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\api-joke-text.cpp"
 				>
 			</File>
 			<File

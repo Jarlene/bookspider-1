@@ -85,6 +85,11 @@ void WebSession::OnApi()
 		handlers.insert(std::make_pair("addproxy", &WebSession::OnAddProxy));
 		handlers.insert(std::make_pair("delproxy", &WebSession::OnDelProxy));
 		handlers.insert(std::make_pair("listproxy", &WebSession::OnListProxy));
+		handlers.insert(std::make_pair("hot-text", &WebSession::OnHotText));
+		handlers.insert(std::make_pair("hot-image", &WebSession::OnHotImage));
+		handlers.insert(std::make_pair("late-text", &WebSession::OnLateText));
+		handlers.insert(std::make_pair("late-image", &WebSession::OnLateImage));
+		handlers.insert(std::make_pair("18plus", &WebSession::On18Plus));
 	}
 
 	if(0 == strncmp(m_path.c_str(), "/api/", 5))
@@ -158,4 +163,20 @@ int WebSession::Send(int code, const char* contentType, const void* data, int le
 	socket_setbufvec(vec, 0, m_buffer2, strlen(m_buffer2));
 	socket_setbufvec(vec, 1, (void*)data, len);
 	return aio_socket_send_v(m_sock, vec, 2, OnSend, this);
+}
+
+int WebSession::ReplyRedirectTo(const char* uri)
+{
+	sprintf(m_buffer2, "HTTP/1.1 302 Found\r\n"
+		"Server: MD WebServer 0.1\r\n"
+		"location: %s\r\n"
+		"Connection: keep-alive\r\n"
+		"Keep-Alive: timeout=5,max=100\r\n"
+		"Content-Type: text/html; charset=utf-8\r\n"
+		"Content-Length: 0\r\n\r\n", 
+		uri);
+
+	socket_bufvec_t vec[1];
+	socket_setbufvec(vec, 0, m_buffer2, strlen(m_buffer2));
+	return aio_socket_send_v(m_sock, vec, 1, OnSend, this);
 }

@@ -23,6 +23,7 @@ public:
 	int ReplyArrary(const char* name, const std::string& value);
 	int Reply(int code, const char* msg);
 	int Reply(const std::string& reply);
+	int ReplyRedirectTo(const char* uri);
 
 private:
 	void OnApi();
@@ -37,6 +38,12 @@ private:
 	int OnListProxy();
 	int OnComment();
 	int OnCleanup();
+
+	int On18Plus();
+	int OnHotText();
+	int OnHotImage();
+	int OnLateText();
+	int OnLateImage();
 
 private:
 	char m_buffer[2*1024];
