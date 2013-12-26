@@ -48,6 +48,8 @@ int jokedb_insert_jokes(const char* website, const Jokes& jokes);
 int jokedb_insert_comics(const char* website, const Comics& comics);
 int jokedb_insert_comments(const char* website, unsigned int id, const Comments& comments);
 
+int jokedb_query_jokes(const char* website, int image, int hot, Jokes& jokes);
+int jokedb_query_comics(const char* website, Comics& comics);
 int jokedb_query_comment(unsigned int id, char datetime[20], std::string& comment);
 
 #endif /* !_joke_db_h_ */

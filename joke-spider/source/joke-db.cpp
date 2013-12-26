@@ -2,6 +2,8 @@
 #include "sys/sync.hpp"
 #include "dbclient.h"
 #include "cstringext.h"
+#include "cppstringext.h"
+#include <algorithm>
 
 static void* db;
 static char buffer[2*1024*1024];
@@ -106,6 +108,50 @@ int jokedb_insert_jokes(const char* website, const Jokes& jokes)
 	return i;
 }
 
+static bool joke_approve_compare(const Joke& l, const Joke& r)
+{
+	return l.approve < r.approve;
+}
+
+int jokedb_query_jokes(const char* /*website*/, int images, int hot, Jokes& jokes)
+{
+	char sql[128] = {0};
+	if(1 == images)
+		snprintf(sql, sizeof(sql)-1, "select * from joke_image order by datetime desc limit 0,800");
+	else
+		snprintf(sql, sizeof(sql)-1, "select * from joke_text order by datetime desc limit 0,500");
+
+	DBQueryResult result;
+	AutoThreadLocker locker(g_locker);
+	int r = db_query(db, sql, result);
+	if(r < 0)
+		return r;
+
+	while(0 == result.FetchRow())
+	{
+		Joke joke;
+		int id = 0;
+		r = result.GetValue("id", id);
+		r = result.GetValue("author", joke.author);
+		r = result.GetValue("author_icon", joke.icon);
+		r = result.GetValue("datetime", joke.datetime);
+		r = result.GetValue("content", joke.content);
+		r = result.GetValue("image", joke.image);
+		r = result.GetValue("approve", joke.approve);
+		r = result.GetValue("disapprove", joke.disapprove);
+		r = result.GetValue("comment", joke.comment);
+		joke.id = (unsigned int)id;
+		jokes.push_back(joke);
+	}
+
+	if(hot)
+	{
+		std::sort(jokes.begin(), jokes.end(), joke_approve_compare);
+	}
+
+	return 0;
+}
+
 int jokedb_insert_comics(const char* /*website*/, const Comics& comics)
 {
 	AutoThreadLocker locker(g_locker);
@@ -145,6 +191,34 @@ int jokedb_insert_comics(const char* /*website*/, const Comics& comics)
 	sql.insert(0, "insert into joke_18plus (id, title, image, text, datetime) values ");
 	sql += " on duplicate key update text=values(text)";
 	return db_insert(db, sql.c_str());
+}
+
+int jokedb_query_comics(const char* /*website*/, Comics& comics)
+{
+	char sql[128] = {0};
+	snprintf(sql, sizeof(sql)-1, "select id, title, text, image, datetime from joke_18plus order by datetime desc limit 0,1000");
+
+	DBQueryResult result;
+	AutoThreadLocker locker(g_locker);
+	int r = db_query(db, sql, result);
+	if(r < 0)
+		return r;
+
+	while(0 == result.FetchRow())
+	{
+		int id = 0;
+		Comic comic;
+		std::string image;
+		r = result.GetValue("id", id);
+		r = result.GetValue("title", comic.title);
+		r = result.GetValue("text", comic.text);
+		r = result.GetValue("image", image);
+		r = result.GetValue("datetime", comic.datetime);
+		comic.id = id;
+		Split(image.c_str(), ',', comic.images);
+		comics.push_back(comic);
+	}
+	return 0;
 }
 
 int jokedb_insert_comments(const char* /*website*/, unsigned int id, const Comments& comments)
