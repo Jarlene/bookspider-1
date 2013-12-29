@@ -18,7 +18,7 @@ static int OnList(void* param, const char* id, const char* icon, const char* aut
 	joke.id = (unsigned int)atoi(p) + 2 * JOKE_SITE_ID;
 	joke.icon = icon;
 	joke.author = author;
-	joke.datetime.assign(datetime, 19);
+	joke.datetime.assign(datetime+(strlen(datetime)-19));
 	joke.content = content;
 	joke.image = strstr(image, "1px.jpg")?"":image;
 	joke.approve = approve;
@@ -42,9 +42,9 @@ int CBaiSiBuDeJie::List()
 	{
 		// latest update
 		if(2 == m_nav)
-			snprintf(uri, sizeof(uri)-1, "http://www.budejie.com/xcs.php?page=%d", page);
+			snprintf(uri, sizeof(uri)-1, "http://www.budejie.com/duanzi/%d", page);
 		else
-			snprintf(uri, sizeof(uri)-1, "http://www.budejie.com/index.php?page=%d", page);
+			snprintf(uri, sizeof(uri)-1, "http://www.budejie.com/%d", page);
 
 		Jokes jokes;
 		int r = joke_list(this, uri, NULL, OnList, &jokes);
@@ -68,6 +68,32 @@ int CBaiSiBuDeJie::List()
 
 int CBaiSiBuDeJie::Hot()
 {
+	char uri[256] = {0};
+	for(int page=1; page <= 100; page++)
+	{
+		// latest update
+		if(2 == m_nav)
+			snprintf(uri, sizeof(uri)-1, "http://www.budejie.com/hotdoc/%d", page);
+		else
+			snprintf(uri, sizeof(uri)-1, "http://www.budejie.com/hotpic/%d", page);
+
+		Jokes jokes;
+		int r = joke_list(this, uri, NULL, OnList, &jokes);
+		printf("CBaiSiBuDeJie::List[%d] joke_get=%d.\n", page, r);
+		if(0 != r)
+			return r;
+
+		if(jokes.size() < 1)
+			continue;
+
+		// save
+		r = jokedb_insert_jokes(GetName(), jokes);
+		if(r < 0)
+			printf("CBaiSiBuDeJie::List[%d] jokedb_insert=%d.\n", page, r);
+
+		system_sleep(5000);
+	}
+
 	return 0;
 }
 

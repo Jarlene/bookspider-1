@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <xml>
-    <xsl:for-each select="//div[class='main']/div/div/div">
+    <xsl:for-each select="//div[class='web_content_left']/div">
       <joke>
       	<id>
       	  <xsl:attr-of select="//p[class='web_size']" attr='id' />
       	</id>
+		<icon>
+      	  <xsl:attr-of select="//div[class='user_info']/ul/li/img" attr='src' />
+      	</icon>
   	    <author>
-          <xsl:value-of select="//div[class='web_msg']/p/a" />
+          <xsl:value-of select="//li[class='user_name']/p" />
         </author>
         <datetime>
-          <xsl:value-of select="//div[class='web_msg']/p/span" />
+          <xsl:value-of select="//p[class='time']" />
         </datetime>
         <contents>
           <xsl:for-each select="//p[class='web_size']/$">
@@ -19,16 +22,16 @@
           </xsl:for-each>
         </contents>
         <image>
-        	<xsl:attr-of select="//p[class='web_pic']/a/img" attr='src' />
+        	<xsl:attr-of select="div/div[2]/div/p[2]/a/img" attr='src' />
         </image>
         <approve>
-        	<xsl:value-of select="//div[class='web_column']/ul/li/a/span" />
+        	<xsl:value-of select="//ul[class='floatl']/li/a/span" />
         </approve>
         <disapprove>
-        	<xsl:value-of select="//div[class='web_column']/ul/li[2]/a/span" />
+        	<xsl:value-of select="//ul[class='floatl']/li[2]/a/span" />
         </disapprove>
         <comment>
-        	<xsl:value-of select="//div[class='web_column']/ul[2]/li/a/em" />
+        	<xsl:value-of select="//ul[class='floatr']/li[2]/a/span" />
         </comment>
       </joke>
     </xsl:for-each>
