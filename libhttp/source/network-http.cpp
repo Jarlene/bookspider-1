@@ -18,9 +18,16 @@ static int ReqHttp(HttpSocket* http, const char* uri, const char* req, mmptr& re
 
 	int code = http->GetResponse().GetStatusCode();
 	if(code >= 300 && code < 400)
+	{
+		std::string location;
+		if(http->GetResponse().GetHeader("location", location))
+			reply.set(location.c_str());
 		return ERROR_HTTP_REDIRECT;
+	}
 	else if(200 != code)
+	{
 		return -code;
+	}
 
 	assert(200 == code);
 	if(reply.size()>0)
