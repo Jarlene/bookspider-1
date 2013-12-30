@@ -69,7 +69,7 @@ int CBaiSiBuDeJie::List()
 int CBaiSiBuDeJie::Hot()
 {
 	char uri[256] = {0};
-	for(int page=1; page <= 100; page++)
+	for(int page=1; page <= 30; page++)
 	{
 		// latest update
 		if(2 == m_nav)
@@ -113,10 +113,10 @@ static int OnGetComment(void* param, const char* icon, const char* user, const c
 int CBaiSiBuDeJie::GetComment(Comments& comments, unsigned int id)
 {
 	char uri[256] = {0};
-	for(int i=1; 1; i++)
+	for(int i=1; i<2; i++)
 	{
 		size_t n = comments.size();
-		snprintf(uri, sizeof(uri)-1, "http://www.budejie.com/detail.php?id=%u&nav=%d&page=%d", id%(GetId()*JOKE_SITE_ID), m_nav, i);
+		snprintf(uri, sizeof(uri)-1, "http://www.budejie.com/detail-%u.html", id%(GetId()*JOKE_SITE_ID));
 		int r = joke_comment(this, uri, NULL, OnGetComment, &comments);
 		if(r < 0 || comments.size()==n)
 			break;
