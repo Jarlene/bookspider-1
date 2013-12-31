@@ -84,6 +84,13 @@ public:
 		return *this;
 	}
 
+	jsonobject& add(const char* name, unsigned int value)
+	{
+		addname(name);
+		m_json += ToString(value);
+		return *this;
+	}
+
 	jsonobject& add(const char* name, bool value)
 	{
 		addname(name);
