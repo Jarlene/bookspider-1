@@ -12,15 +12,16 @@ int Inflate(const void* ptr, size_t len, mmptr& result);
 
 static int ReqHttp(HttpSocket* http, const char* uri, const char* req, mmptr& reply)
 {
-	int r = (req&&*req)?http->Post(uri, req, strlen(req), reply):http->Get(uri, reply);
+	int r = (req&&*req)?http->Post(uri, req, strlen(req)):http->Get(uri);
 	if(r < 0)
 		return r;
 
-	int code = http->GetResponse().GetStatusCode();
+	const HttpResponse& response = http->GetResponse();
+	int code = response.GetStatusCode();
 	if(code >= 300 && code < 400)
 	{
 		std::string location;
-		if(http->GetResponse().GetHeader("location", location))
+		if(response.GetHeader("location", location))
 			reply.set(location.c_str());
 		return ERROR_HTTP_REDIRECT;
 	}
@@ -30,10 +31,11 @@ static int ReqHttp(HttpSocket* http, const char* uri, const char* req, mmptr& re
 	}
 
 	assert(200 == code);
+	reply.set(response.GetReply(), response.GetContentLength());
 	if(reply.size()>0)
 	{
 		std::string contentEncoding;
-		http->GetResponse().GetContentEncoding(contentEncoding);
+		response.GetContentEncoding(contentEncoding);
 		if(contentEncoding.size())
 		{
 			mmptr result;
