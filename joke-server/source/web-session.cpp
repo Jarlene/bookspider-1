@@ -35,8 +35,6 @@ void WebSession::OnRecv(void* param, int code, int bytes)
 		if(0 == code)
 		{
 			self->OnApi();
-
-			http_parser_clear(self->m_http);
 		}
 		else if(1 == code)
 		{
@@ -137,7 +135,10 @@ void WebSession::OnSend(void* param, int code, int bytes)
 {
 	WebSession *self = (WebSession*)param;
 	if(0 == code)
+	{
+		http_parser_clear(self->m_http);
 		code = aio_socket_recv(self->m_sock, self->m_buffer, sizeof(self->m_buffer), OnRecv, self);
+	}
 
 	if(code < 0)
 		self->release();
