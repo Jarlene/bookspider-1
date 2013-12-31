@@ -9,10 +9,12 @@
 
 #define MAX_TOP_BOOK	500
 
-#if 0
+#define TOP_BOOK_STORE_LOCAL 1
+
+#if TOP_BOOK_STORE_LOCAL
 #include "../libsdk/json/jsonhelper.h"
 #include "time64.h"
-static void SaveBook(const BookManager::Books& books)
+static void SaveBook(IBookSite* site, EBookTop type, const BookManager::Books& books)
 {
 	jsonarray jarr;
 	BookManager::Books::const_iterator it;
@@ -32,7 +34,7 @@ static void SaveBook(const BookManager::Books& books)
 	char date[12] = {0};
 	time64_format(time64_now(), "%04Y-%02M-%02D", date);
 	char filename[128]= {0};
-	snprintf(filename, sizeof(filename), "%s-%d-%s.json", site->GetName(), types[i], date);
+	snprintf(filename, sizeof(filename), "%s-%d-%s.json", site->GetName(), type, date);
 
 	FILE* fp = fopen(filename, "w");
 	std::string json = jarr.json();
@@ -71,12 +73,16 @@ static int STDCALL OnThread(void* param)
 			continue;
 		}
 
+#if TOP_BOOK_STORE_LOCAL
+		SaveBook(site, types[i], books);
+#else
 		r = bookmgr->SetTopBooks(types[i], books);
 		if(r < 0)
 		{
 			printf("%s:%d save site[%s], top[%d] books error: %d\n", __FILE__, __LINE__, site->GetName(), i, r);
 			continue;
 		}
+#endif
 	}
 
 	return 0;
