@@ -60,6 +60,7 @@ static int InitWebServer(const char* ip, int port)
 		return -1;
 	}
 
+	printf("server listen at %s:%d\n", ip?ip:"localhost", port);
 	s_webserver = aio_socket_create(server, 1);
 	return aio_socket_accept(s_webserver, OnAccept, NULL); // start server
 }
@@ -73,6 +74,15 @@ int main(int argc, char* argv[])
 	sigaction(SIGCHLD, &sa, 0);
 	sigaction(SIGPIPE, &sa, 0);
 #endif
+
+	int port = 2001;
+	for(int i=1; i<argc; i++)
+	{
+		if(streq(argv[i], "--port") && i+1<argc)
+		{
+			port = atoi(argv[++i]);
+		}
+	}
 
 	// use proxy
 	config_proxy_load();
@@ -92,7 +102,7 @@ int main(int argc, char* argv[])
 	for(int i=0; i<s_workers; i++)
 		sys_thread_pool_push(AioWorker, NULL); // start worker
 
-	InitWebServer(NULL, 2001); // start web server
+	InitWebServer(NULL, port); // start web server
 
 	for(char c = getchar(); 'q' != c ; c = getchar())
 	{
