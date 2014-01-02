@@ -112,11 +112,14 @@ static void OnAction(void* param)
 	for(it = sessions.begin(); it != sessions.end(); ++it)
 	{
 		WebSession* session = *it;
-		if(0 != r)
-			session->Reply(r, "Get comment failed.");
-		else
-			session->ReplyArrary("data", comment);
-		session->release();
+		if(session)
+		{
+			if(0 != r)
+				session->Reply(r, "Get comment failed.");
+			else
+				session->ReplyArrary("data", comment);
+			session->release();
+		}
 	}
 }
 
@@ -134,16 +137,19 @@ int WebSession::OnComment()
 	std::string comment;
 	int r = jokecomment_query(id, datetime, comment);
 	if(0 == r)
-		r = ReplyArrary("data", comment);
+	{
+		int ret = ReplyArrary("data", comment);
 
-	// valid if in 10-minutes
-	if(datetime + 10*60*1000 > time64_now())
-		return r;
+		// valid if in 10-minutes
+		if(datetime + 10*60*1000 > time64_now())
+			return ret;
+	}
 
-	addref();
+	if(0 != r)
+		addref();
 
 	// update from website
-	if(PushSession(id, this))
+	if(PushSession(id, 0==r?NULL:this))
 	{
 		TCommentArgs* args = (TCommentArgs*)malloc(sizeof(TCommentArgs));
 		args->id = id;
