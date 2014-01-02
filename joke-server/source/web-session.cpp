@@ -160,10 +160,9 @@ int WebSession::Send(int code, const char* contentType, const void* data, int le
 		dlog_log("%s\n", (const char*)data);
 	}
 
-	socket_bufvec_t vec[2];
-	socket_setbufvec(vec, 0, m_buffer2, strlen(m_buffer2));
-	socket_setbufvec(vec, 1, (void*)data, len);
-	return aio_socket_send_v(m_sock, vec, 2, OnSend, this);
+	socket_setbufvec(m_vec, 0, m_buffer2, strlen(m_buffer2));
+	socket_setbufvec(m_vec, 1, (void*)data, len);
+	return aio_socket_send_v(m_sock, m_vec, 2, OnSend, this);
 }
 
 int WebSession::ReplyRedirectTo(const char* uri)
@@ -177,7 +176,6 @@ int WebSession::ReplyRedirectTo(const char* uri)
 		"Content-Length: 0\r\n\r\n", 
 		uri);
 
-	socket_bufvec_t vec[1];
-	socket_setbufvec(vec, 0, m_buffer2, strlen(m_buffer2));
-	return aio_socket_send_v(m_sock, vec, 1, OnSend, this);
+	socket_setbufvec(m_vec, 0, m_buffer2, strlen(m_buffer2));
+	return aio_socket_send_v(m_sock, m_vec, 1, OnSend, this);
 }

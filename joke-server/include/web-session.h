@@ -49,6 +49,7 @@ private:
 	char m_buffer[2*1024];
 	char m_buffer2[2*1024];
 	aio_socket_t m_sock;
+	socket_bufvec_t m_vec[2];
 	std::string m_ip;	
 	int m_port;
 
