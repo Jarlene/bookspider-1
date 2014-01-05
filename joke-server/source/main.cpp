@@ -26,7 +26,7 @@ void AioWorker(void* param)
 {
 	while(1)
 	{
-		int r = aio_socket_process();
+		int r = aio_socket_process(2*60*1000);
 		if(0 != r)
 		{
 			printf("aio socket error: %d\n", r);
@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
 	s_workers = system_getcpucount() * 2;
 	g_taskQ = sys_task_queue_create(s_workers); // task queue
 
-	aio_socket_init(s_workers, 2*60*1000);
+	aio_socket_init(s_workers);
 	for(int i=0; i<s_workers; i++)
 		sys_thread_pool_push(AioWorker, NULL); // start worker
 
