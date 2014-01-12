@@ -185,11 +185,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\source\api-joke-image.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\source\api-joke-text.cpp"
+				RelativePath=".\source\api-joke.cpp"
 				>
 			</File>
 			<File
@@ -240,6 +236,14 @@
 			</File>
 			<File
 				RelativePath="..\joke-spider\include\joke-db.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\joke-list.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\joke-node.h"
 				>
 			</File>
 			<File

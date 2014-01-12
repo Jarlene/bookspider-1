@@ -4,6 +4,7 @@
 #include "aio-socket.h"
 #include "sys-thread-pool.h"
 #include "sys-task-queue.h"
+#include "sys-timer.h"
 #include "web-session.h"
 #include "joke-comment-db.h"
 #include "http-proxy.h"
@@ -104,10 +105,18 @@ int main(int argc, char* argv[])
 
 	InitWebServer(NULL, port); // start web server
 
+	WebSession::OnJokeTimer(NULL, NULL);
+	WebSession::On18PlusTimer(NULL, NULL);
+	sys_timer_t jokeTimer = NULL;
+	sys_timer_t comicTimer = NULL;
+	sys_timer_start(&jokeTimer, 15*60*1000, WebSession::OnJokeTimer, NULL);
+	sys_timer_start(&comicTimer, 15*60*1000, WebSession::On18PlusTimer, NULL);
 	for(char c = getchar(); 'q' != c ; c = getchar())
 	{
 	}
 
+	sys_timer_stop(&jokeTimer);
+	sys_timer_stop(&comicTimer);
 	aio_socket_destroy(s_webserver);
 	aio_socket_clean();
 	sys_task_queue_destroy(g_taskQ);
