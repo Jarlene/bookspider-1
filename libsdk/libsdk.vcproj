@@ -195,14 +195,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\sdk\source\aio.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\sdk\include\aio.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\sdk\source\base64.c"
 				>
 			</File>
