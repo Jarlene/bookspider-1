@@ -1,5 +1,6 @@
 #include "web-session.h"
 #include "cstringext.h"
+#include "tcpserver.h"
 #include "dlog.h"
 #include "url.h"
 #include "config.h"
@@ -11,6 +12,7 @@ WebSession::WebSession(socket_t sock, const char* ip, int port)
 {
 	m_ip = ip;
 	m_port = port;
+	m_cache = NULL;
 
 	m_sock = aio_socket_create(sock, 1);
 	m_http = http_parser_create(HTTP_PARSER_SERVER);
@@ -131,9 +133,21 @@ int WebSession::Reply(const std::string& reply)
 	return Send(200, "application/json", reply.c_str(), reply.length());
 }
 
+int WebSession::Reply(struct joke_cache *joke, int page)
+{
+	assert(!m_cache);
+	m_cache = joke;
+	const char* data = joke->jokes[page];
+	return Send(200, "application/json", data, strlen(data));
+}
+
 void WebSession::OnSend(void* param, int code, int bytes)
 {
 	WebSession *self = (WebSession*)param;
+	assert(self->m_cache);
+	joke_cache_release(self->m_cache);
+	self->m_cache = NULL;
+
 	if(0 == code)
 	{
 		http_parser_clear(self->m_http);
@@ -178,4 +192,53 @@ int WebSession::ReplyRedirectTo(const char* uri)
 
 	socket_setbufvec(m_vec, 0, m_buffer2, strlen(m_buffer2));
 	return aio_socket_send_v(m_sock, m_vec, 1, OnSend, this);
+}
+
+static sys_timer_t s_jokeTimer;
+static aio_socket_t s_webserver;
+
+static void OnAccept(void*, int code, socket_t socket, const char* ip, int port)
+{
+	if(0 != code)
+	{
+		printf("aio socket accept error: %d/%d.\n", code, socket_geterror());
+		exit(1);
+	}
+
+	printf("aio socket accept %s.%d\n", ip, port);
+
+	// listen
+	aio_socket_accept(s_webserver, OnAccept, NULL);
+
+	WebSession* session = new WebSession(socket, ip, port);
+	session->Run();
+}
+
+int WebSession::Start(const char* ip, int port)
+{
+	WebSession::OnJokeTimer(NULL, NULL); // update first
+	int r = sys_timer_start(&s_jokeTimer, 15*60*1000, WebSession::OnJokeTimer, NULL);
+	if(0 != r)
+	{
+		printf("start joke timer error: %d\n", r);
+		return r;
+	}
+
+	socket_t server = tcpserver_create(ip, port, 256);
+	if(0 == server)
+	{
+		printf("server listen at %s.%d error: %d\n", ip?ip:"127.0.0.1", port, socket_geterror());
+		return -1;
+	}
+
+	printf("server listen at %s:%d\n", ip?ip:"localhost", port);
+	s_webserver = aio_socket_create(server, 1);
+	return aio_socket_accept(s_webserver, OnAccept, NULL); // start server
+}
+
+int WebSession::Stop()
+{
+	sys_timer_stop(&s_jokeTimer);
+	aio_socket_destroy(s_webserver);
+	return 0;
 }

@@ -8,8 +8,8 @@
 #include "libct/auto_obj.h"
 #include "jsonhelper.h"
 #include "uri-params.h"
-#include "joke-list.h"
 #include "sys-timer.h"
+#include "joke-node.h"
 #include "error.h"
 #include <string>
 
@@ -21,13 +21,14 @@ public:
 
 	void Run();
 
-	static void OnJokeTimer(sys_timer_t id, void* param);
-	static void On18PlusTimer(sys_timer_t id, void* param);
-
+	static int Start(const char* ip, int port);
+	static int Stop();
+	
 public:
 	int ReplyArrary(const char* name, const std::string& value);
+	int Reply(struct joke_cache *joke, int page);
 	int Reply(int code, const char* msg);
-	int Reply(const std::string& reply);
+	int Reply(const std::string& reply);	
 	int ReplyRedirectTo(const char* uri);
 
 private:
@@ -47,11 +48,13 @@ private:
 	int OnLateImage();
 
 private:
+	static void OnJokeTimer(sys_timer_t id, void* param);
+
 	static void OnRecv(void* param, int code, int bytes);
 	static void OnSend(void* param, int code, int bytes);
 	int Send(int code, const char* contentType, const void* data, int len);
 
-	int OnJoke(struct rwlist* list, const char* redirect);
+	int OnJoke(struct joke_node* list, int count, const char* redirect);
 
 
 private:
@@ -61,6 +64,7 @@ private:
 	socket_bufvec_t m_vec[2];
 	std::string m_ip;	
 	int m_port;
+	struct joke_cache *m_cache;
 
 	std::string m_path;
 	URIParams m_params;

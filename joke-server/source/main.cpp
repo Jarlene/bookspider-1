@@ -1,6 +1,5 @@
 #include "sys/sock.h"
 #include "sys/system.h"
-#include "tcpserver.h"
 #include "aio-socket.h"
 #include "sys-thread-pool.h"
 #include "sys-task-queue.h"
@@ -18,7 +17,6 @@
 #endif
 
 static int s_workers = 0;
-static aio_socket_t s_webserver;
 sys_task_queue_t g_taskQ;
 
 int config_proxy_load();
@@ -33,37 +31,6 @@ void AioWorker(void* param)
 			printf("aio socket error: %d\n", r);
 		}
 	}
-}
-
-void OnAccept(void*, int code, socket_t socket, const char* ip, int port)
-{
-	if(0 != code)
-	{
-		printf("aio socket accept error: %d/%d.\n", code, socket_geterror());
-		exit(1);
-	}
-
-	printf("aio socket accept %s.%d\n", ip, port);
-
-	// listen
-	aio_socket_accept(s_webserver, OnAccept, NULL);
-
-	WebSession* session = new WebSession(socket, ip, port);
-	session->Run();
-}
-
-static int InitWebServer(const char* ip, int port)
-{
-	socket_t server = tcpserver_create(ip, port, 256);
-	if(0 == server)
-	{
-		printf("server listen at %s.%d error: %d\n", ip?ip:"127.0.0.1", port, socket_geterror());
-		return -1;
-	}
-
-	printf("server listen at %s:%d\n", ip?ip:"localhost", port);
-	s_webserver = aio_socket_create(server, 1);
-	return aio_socket_accept(s_webserver, OnAccept, NULL); // start server
 }
 
 int main(int argc, char* argv[])
@@ -103,21 +70,12 @@ int main(int argc, char* argv[])
 	for(int i=0; i<s_workers; i++)
 		sys_thread_pool_push(AioWorker, NULL); // start worker
 
-	InitWebServer(NULL, port); // start web server
-
-	WebSession::OnJokeTimer(NULL, NULL);
-	WebSession::On18PlusTimer(NULL, NULL);
-	sys_timer_t jokeTimer = NULL;
-	sys_timer_t comicTimer = NULL;
-	sys_timer_start(&jokeTimer, 15*60*1000, WebSession::OnJokeTimer, NULL);
-	sys_timer_start(&comicTimer, 15*60*1000, WebSession::On18PlusTimer, NULL);
+	WebSession::Start(NULL, port); // start web server
 	for(char c = getchar(); 'q' != c ; c = getchar())
 	{
 	}
 
-	sys_timer_stop(&jokeTimer);
-	sys_timer_stop(&comicTimer);
-	aio_socket_destroy(s_webserver);
+	WebSession::Stop();
 	aio_socket_clean();
 	sys_task_queue_destroy(g_taskQ);
 	jokecomment_save();

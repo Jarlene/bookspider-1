@@ -1,34 +1,34 @@
 #include "web-session.h"
 #include "joke-db.h"
-#include "joke-node.h"
 #include "jsonhelper.h"
 #include "log.h"
 #include <time.h>
 
-static struct rwlist s_comics;
+#define JOKE_NODE_NUM 5
+
+static struct joke_node s_comics[JOKE_NODE_NUM];
 
 int WebSession::On18Plus()
 {
-	return OnJoke(&s_comics, "/joke/18plus.php?");
+	return OnJoke(s_comics, JOKE_NODE_NUM, "/joke/18plus.php?");
 }
 
-static int Query18Plus()
+int Query18Plus(time_t tnow)
 {
 	Comics comics;
 	int r = jokedb_query_comics(NULL, comics);
 	if(r < 0)
 	{
-		log_error("WebSession::On18PlusTimer jokedb_query_comics error: %d\n", r);
+		log_error("Query18Plus jokedb_query_comics error: %d\n", r);
 		return r;
 	}
 
-	joke_node* node = (joke_node*)malloc(sizeof(joke_node));
-	if(!node)
+	joke_cache* cache = (joke_cache*)malloc(sizeof(joke_cache));
+	if(!cache)
 		return -ENOMEM;
 
-	memset(node, 0, sizeof(joke_node));
-	node->time = time(NULL);
-	node->ref = 1;
+	memset(cache, 0, sizeof(joke_cache));
+	cache->ref = 1;
 
 	jsonarray jarr[PAGE_NUM];
 	for(int i = 0; i < (int)comics.size() && i < PAGE_SIZE*PAGE_NUM; i++)
@@ -46,18 +46,13 @@ static int Query18Plus()
 	{
 		jsonobject json;
 		json.add("code", 0).add("msg", "ok");
-		json.add("timestamp", (unsigned int)time(NULL));
+		json.add("timestamp", (unsigned int)tnow);
 		json.add("data", jarr[i]);
 
-		node->jokes[node->count++] = strdup(json.json().c_str());
+		cache->jokes[cache->count++] = strdup(json.json().c_str());
 	}
 
-	rwlist_push(&s_comics, &node->list);
-	log_info("WebSession::On18PlusTimer ok, comics: %u\n", comics.size());
+	joke_node_push(s_comics, JOKE_NODE_NUM, tnow, cache);
+	joke_cache_release(cache);
 	return 0;
-}
-
-void WebSession::On18PlusTimer(sys_timer_t /*id*/, void* /*param*/)
-{
-	Query18Plus();
 }
