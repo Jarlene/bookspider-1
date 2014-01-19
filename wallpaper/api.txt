@@ -1,5 +1,5 @@
 1. 获取分类
-/wallpaper/catalog
+/wallpaper/catalog?device=iphone5
 
 返回格式：
 {
@@ -8,67 +8,28 @@
 	"data"	:
 	[
 		{
-			"id"		: "AF00",
-			"name"		: "全部",
+			"catalog"	: "全部",
 			"subcatalog": [] // 子类（注意：有的子类为空）
 		},
 
 		{
-			"id"		: "AF12",
-			"name"		: "风景",			
-			"subcatalog":
-			[
-				{
-					"id"  	: "AF128CFE",
-					"name"	: "自然风景"
-				},
-				
-				{
-					"id"	: "AF128CFF",
-					"name"	: "绿色风景"					
-				}
-			]
+			"catalog"	: "风景",			
+			"subcatalog":[ "自然风景", "绿色风景" ]
 		},
 
 		{
-			"id"		: "AF01",
-			"name"		: "美女",
-			"subcatalog":
-			[
-				{
-					"id"	: "AF0101",
-					"name"	: "清纯美女"					
-				},
-				
-				{
-					"id"	: "AF0102",
-					"name" 	: "古装美女"
-				}
-			]
+			"catalog"	: "美女",
+			"subcatalog":[ "清纯美女",  "古装美女" ]
 		}
 	]
 }
 
-2. 获取分辨率
-/wallpaper/resolution
-
-返回格式：
-{
-	"code"  : 0,
-	"msg	: "ok",
-	"data"	:
-	[
-		"800x1280",
-		"720x1280"
-	]
-}
-
-3. 获取相册列表：
-/wallpaper/album?catalog=AF0102&device=iphone5s&order=update&page=1
+2. 获取壁纸：
+/wallpaper/album?device=iphone5s&catalog=清纯美女
 
 参数说明：
-catalog: 分类编号，catalog返回的id值
 device：设备类型，可输入iphone5/iphone5s/iphone4s
+catalog: 分类
 order：排序方式：update-按最近更新排序, rank-按推荐数排序, download-按下载量排序, 只有查看全部壁纸时才有效（可选参数，默认按最新排序）
 page：页码（可选参数，默认值1）
 orient：landscape-横屏，seascape-竖屏（可选参数，默认竖屏）
@@ -81,30 +42,22 @@ orient：landscape-横屏，seascape-竖屏（可选参数，默认竖屏）
 	[
 		{
 			"name" : "花丛高清手机壁纸", // 相册名（注意：相册名称可能会重复，但是网址不同）
-			"uri"  : "/bizhi/detail_1339_15070.html",
-			"image": "http://b.zol-img.com.cn/sjbizhi/images/2/208x170/1352969123830.jpg"   // 相册图标
+			"image":
+			[
+				"http://b.zol-img.com.cn/sjbizhi/images/6/120x90/138934176113.jpg",
+				"http://b.zol-img.com.cn/sjbizhi/images/6/120x90/1389341760797.jpg",
+				"http://b.zol-img.com.cn/sjbizhi/images/6/120x90/1389341759892.jpg"
+			]
 		},
 
 		{
-			"name" : "花丛高清手机壁纸",
-			"uri"  : "/bizhi/detail_1339_15071.html",
-			"image": "http://b.zol-img.com.cn/sjbizhi/images/2/208x170/1352969127177.jpg"
+			"name" : "花丛高清手机壁纸2",
+			"image":
+			[
+				"http://b.zol-img.com.cn/sjbizhi/images/6/120x90/138934176113.jpg",
+				"http://b.zol-img.com.cn/sjbizhi/images/6/120x90/1389341760797.jpg",
+				"http://b.zol-img.com.cn/sjbizhi/images/6/120x90/1389341759892.jpg"
+			]
 		}
-	]
-}
-
-4. 查看相册图片：
-/wallpaper/view?uri=http://b.zol-img.com.cn/sjbizhi/images/2/208x170/1352969123830.jpg
-uri: 分类网址，特别注意：网址必须按照base64编码
-
-返回格式：
-{
-	"code"  : 0,
-	"msg	: "ok",
-	"data"	:
-	[
-		"http://b.zol-img.com.cn/sjbizhi/images/6/120x90/138934176113.jpg",
-		"http://b.zol-img.com.cn/sjbizhi/images/6/120x90/1389341760797.jpg",
-		"http://b.zol-img.com.cn/sjbizhi/images/6/120x90/1389341759892.jpg"
 	]
 }
