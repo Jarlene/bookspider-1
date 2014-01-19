@@ -32,7 +32,7 @@
 	$response = http_get($uri);
 
 	$doc = dom_parse($response);
-	$elements = xpath_query($doc, "//dl[@class='filter-item first clearfix']/dd[@class='brand-sel-box clearfix']");
+	$elements = xpath_query($doc, "//dl[@class='filter-item first clearfix']/dd");
 
 	$catalog = array();
 	if (!is_null($elements)) {
