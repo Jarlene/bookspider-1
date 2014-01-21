@@ -9,29 +9,50 @@
 
 		if (!is_null($elements)) {
 			foreach ($elements as $element) {
-				$src = $element->getAttribute('src');
+				$src = $element->getattribute('src');
 				if(strlen($src) < 1){
-					$src = $element->getAttribute('srcs');
+					$src = $element->getattribute('srcs');
 				}
 
 				if(strlen($src) > 0){
-					$album[] = $src;
+					// /sjbizhi/images/6/120x90/1390289717341.jpg => /sjbizhi/images/6/240x320/1390289717341.jpg
+					$file = basename($src);
+					$dir = dirname(dirname($src));
+					$album[] = array("dir" => $dir, "file" => $file);
 				}
 			}
 		}
-		
+
 		return $album;
 	}
 
-	function zol_wallpaper_album($uri)
+	function zol_wallpaper_album($uri, $sort, $page)
 	{
+		if(0==strcmp("hot", $sort))
+		{
+			$uri = $uri . 'hot_' . $page . '.html';
+		}
+		else if($page > 1){
+			$uri = $uri . $page . '.html';
+		}
+
 		$response = http_get($uri);
 		$doc = dom_parse($response);
 		$elements = xpath_query($doc, "//li[@class='photo-list-padding']/a");
 
-		$album = array();
+		$check_page = 0;
+		$pages = xpath_query($doc, "//div[@class='page']/*/text()");
+		foreach ($pages as $p) {
+			if(XML_TEXT_NODE == $p->nodeType){
+				if((int)$p->wholeText >= $page){
+					$check_page = 1;
+					break;
+				}
+			}
+		}
 
-		if (!is_null($elements)) {
+		$album = array();
+		if (1 == $check_page && !is_null($elements)) {
 			foreach ($elements as $element) {
 				$href = $element->getAttribute('href');
 				$title = $element->getAttribute('title');
@@ -95,23 +116,27 @@
 		return $catalog;
 	}
 	
-	function zol_wallpaper_device($device)
+	function zol_wallpaper_resolution($device)
 	{
 		$devices = array(
-			"iphone5s" => 'http://sj.zol.com.cn/bizhi/640x1136/',
-			"iphone5" => 'http://sj.zol.com.cn/bizhi/640x1136/',
-			"iphone4s" =>  'http://sj.zol.com.cn/bizhi/640x960/',
-			"iphone4" => 'http://sj.zol.com.cn/bizhi/640x960/',
-			"iphone3gs" => 'http://sj.zol.com.cn/bizhi/320x480/',
-			"iphone3" => 'http://sj.zol.com.cn/bizhi/320x480/',
-			"I9300" => 'http://sj.zol.com.cn/bizhi/720x1280/',
-			"I9100" => 'http://sj.zol.com.cn/bizhi/480x800/',
-			"HTCOne" => 'http://sj.zol.com.cn/bizhi/720x1280/',
-			"mi2" => 'http://sj.zol.com.cn/bizhi/720x1280/', // xiao mi 2
-			"mi1s" => 'http://sj.zol.com.cn/bizhi/480x854/', // xiao mi 1s
-			"k860" => 'http://sj.zol.com.cn/bizhi/720x1280/' // lenove K860
+			"iphone5s" => '640x1136',
+			"iphone5" => '640x1136',
+			"iphone4s" =>  '640x960',
+			"iphone4" => '640x960',
+			"iphone3gs" => '320x480',
+			"iphone3" => '320x480',
+			"I9300" => '720x1280',
+			"I9100" => '480x800',
+			"HTCOne" => '720x1280',
+			"mi2" => '720x1280', // xiao mi 2
+			"mi1s" => '480x854', // xiao mi 1s
+			"k860" => '720x1280' // lenove K860
 		);
-
+		return $devices[$device];
+	}
+	
+	function zol_wallpaper_device($device)
+	{
 		$mc = new Memcached();
 		$mc->addServer("localhost", 11211);
 
@@ -120,7 +145,7 @@
 
 		if (!$catalogs) {
 			$catalogs = array();
-			$uri = $devices[$device];
+			$uri = 'http://sj.zol.com.cn/bizhi/' . zol_wallpaper_resolution($device) . '/';
 			if($uri){
 				$catalog["name"] = "all";
 				$catalog["uri"] = $uri;

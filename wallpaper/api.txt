@@ -30,7 +30,7 @@
 参数说明：
 device：设备类型，可输入iphone5/iphone5s/iphone4s
 catalog: 分类
-order：排序方式：update-按最近更新排序, rank-按推荐数排序, download-按下载量排序, 只有查看全部壁纸时才有效（可选参数，默认按最新排序）
+order：排序方式：update-按最近更新排序, hot-按推荐数排序（可选参数，默认按最新排序）
 page：页码（可选参数，默认值1）
 orient：landscape-横屏，seascape-竖屏（可选参数，默认竖屏）
 
