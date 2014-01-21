@@ -98,9 +98,12 @@
 	function zol_wallpaper_device($device)
 	{
 		$devices = array(
+			"iphone5s" => 'http://sj.zol.com.cn/bizhi/640x1136/',
 			"iphone5" => 'http://sj.zol.com.cn/bizhi/640x1136/',
-			"iphone4" => 'http://sj.zol.com.cn/bizhi/640x960/',
 			"iphone4s" =>  'http://sj.zol.com.cn/bizhi/640x960/',
+			"iphone4" => 'http://sj.zol.com.cn/bizhi/640x960/',
+			"iphone3gs" => 'http://sj.zol.com.cn/bizhi/320x480/',
+			"iphone3" => 'http://sj.zol.com.cn/bizhi/320x480/',
 			"I9300" => 'http://sj.zol.com.cn/bizhi/720x1280/',
 			"I9100" => 'http://sj.zol.com.cn/bizhi/480x800/',
 			"HTCOne" => 'http://sj.zol.com.cn/bizhi/720x1280/',

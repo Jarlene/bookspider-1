@@ -1,5 +1,5 @@
 ﻿1. 获取分类
-/wallpaper/catalog?device=iphone5
+/wallpaper/catalog.php?device=iphone5
 
 返回格式：
 {
@@ -25,7 +25,7 @@
 }
 
 2. 获取壁纸：
-/wallpaper/album?device=iphone5s&catalog=清纯美女
+/wallpaper/album.php?device=iphone5s&catalog=清纯美女
 
 参数说明：
 device：设备类型，可输入iphone5/iphone5s/iphone4s
