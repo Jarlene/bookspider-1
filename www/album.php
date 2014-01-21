@@ -20,6 +20,10 @@
 	$mc = new Memcached();
 	$mc->addServer("localhost", 11211);
 
+	if(0 != strcmp("hot", $sort)){
+		$sort = "";
+	}
+
 	$mckey = "album-" . $device . "-" . $catalog . "-" . $sort . "-" . $page;
 //	$mc->delete($mckey);
 	$data = $mc->get($mckey);

@@ -2,6 +2,7 @@
 	function zol_wallpaper_image($uri)
 	{
 		$response = http_get($uri);
+		$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 		$doc = dom_parse($response);
 		$elements = xpath_query($doc, "//ul[@id='showImg']/li/a/img");
 
@@ -28,15 +29,14 @@
 
 	function zol_wallpaper_album($uri, $sort, $page)
 	{
-		if(0==strcmp("hot", $sort))
-		{
+		if(0==strcmp("hot", $sort)){
 			$uri = $uri . 'hot_' . $page . '.html';
-		}
-		else if($page > 1){
+		} else if($page > 1){
 			$uri = $uri . $page . '.html';
 		}
 
 		$response = http_get($uri);
+		$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 		$doc = dom_parse($response);
 		$elements = xpath_query($doc, "//li[@class='photo-list-padding']/a");
 
@@ -64,10 +64,11 @@
 
 		return $album;
 	}
-	
+
 	function zol_wallpaper_subcatalog($uri)
 	{
 		$response = http_get($uri);
+		$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 		$doc = dom_parse($response);
 		$elements = xpath_query($doc, "//dl[@class='filter-item clearfix subcateClass']/dd");
 
@@ -94,6 +95,7 @@
 	function zol_wallpaper_catalog($uri)
 	{
 		$response = http_get($uri);
+		$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 		$doc = dom_parse($response);
 		$elements = xpath_query($doc, "//dl[@class='filter-item first clearfix']/dd");
 
