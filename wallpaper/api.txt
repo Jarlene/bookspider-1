@@ -32,7 +32,7 @@ device：设备类型，可输入iphone5/iphone5s/iphone4s
 catalog: 分类
 order：排序方式：update-按最近更新排序, hot-按推荐数排序（可选参数，默认按最新排序）
 page：页码（可选参数，默认值1）
-orient：landscape-横屏，seascape-竖屏（可选参数，默认竖屏）
+orient：all-所有, landscape-横屏，seascape-竖屏（可选参数，默认竖屏）
 
 返回格式：
 {
@@ -47,7 +47,9 @@ orient：landscape-横屏，seascape-竖屏（可选参数，默认竖屏）
 				"http://b.zol-img.com.cn/sjbizhi/images/6/120x90/138934176113.jpg",
 				"http://b.zol-img.com.cn/sjbizhi/images/6/120x90/1389341760797.jpg",
 				"http://b.zol-img.com.cn/sjbizhi/images/6/120x90/1389341759892.jpg"
-			]
+			],
+			"refer" : "http://b.zol-img.com.cn/sjbizhi/images/6/120x90/",
+			"size"  : "120x90"
 		},
 
 		{
@@ -57,7 +59,9 @@ orient：landscape-横屏，seascape-竖屏（可选参数，默认竖屏）
 				"http://b.zol-img.com.cn/sjbizhi/images/6/120x90/138934176113.jpg",
 				"http://b.zol-img.com.cn/sjbizhi/images/6/120x90/1389341760797.jpg",
 				"http://b.zol-img.com.cn/sjbizhi/images/6/120x90/1389341759892.jpg"
-			]
+			],
+			"refer" : "http://b.zol-img.com.cn/sjbizhi/images/6/120x90/",
+			"size"  : "120x90"
 		}
 	]
 }

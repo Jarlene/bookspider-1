@@ -27,8 +27,15 @@
 		return $album;
 	}
 
-	function zol_wallpaper_album($uri, $sort, $page)
+	function zol_wallpaper_album($uri, $sort, $page, $orient)
 	{
+		if(0 == strcmp("seascape", $orient)){
+			$uri = substr($uri, 0, -1) . "_p2/";
+		}
+		else if(0 == strcmp("landscape", $orient)){
+			$uri = substr($uri, 0, -1) . "_p3/";
+		}
+
 		if(0==strcmp("hot", $sort)){
 			$uri = $uri . 'hot_' . $page . '.html';
 		} else if($page > 1){
@@ -40,8 +47,8 @@
 		$doc = dom_parse($response);
 		$elements = xpath_query($doc, "//li[@class='photo-list-padding']/a");
 
-		$check_page = 0;
 		$pages = xpath_query($doc, "//div[@class='page']/*/text()");
+		$check_page = 0 == $pages->length ? 1 : 0;
 		foreach ($pages as $p) {
 			if(XML_TEXT_NODE == $p->nodeType){
 				if((int)$p->wholeText >= $page){

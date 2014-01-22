@@ -6,6 +6,7 @@
 
 	$page = php_reqvar("page", "1");
 	$sort = php_reqvar("order", "");
+	$orient = php_reqvar("orient", 'seascape');
 	$device = php_reqvar("device", 'iphone5');
 	$catalog = php_reqvar("catalog", 'all');
 
@@ -16,7 +17,7 @@
 		$reply["data"] = array();
 		echo json_encode($reply);
 	}
-	
+
 	$mc = new Memcached();
 	$mc->addServer("localhost", 11211);
 
@@ -24,7 +25,7 @@
 		$sort = "";
 	}
 
-	$mckey = "album-" . $device . "-" . $catalog . "-" . $sort . "-" . $page;
+	$mckey = "album-" . $device . "-" . $catalog . "-" . $sort . "-" . $page . "-" . $orient;
 //	$mc->delete($mckey);
 	$data = $mc->get($mckey);
 
@@ -32,7 +33,7 @@
 		$data = array();
 		$size = zol_wallpaper_resolution($device);
 
-		$albums = zol_wallpaper_album($uri, $sort, $page);	
+		$albums = zol_wallpaper_album($uri, $sort, $page, $orient);	
 		foreach($albums as $key => $value){
 			$img = array();
 			$images = zol_wallpaper_image($value);
@@ -43,7 +44,8 @@
 			$data[] = array(
 				"name" => $key,
 				"image" => $img,
-				"refer" => $uri
+				"refer" => $uri,
+				"size" => $size
 			);
 		}
 
