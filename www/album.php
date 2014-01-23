@@ -32,20 +32,28 @@
 	if (!$data) {
 		$data = array();
 		$size = zol_wallpaper_resolution($device);
+		sscanf($size, "%dx%d", $width, $height);
 
 		$albums = zol_wallpaper_album($uri, $sort, $page, $orient);	
 		foreach($albums as $key => $value){
 			$img = array();
+			$img2 = array();
 			$images = zol_wallpaper_image($value);
 			foreach($images as $image){
 				$img[] = $image['dir'] . '/' . $size . '/' . $image['file'];
+				if($width >= 1024){
+					$img2[] = $image['dir'] . '/' . "960x600" . '/' . $image['file'];
+				} else {
+					$img2[] = $image['dir'] . '/' . "320x510" . '/' . $image['file'];
+				}
 			}
 
 			$data[] = array(
 				"name" => $key,
 				"image" => $img,
+				"image2" => $img2,
 				"refer" => $uri,
-				"size" => $size
+				"size" => $width >= 1024 ? "960x600" : "320x510" //$size
 			);
 		}
 

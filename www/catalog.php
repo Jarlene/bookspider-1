@@ -10,12 +10,12 @@
 	$data = array();
 	foreach($catalogs as $i){
 		$subcatalog = array();
-		foreach($i->subcatalog as $key => $value){
+		foreach($i["subcatalog"] as $key => $value){
 			$subcatalog[] = $key;
 		}
 
 		$catalog = array();
-		$catalog["catalog"] = $i->name;
+		$catalog["catalog"] = $i["name"];
 		$catalog["subcatalog"] = $subcatalog;
 		$data[] = $catalog;
 	}
