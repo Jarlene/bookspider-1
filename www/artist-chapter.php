@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 	require("php/http.inc");
 	require("php/dom.inc");
 	require("php/util.inc");
@@ -30,7 +30,6 @@
 		$chapters = pingshu8_chapters($uri);
 		foreach($chapters as $chapter => $href){
 			$uri = pingshu8_audio($href);
-			$uri = mb_convert_encoding($uri, "UTF-8", "gb2312");
 			if(strlen($chapter) > 0 && strlen($uri) > 0){
 				$data[] = array("name" => $chapter, "uri" => $uri);
 			}

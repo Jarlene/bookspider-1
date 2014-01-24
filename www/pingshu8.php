@@ -8,7 +8,7 @@
 			return "";
 		}
 
-		return 2 == count($matches) ? $matches[1] : "";
+		return 2 == count($matches) ? iconv("gb2312", "UTF-8", $matches[1]) : "";
 	}
 
 	function pingshu8_chapters($uri)
@@ -25,8 +25,7 @@
 			foreach ($elements as $element) {
 				$href = $element->getattribute('href');
 				$chapter = $element->nodeValue;
-				
-				//$chapter = mb_convert_encoding($chapter, "UTF-8", "gb2312");
+
 				if(strlen($href) > 0 && strlen($chapter) > 0){
 					$chapters[$chapter] = 'http://' . $host["host"] . $href;
 				}
@@ -51,7 +50,6 @@
 				$href = $element->getattribute('href');
 				$book = $element->nodeValue;
 
-				//$book = mb_convert_encoding($book, "UTF-8", "gb2312");
 				if(strlen($href) > 0 && strlen($book) > 0){
 					$books[$book] = 'http://' . $host["host"] . $href;
 				}
