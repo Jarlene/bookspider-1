@@ -140,7 +140,7 @@
 			"/iphone4.*/" =>  'http://sj.zol.com.cn/bizhi/640x960/',
 			"/iphone3.*/" => 'http://sj.zol.com.cn/bizhi/320x480/',
 			"/iphone\d*/" => 'http://sj.zol.com.cn/bizhi/640x1136/', // iphone6/iphone7/iphone8
-			"/ipad3.*/" => 'http://desk.zol.com.cn/2048x2048_p3/',
+			"/ipad3.*/" => 'http://desk.zol.com.cn/1024x1024_p3/', //'http://desk.zol.com.cn/2048x2048_p3/',
 			"/ipadair.*/" => 'http://desk.zol.com.cn/1536x2048_p3/',
 			"/ipadmini2.*/" => 'http://desk.zol.com.cn/1536x2048_p3/',
 			"/ipadmini.*/" => 'http://desk.zol.com.cn/1024x1024_p3/',
