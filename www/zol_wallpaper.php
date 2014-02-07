@@ -145,8 +145,8 @@
 			"/ipadmini2.*/" => 'http://desk.zol.com.cn/1536x2048_p3/',
 			"/ipadmini.*/" => 'http://desk.zol.com.cn/1024x1024_p3/',
 			"/ipad2.*/" => 'http://sj.zol.com.cn/bizhi/640x960/', //'http://desk.zol.com.cn/1024x1024_p3/',
-			"/ipad\D*/" => 'http://sj.zol.com.cn/bizhi/640x960/', //'http://desk.zol.com.cn/1024x1024_p3/',
-			"/ipad\d*/" => 'http://desk.zol.com.cn/2048x2048_p3/', // ipad4/ipad5/ipad6/ipad7/ipad8
+			"/ipad\D+.*/" => 'http://sj.zol.com.cn/bizhi/640x960/', //'http://desk.zol.com.cn/1024x1024_p3/',
+			"/ipad\d+.*/" => 'http://desk.zol.com.cn/1024x1024_p3/', //'http://desk.zol.com.cn/2048x2048_p3/', // ipad4/ipad5/ipad6/ipad7/ipad8
 			"/ipod.*/" => 'http://sj.zol.com.cn/bizhi/640x960/', 
 			"I9300" => 'http://sj.zol.com.cn/bizhi/720x1280/',
 			"I9100" => 'http://sj.zol.com.cn/bizhi/480x800/',
