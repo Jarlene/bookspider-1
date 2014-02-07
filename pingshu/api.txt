@@ -1,0 +1,83 @@
+1. 获取服务器列表
+/pingshu/index.php
+
+返回格式：
+{
+	"code"  : 0,
+	"msg	: "ok",
+	"data"	: [ "服务器1", "服务器2" ]
+}
+
+2. 获取分类
+/pingshu/catalog.php?server=服务器1
+
+返回格式：
+{
+	"code"  : 0,
+	"msg	: "ok",
+	"data"	: [ "袁阔成", "单田芳", "田连元" ]
+}
+
+3. 获取作品集
+/pingshu/book.php?server=服务器1&catalog=单田芳
+
+参数说明：
+page：页码（可选参数，默认值1）
+
+返回格式：
+{
+	"code"  : 0,
+	"msg	: "ok",
+	"data"	: [ "杨幺传", "龙虎风云会续集", "天下故事会之古代奇案" ]
+}
+
+4. 获取作品章节
+/pingshu/chapter.php?server=服务器1&catalog=单田芳&book=天下故事会之古代奇案
+
+参数说明：
+page：页码（可选参数，默认值1）
+
+返回格式：
+{
+	"code"  	: 0,
+	"msg		: "ok",
+	"icon"		: "http://www.pingshu8.com/bzmtv_Music_Pic/200872611627.jpg", // 作品图标
+	"summary"	: "评书 天下故事会之古代奇案", // 作品简介
+	"data"		: [ "1.01_水塘乡走尸1", "2.02_水塘乡走尸2", "3.03_水塘乡走尸3" ]
+}
+
+5. 获取作品章节对应的音频文件
+/pingshu/media.php?server=服务器1&catalog=单田芳&book=天下故事会之古代奇案&chapter=1.01_水塘乡走尸1
+
+返回格式：
+{
+	"code"  : 0,
+	"msg	: "ok",
+	"uri"	: "http://pl1.pingshu8.com:8000/2/xs/jiangkun/01.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"
+}
+
+6. 搜索
+/pingshu/search.php?server=服务器1&keyword=天下故事会
+
+返回格式：
+{
+	"code"  : 0,
+	"msg	: "ok",
+	"data"	:
+	[
+		{
+			"name"	: "天下故事会之古代奇案2",
+			"uri"	: "http://pl1.pingshu8.com:8000/2/xs/jiangkun/01.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"
+		},
+
+		{
+			"name"	: "天下故事会之古代奇案2",
+			"uri"	: "http://pl1.pingshu8.com:8000/2/xs/jiangkun/02.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"
+		},
+
+		{
+			"name"	: "天下故事会之古代奇案3",
+			"uri"	: "http://pl1.pingshu8.com:8000/2/xs/jiangkun/03.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"
+		}
+	]
+}
