@@ -1,0 +1,60 @@
+1. 获取艺术家列表
+http://115.28.54.237/wallpaper/artist.php
+
+返回格式：
+{
+	"code"  : 0,
+	"msg	: "ok",
+	"data"	:
+	[
+		"博韬",
+		"陈丽君_陈丽洁",
+		"单田芳"
+	]
+}
+
+2. 获取艺术家作品集
+http://115.28.54.237/wallpaper/artist-works.php?artist=单田芳
+
+返回格式：
+{
+	"code"  : 0,
+	"msg	: "ok",
+	"data"	:
+	[
+		"杨幺传(40回)",
+		"龙虎风云会续集(74回)",
+		"中国古代奇案故事全集(17回)"
+	]
+}
+
+3. 获取章节目录及音频文件链接
+http://115.28.54.237/wallpaper/artist-chapter.php?artist=单田芳&works=姜昆相声精选集
+
+返回格式：
+{
+	"code"  : 0,
+	"msg	: "ok",
+	"data"	:
+	[
+		{
+			"name"	: "1.踩脚",
+			"uri"	: 
+			[
+				"http://pl1.pingshu8.com:8000/2/xs/jiangkun/01.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd",
+				"http://www.tingshu.com/01.mp3",
+				"http://www.ting.com/2"
+			]
+		},
+
+		{
+			"name"	: "2.虎口遐想",
+			"uri"	: ["http://pl1.pingshu8.com:8000/2/xs/jiangkun/02.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"]
+		},
+
+		{
+			"name"	: "3.家庭烦恼",
+			"uri"	: ["http://pl1.pingshu8.com:8000/2/xs/jiangkun/03.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"]
+		}
+	]
+}
