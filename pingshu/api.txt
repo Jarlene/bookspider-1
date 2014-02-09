@@ -44,9 +44,6 @@
 3. 获取作品集
 /pingshu/pingshu.php?server=0&catalog=单田芳
 
-参数说明：
-page：页码（可选参数，默认值1）
-
 返回格式：
 {
 	"code"  : 0,
@@ -56,9 +53,6 @@ page：页码（可选参数，默认值1）
 
 4. 获取作品章节
 /pingshu/pingshu.php?server=0&catalog=单田芳&book=天下故事会之古代奇案
-
-参数说明：
-page：页码（可选参数，默认值1）
 
 返回格式：
 {
@@ -70,7 +64,7 @@ page：页码（可选参数，默认值1）
 }
 
 5. 获取作品章节对应的音频文件
-/pingshu/pingshu.php?server=0&catalog=单田芳&book=天下故事会之古代奇案&chapter=1.01_水塘乡走尸1
+/pingshu/pingshu.php?server=0&catalog=单田芳&book=天下故事会之古代奇案&chapter=01_水塘乡走尸1
 
 返回格式：
 {

@@ -8,8 +8,8 @@
 	$mc = new Memcached();
 	$mc->addServer("localhost", 11211);
 
-	$server = php_reqvar("server", '4');
-	$catalog = php_reqvar("catalog", '百家讲坛');
+	$server = php_reqvar("server", '');
+	$catalog = php_reqvar("catalog", '');
 	$book = php_reqvar("book", '');
 	$chapter = php_reqvar("chapter", '');
 
