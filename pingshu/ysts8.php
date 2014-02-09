@@ -23,7 +23,22 @@
 			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
+			$infos = xpath_query($doc, "//div[@class='ny_txt']/ul/p");
 			$elements = xpath_query($doc, "//div[@class='ny_l']/ul/li/a");
+
+			$summary = "";
+			if(is_null($infos)){
+				print_r("parse book icon/information error.");
+			} else {
+				foreach($infos as $info){
+					foreach($info->childNodes as $node){
+						if(XML_TEXT_NODE == $node->nodeType){
+							$summary = $summary . $node->nodeValue;
+							$summary = $summary . "\r\n";
+						}
+					}
+				}
+			}
 
 			$chapters = array();
 
@@ -39,7 +54,12 @@
 				}
 			}
 
-			return $chapters;
+			print_r($data);
+			$data = array();
+			$data["icon"] = "";
+			$data["info"] = $summary;
+			$data["chapter"] = $chapters;
+			return $data;
 		}
 
 		function __ParseBooks($uri, $response)
@@ -93,7 +113,10 @@
 				$books = array_merge($books, $nbooks);
 			}
 			
-			return $books;
+			$data = array();
+			$data["icon"] = "";
+			$data["book"] = $books;
+			return $data;
 		}
 		
 		function GetCatalog()

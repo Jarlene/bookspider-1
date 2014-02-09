@@ -10,7 +10,7 @@
 		{
 			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			
+
 			if(!preg_match('/encodeURI\(\"(.+)\"\)/', $response, $matches)){
 				return "";
 			}
@@ -55,12 +55,28 @@
 			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
+			$icons = xpath_query($doc, "//div[@class='a']/img");
+			$infos = xpath_query($doc, "//div[@class='c']/div");
 			$options = xpath_query($doc, "//select[@name='turnPage']/option");
+
+			$host = parse_url($uri);
+			$iconuri = "";
+			$summary = "";
+			if(is_null($icons) || is_null($infos)){
+				print_r("parse book icon/information error.");
+			} else {
+				foreach($icons as $icon){
+					$href = $icon->getattribute('src');
+					$iconuri = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $href;
+				}
+				foreach($infos as $info){
+					$summary = $info->nodeValue;
+				}
+			}
 
 			$chapters = array();
 
 			if (!is_null($options)) {
-				$host = parse_url($uri);
 				foreach ($options as $option) {
 					$href = $option->getattribute('value');
 					if(strlen($href) > 0){
@@ -79,7 +95,11 @@
 				$chapters = array_merge($chapters, $nchapters);
 			}
 
-			return $chapters;
+			$data = array();
+			$data["icon"] = $iconuri;
+			$data["info"] = $summary;
+			$data["chapter"] = $chapters;
+			return $data;
 		}
 
 		function GetBooks($uri)
@@ -87,12 +107,24 @@
 			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
-			$elements = xpath_query($doc, "//div[@class='tab33']/a");
+			$icons = xpath_query($doc, "//div[@class='z4']/img");
+			$elements = xpath_query($doc, "//div[@class='jj2']/div/div/a");
+
+			$host = parse_url($uri);
+			$iconuri = "";
+
+			if(is_null($icons)){
+				print_r("parse books icon error.");
+			} else {
+				foreach($icons as $icon){
+					$href = $icon->getattribute('src');
+					$iconuri = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $href;
+				}
+			}
 
 			$books = array();
 
 			if (!is_null($elements)) {
-				$host = parse_url($uri);
 				foreach ($elements as $element) {
 					$href = $element->getattribute('href');
 					$book = $element->nodeValue;
@@ -103,7 +135,10 @@
 				}
 			}
 
-			return $books;
+			$data = array();
+			$data["icon"] = $iconuri;
+			$data["book"] = $books;
+			return $data;
 		}
 
 		function __GetSubcatalog($uri)
@@ -137,10 +172,10 @@
 		{
 			$catalog = array();
 			$catalog["评书"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_1.Htm');
-			$catalog["相声"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_2.Htm');
+			$catalog["相声小品"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_2.Htm');
 			$catalog["小说"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_3.Htm');
-			$catalog["金庸"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_4.Htm');
-			$catalog["综艺"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_5.Htm');
+			$catalog["金庸全集"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_4.Htm');
+			$catalog["综艺娱乐"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_5.Htm');
 			return $catalog;
 		}
 	}

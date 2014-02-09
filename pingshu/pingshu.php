@@ -4,7 +4,7 @@
 	require("php/util.inc");
 	require("pingshu8.php");
 	require("ysts8.php");
-	
+
 	$mc = new Memcached();
 	$mc->addServer("localhost", 11211);
 
@@ -12,6 +12,9 @@
 	$catalog = php_reqvar("catalog", '');
 	$book = php_reqvar("book", '');
 	$chapter = php_reqvar("chapter", '');
+
+	$reply["code"] = 0;
+	$reply["msg"] = "ok";
 
 	$data = array();
 	if(0 == strlen($server)){
@@ -32,12 +35,15 @@
 			}
 		} else if(0 == strlen($book)){
 			$books = GetBooks($s, $catalog);
-			foreach($books as $k => $v){
+			$reply["icon"] = $books["icon"];
+			foreach($books["book"] as $k => $v){
 				$data[] = $k;
 			}
 		} else if(0 == strlen($chapter)){
 			$chapters = GetChapters($s, $catalog, $book);
-			foreach($chapters as $k => $v){
+			$reply["icon"] = $chapters["icon"];
+			$reply["summary"] = $chapters["info"];
+			foreach($chapters["chapter"] as $k => $v){
 				$data[] = $k;
 			}
 		} else {
@@ -45,8 +51,6 @@
 		}
 	}
 
-	$reply["code"] = 0;
-	$reply["msg"] = "ok";
 	$reply["data"] = $data;
 	echo json_encode($reply);
 
@@ -56,11 +60,11 @@
 		$ysts8 = new CYSTS8();
 
 		$servers = array();
-		$servers["0"] = array("name" => "服1", "object" => $pingshu8);
-//		$servers["1"] = array("name" => "服2", "object" => $pingshu8);
-//		$servers["2"] = array("name" => "服3", "object" => $pingshu8);
-//		$servers["3"] = array("name" => "服4", "object" => $pingshu8);
-		$servers["4"] = array("name" => "服5", "object" => $ysts8);
+		$servers["0"] = array("name" => "服务器1", "object" => $pingshu8);
+//		$servers["1"] = array("name" => "服务器2", "object" => $pingshu8);
+//		$servers["2"] = array("name" => "服务器3", "object" => $pingshu8);
+//		$servers["3"] = array("name" => "服务器4", "object" => $pingshu8);
+		$servers["4"] = array("name" => "服务器5", "object" => $ysts8);
 		return $servers;
 	}
 
@@ -89,7 +93,7 @@
 
 		return $catalog;
 	}
-	
+
 	function GetCatalogUri($s, $catalog)
 	{
 		$catalogs = GetCatalog($s);
@@ -101,7 +105,7 @@
 		}
 		return "";
 	}
-	
+
 	function GetBooks($s, $catalog)
 	{
 		global $mc;
@@ -124,7 +128,7 @@
 	function GetBookUri($s, $catalog, $book)
 	{
 		$books = GetBooks($s, $catalog);
-		foreach($books as $k => $v){
+		foreach($books["book"] as $k => $v){
 			if(0 == strcmp($k, $book))
 				return $v;
 		}
@@ -153,7 +157,7 @@
 	function GetChapterUri($s, $catalog, $book, $chapter)
 	{
 		$chapters = GetChapters($s, $catalog, $book);
-		foreach($chapters as $k => $v){
+		foreach($chapters["chapter"] as $k => $v){
 			if(0 == strcmp($k, $chapter))
 				return $v;
 		}

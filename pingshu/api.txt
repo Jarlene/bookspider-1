@@ -48,6 +48,7 @@
 {
 	"code"  : 0,
 	"msg	: "ok",
+	"icon"	: "http://www.pingshu8.com/bzmtv_Music_Pic/2006110135110.jpg", // 分类图标
 	"data"	: [ "杨幺传", "龙虎风云会续集", "天下故事会之古代奇案" ]
 }
 
