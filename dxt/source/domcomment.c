@@ -18,10 +18,10 @@ static int identify(const char* p)
 
 static const char* parse(domdoc_t* doc, domnode_t* node, const char* p)
 {
-	const char* p1;
-	p = strstr(p, "!--");
-	assert(p);
-	p1 = strstr(p+3, "-->");
+	const char* p0, *p1;
+	p0 = strstr(p, "!--");
+	assert(p0);
+	p1 = strstr(p0+3, "-->");
 	if(p1)
 	{
 		p1 += 3;
