@@ -67,7 +67,11 @@
 			} else {
 				foreach($icons as $icon){
 					$href = $icon->getattribute('src');
-					$iconuri = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $href;
+					if(0==strncmp("../", $href, 3)){
+						$iconuri = 'http://' . $host["host"] . dirname(dirname($host["path"])) . '/' . substr($href, 3);
+					} else {
+						$iconuri = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $href;
+					}
 				}
 				foreach($infos as $info){
 					$summary = $info->nodeValue;
@@ -118,7 +122,11 @@
 			} else {
 				foreach($icons as $icon){
 					$href = $icon->getattribute('src');
-					$iconuri = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $href;
+					if(0==strncmp("../", $href, 3)){
+						$iconuri = 'http://' . $host["host"] . dirname(dirname($host["path"])) . '/' . substr($href, 3);
+					} else {
+						$iconuri = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $href;
+					}
 				}
 			}
 
