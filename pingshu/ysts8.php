@@ -24,7 +24,7 @@
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
 			$infos = xpath_query($doc, "//div[@class='ny_txt']/ul/p");
-			$elements = xpath_query($doc, "//div[@class='ny_l']/ul/li/a");
+			$elements = xpath_query($doc, "//div[@class='ny_l']/ul/li/a[1]");
 
 			$summary = "";
 			if(is_null($infos)){

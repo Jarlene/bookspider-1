@@ -178,6 +178,64 @@
 			$catalog["综艺娱乐"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_5.Htm');
 			return $catalog;
 		}
+
+		function __SearchAuthor($keyword)
+		{
+			$uri = "http://www.pingshu8.com/bzmtv_inc/SingerSearch.asp?keyword=%B5%A5%CC%EF%B7%BC";
+			$response = http_get($uri);
+			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+			$doc = dom_parse($response);
+			$elements = xpath_query($doc, "//table[@class='TableLine']/tr/td[0]/div/a");
+
+			$artists = array();
+
+			if (!is_null($elements)) {
+				$host = parse_url($uri);
+				foreach ($elements as $element) {
+					$href = $element->getattribute('href');
+					$artist = $element->nodeValue;
+
+					//$artist = mb_convert_encoding($artist, "gb2312", "UTF-8");
+					//$artist = mb_convert_encoding($artist, "UTF-8", "gb2312");
+					//$artist = iconv("GB18030", "UTF-8", $artist);
+					if(strlen($href) > 0 && strlen($artist) > 0){
+						$artists[$artist] = 'http://' . $host["host"] . $href;
+					}
+				}
+			}
+
+			return $artists;
+		}
+		
+		function __SearchBook($keyword)
+		{
+			$uri = "http://www.pingshu8.com/bzmtv_inc/SpecialSearch.asp?keyword=%D1%EE%E7%DB%B4%AB";
+			$response = http_get($uri);
+			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+			$doc = dom_parse($response);
+			$xpath = new DOMXpath($doc);
+			$elements = $xpath->query($doc, "//table[@class='TableLine']/tr");
+			
+			if (!is_null($elements)) {
+				$host = parse_url($uri);
+				foreach ($elements as $element) {
+					$author = $xpath->query($doc, "td[1]/a", $element);
+					$book = $xpath->query($doc, "td[0]/div/a", $element);
+
+					//$artist = mb_convert_encoding($artist, "gb2312", "UTF-8");
+					//$artist = mb_convert_encoding($artist, "UTF-8", "gb2312");
+					//$artist = iconv("GB18030", "UTF-8", $artist);
+					if(strlen($href) > 0 && strlen($artist) > 0){
+						$artists[$artist] = 'http://' . $host["host"] . $href;
+					}
+				}
+			}
+		}
+
+		function Search($keyword)
+		{
+			
+		}
 	}
 
 	// print_r($all);

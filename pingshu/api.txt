@@ -75,7 +75,12 @@
 }
 
 6. 搜索
-/pingshu/search.php?server=0&keyword=天下故事会
+/pingshu/search.php?server=0&keyword=乱世枭雄
+
+返回结果说明：
+若返回的结果只有catalog字段，表明搜索的结果是个分类（或人名），
+若返回的结果包含book，表明搜索结果是书籍
+这两种结果需要分别对待
 
 返回格式：
 {
@@ -84,18 +89,27 @@
 	"data"	:
 	[
 		{
-			"name"	: "天下故事会之古代奇案2",
-			"uri"	: "http://pl1.pingshu8.com:8000/2/xs/jiangkun/01.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"
+			"catalog"	: "纪实文学",
+		},
+	
+		{
+			"catalog"	: "纪实文学",
+			"book"		: "乱世枭雄东北王张作霖"
 		},
 
 		{
-			"name"	: "天下故事会之古代奇案2",
-			"uri"	: "http://pl1.pingshu8.com:8000/2/xs/jiangkun/02.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"
+			"catalog" 	: "单田芳",
+			"book"		: "乱世枭雄"
 		},
 
 		{
-			"name"	: "天下故事会之古代奇案3",
-			"uri"	: "http://pl1.pingshu8.com:8000/2/xs/jiangkun/03.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"
+			"catalog"	: "单田芳",
+			"book"		: "乱世枭雄300回"
+		},
+		
+		{
+			"catalog"	: "历史军事",
+			"book" 		: "话民国传奇,品乱世枭雄"
 		}
 	]
 }

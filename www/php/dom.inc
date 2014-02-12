@@ -8,10 +8,23 @@ function dom_parse($html)
 	return $doc;
 }
 
-function xpath_query($doc, $path)
+function xpath_query($doc, $path, $parent=null)
 {
 	$xpath = new DOMXpath($doc);
-	$elements = $xpath->query($path);
+	if(is_null($parent)){
+		$elements = $xpath->query($path);
+	} else {
+		$elements = $xpath->query($path, $parent);
+	}
 	return $elements;
 }
+
+function xpath_get($doc, $path, $parent=null)
+{
+	$elements = xpath_query($doc, $path, $parent);
+	if(!is_null($elements) && 1==$elements->length) 
+		return $elements->item[0];
+	return null;
+}
+
 ?>
