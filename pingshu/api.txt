@@ -69,9 +69,12 @@
 
 返回格式：
 {
-	"code"  : 0,
-	"msg	: "ok",
-	"uri"	: "http://pl1.pingshu8.com:8000/2/xs/jiangkun/01.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"
+	"code"  	: 0,
+	"msg		: "ok",
+	"catalog"	: "单田芳",
+	"book"		: "天下故事会之古代奇案",
+	"chapter"	: "01_水塘乡走尸1",
+	"uri"		: "http://pl1.pingshu8.com:8000/2/xs/jiangkun/01.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"
 }
 
 6. 搜索

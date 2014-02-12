@@ -47,6 +47,9 @@
 				$data[] = $k;
 			}
 		} else {
+			$reply["catalog"] = $catalog;
+			$reply["book"] = $book;
+			$reply["chapter"] = $chapter;
 			$data = GetAudio($s, $catalog, $book, $chapter);
 		}
 	}
