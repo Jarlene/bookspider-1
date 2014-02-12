@@ -1,4 +1,8 @@
 <?php
+	require("php/http.inc");
+	require("php/dom.inc");
+	require("php/util.inc");
+
 	class CPingShu8 
 	{
 		function GetName()
@@ -189,63 +193,61 @@
 
 		function __SearchAuthor($keyword)
 		{
-			$uri = "http://www.pingshu8.com/bzmtv_inc/SingerSearch.asp?keyword=%B5%A5%CC%EF%B7%BC";
+			$uri = "http://www.pingshu8.com/bzmtv_inc/SingerSearch.asp?keyword="  . urlencode(iconv("UTF-8", "gb2312", $keyword));
 			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
-			$elements = xpath_query($doc, "//table[@class='TableLine']/tr/td[0]/div/a");
+			$elements = xpath_query($doc, "//table[@class='TableLine']/form/tr/td[1]/div/a");
 
 			$artists = array();
 
 			if (!is_null($elements)) {
-				$host = parse_url($uri);
 				foreach ($elements as $element) {
-					$href = $element->getattribute('href');
 					$artist = $element->nodeValue;
-
-					//$artist = mb_convert_encoding($artist, "gb2312", "UTF-8");
-					//$artist = mb_convert_encoding($artist, "UTF-8", "gb2312");
-					//$artist = iconv("GB18030", "UTF-8", $artist);
-					if(strlen($href) > 0 && strlen($artist) > 0){
-						$artists[$artist] = 'http://' . $host["host"] . $href;
+					if(strlen($artist) > 0){
+						$artists[] = $artist;
 					}
 				}
 			}
 
 			return $artists;
 		}
-		
+
 		function __SearchBook($keyword)
 		{
-			$uri = "http://www.pingshu8.com/bzmtv_inc/SpecialSearch.asp?keyword=%D1%EE%E7%DB%B4%AB";
+			$uri = "http://www.pingshu8.com/bzmtv_inc/SpecialSearch.asp?keyword=" . urlencode(iconv("UTF-8", "gb2312", $keyword));
 			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
 			$xpath = new DOMXpath($doc);
-			$elements = $xpath->query($doc, "//table[@class='TableLine']/tr");
-			
+			$elements = $xpath->query("//table[@class='TableLine']/tr");
+
+			$books = array();
 			if (!is_null($elements)) {
 				$host = parse_url($uri);
 				foreach ($elements as $element) {
-					$author = $xpath->query($doc, "td[1]/a", $element);
-					$book = $xpath->query($doc, "td[0]/div/a", $element);
+					$author = $xpath->query("td[2]/a", $element);
+					$book = $xpath->query("td[1]/div/a", $element);
+					if(0==$author->length || 0==$book->length)
+						continue;
 
-					//$artist = mb_convert_encoding($artist, "gb2312", "UTF-8");
-					//$artist = mb_convert_encoding($artist, "UTF-8", "gb2312");
-					//$artist = iconv("GB18030", "UTF-8", $artist);
-					if(strlen($href) > 0 && strlen($artist) > 0){
-						$artists[$artist] = 'http://' . $host["host"] . $href;
-					}
+					$books[] = array("catalog" => $author->item(0)->nodeValue, "book" => $book->item(0)->nodeValue);
 				}
 			}
+			return $books;
 		}
 
 		function Search($keyword)
 		{
-			
+			$authors = __SearchAuthor($keyword);
+			$books = __SearchBook($keyword);
+			return array("catalog" => $authors, "book" => $books);
 		}
 	}
 
+	//$pinshu8 = new CPingShu8();
+	//print_r($pinshu8->__SearchBook("王"));
+	//print_r($pinshu8->__SearchAuthor("王"));
 	// print_r($all);
 	//print_r(pingshu8_artist('http://www.pingshu8.com/Music/bzmtv_1.Htm'));
 	//print_r(pingshu8_artist('http://www.pingshu8.com/Music/bzmtv_2.Htm'));

@@ -148,6 +148,13 @@
 			$catalog["小说"] = $subcatalogs;
 			return $catalog;
 		}
+		
+		function Search($keyword)
+		{
+			$authors = __SearchAuthor($keyword);
+			$books = __SearchBook($keyword);
+			return array("catalog" => $authors, "book" => $books);
+		}
 	}
 
 	//print_r(ysts8_works('http://www.ysts8.com/Ysmp3/40_1.html'));
