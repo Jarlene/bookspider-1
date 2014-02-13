@@ -3,92 +3,135 @@
 	require("php/dom.inc");
 	require("php/util.inc");
 
-	function _77nt_audio($uri)
+	
+	class C77NT
 	{
-		$uri = str_replace("Play", "zyurl", $uri);
-		$headers = http_get_headers($uri, "Location");
+		function GetName()
+		{
+			return "77nt";
+		}
+		
+		function _77nt_audio($uri)
+		{
+			$uri = str_replace("Play", "zyurl", $uri);
+			$headers = http_get_headers($uri, "Location");
 
-		if(!preg_match("/Location:([^\r\n]*)/i", $headers, $matches)){
-			return "";
+			if(!preg_match("/Location:([^\r\n]*)/i", $headers, $matches)){
+				return "";
+			}
+
+			return 2 == count($matches) ? iconv("gb2312", "UTF-8", $matches[1]) : "";
 		}
 
-		return 2 == count($matches) ? iconv("gb2312", "UTF-8", $matches[1]) : "";
-	}
+		function GetChapters($bookid)
+		{
+			list($path, $id) = split("-", $bookid);
+			$uri = "http://http://www.77nt.com/" . $path . "/List_ID_" . $id . "html";
+			$response = http_get($uri);
+			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+			$doc = dom_parse($response);
+			$icons = xpath_query($doc, "//div[@class='conlist']/ul/li[1]/img");
+			$elements = xpath_query($doc, "//ul[@class='compress']/ul/div/li/span/a");
 
-	function _77nt_chapters($uri)
-	{
-		$response = http_get($uri);
-		$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-		$doc = dom_parse($response);
-		$elements = xpath_query($doc, "//ul[@class='compress']/ul/div/li/span/a");
-
-		$chapters = array();
-
-		if (!is_null($elements)) {
 			$host = parse_url($uri);
+
+			$iconuri = "";
+			$summary = "";
+			foreach($icons as $icon){
+				$href = $icon->getattribute('src');
+				$iconuri = 'http://' . $host["host"] . $href;
+			}
+
+			$chapters = array();
 			foreach ($elements as $element) {
 				$href = $element->getattribute('href');
 				$chapter = $element->nodeValue;
 
 				if(strlen($href) > 0 && strlen($chapter) > 0){
-					$chapters[$chapter] = 'http://' . $host["host"] . $href;
+					$chapters[] = array("name" => $chapter, "uri" => 'http://' . $host["host"] . $href);
 				}
 			}
+
+			$data = array();
+			$data["icon"] = $iconuri;
+			$data["info"] = $summary;
+			$data["chapter"] = $chapters;
+			return $data;
 		}
 
-		return $chapters;
-	}
+		function __ParseBooks($response, &$books)
+		{
+			$doc = dom_parse($response);
+			$elements = xpath_query($doc, "//div[@class='clist']/ul/li/a");
 
-	function _77nt_works($uri)
-	{
-		$response = http_get($uri);
-		$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-		$doc = dom_parse($response);
-		$elements = xpath_query($doc, "//div[@class='pingshu_ysts8']/ul/li/a");
-
-		$books = array();
-
-		if (!is_null($elements)) {
-			$host = parse_url($uri);
 			foreach ($elements as $element) {
 				$href = $element->getattribute('href');
-				$book = $element->firstChild->wholeText;
+				$book = $element->getattribute('title');
 
 				if(strlen($href) > 0 && strlen($book) > 0){
-					$books[$book] = 'http://' . $host["host"] . $href;
+					$bookid = basename($href, ".Htm");
+					$books[dirname($href) . '-' . substr($bookid, 8)] = $book;
 				}
 			}
 		}
+		
+		function GetBooks($uri)
+		{
+			$response = http_get($uri);
+			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+			$doc = dom_parse($response);
+			$options = xpath_query($doc, "//select[@name='select']/option");
+			$elements = xpath_query($doc, "//div[@class='pingshu_ysts8']/ul/li/a");
 
-		return $books;
-	}
+			$books = array();
 
-	function ysts8_artist($uri)
-	{
-		$uri = 'http://www.pingshu8.com/Music/bzmtv_1.Htm';
-		$response = http_get($uri);
-		$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-		$doc = dom_parse($response);
-		$elements = xpath_query($doc, "//div[@class='t2']/ul/li/a");
-
-		$artists = array();
-
-		if (!is_null($elements)) {
 			$host = parse_url($uri);
-			foreach ($elements as $element) {
-				$href = $element->getattribute('href');
-				$artist = $element->nodeValue;
+			foreach ($options as $option) {
+				$href = $option->getattribute('value');
+				if(strlen($href) > 0){
+					$u = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $href;
+					if(0 != strcmp($u, $uri)){
+						$response = http_get($u);
+						$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+					}
 
-				//$artist = mb_convert_encoding($artist, "gb2312", "UTF-8");
-				//$artist = mb_convert_encoding($artist, "UTF-8", "gb2312");
-				//$artist = iconv("GB18030", "UTF-8", $artist);
-				if(strlen($href) > 0 && strlen($artist) > 0){
-					$artists[$artist] = 'http://' . $host["host"] . $href;
+					$this->__ParseBooks($u, $response, $books);
 				}
 			}
+
+			$data = array();
+			$data["icon"] = "";
+			$data["book"] = $books;
+			return $data;
 		}
 
-		return $artists;
+		function ysts8_artist($uri)
+		{
+			$uri = 'http://www.pingshu8.com/Music/bzmtv_1.Htm';
+			$response = http_get($uri);
+			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+			$doc = dom_parse($response);
+			$elements = xpath_query($doc, "//div[@class='t2']/ul/li/a");
+
+			$artists = array();
+
+			if (!is_null($elements)) {
+				$host = parse_url($uri);
+				foreach ($elements as $element) {
+					$href = $element->getattribute('href');
+					$artist = $element->nodeValue;
+
+					//$artist = mb_convert_encoding($artist, "gb2312", "UTF-8");
+					//$artist = mb_convert_encoding($artist, "UTF-8", "gb2312");
+					//$artist = iconv("GB18030", "UTF-8", $artist);
+					if(strlen($href) > 0 && strlen($artist) > 0){
+						$artists[$artist] = 'http://' . $host["host"] . $href;
+					}
+				}
+			}
+
+			return $artists;
+		}
 	}
 
 	function ysts8_all()
