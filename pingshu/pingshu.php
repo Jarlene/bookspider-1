@@ -10,21 +10,51 @@
 
 	$server = php_reqvar("server", '');
 	$catalog = php_reqvar("catalog", '');
-	$book = php_reqvar("book", '');
-	$chapter = php_reqvar("chapter", '');
+	$bookid = php_reqvar("bookid", '');
+	$chapter = php_reqvar("chapterid", '');
+	$keyword = php_reqvar("keyword", '');
 
 	$reply["code"] = 0;
 	$reply["msg"] = "ok";
 
 	$data = array();
-	if(0 == strlen($server)){
+	if(strlen($keyword) > 0){
 		$servers = GetServers();
 		foreach($servers as $k => $v){
-			$data[] = array("id" => $k, "name" => $v["name"]);
+			$result = Search($v["object"], $keyword);
+			foreach($result as $b){
+				$bid = $b["bookid"];
+				$data[] = array("server" => $k, "book" => $b["book"], "bookid" => "$bid");
+			}
+		}
+	} else if(0 == strlen($server)){
+		$servers = GetServers();
+		foreach($servers as $k => $v){
+			$data[] = array("id" => "$k", "name" => $v["name"]);
 		}
 	} else {
 		$s = GetServerObj($server);
-		if(0 == strlen($catalog)){
+		if(strlen($chapter) > 0){
+			$reply["catalog"] = $catalog;
+			$reply["bookid"] = $bookid;
+			$reply["chapterid"] = $chapter;
+			$data = GetAudio($s, $catalog, $bookid, $chapter);
+		} else if(strlen($bookid) > 0) {
+			$chapters = GetChapters($s, $catalog, $bookid);
+			$reply["icon"] = $chapters["icon"];
+			$reply["summary"] = $chapters["info"];
+			$i = 1;
+			foreach($chapters["chapter"] as $v){
+				$data[] = array("chapter" => $v["name"], "chapterid" => "$i");
+				$i++;
+			}
+		} else if(strlen($catalog) > 0) {
+			$books = GetBooks($s, $catalog);
+			$reply["icon"] = $books["icon"];
+			foreach($books["book"] as $k => $v){
+				$data[] = array("book" => $v, "bookid" => "$k");
+			}
+		} else {
 			$catalogs = GetCatalog($s);
 			foreach($catalogs as $k => $v){
 				$keys = array();
@@ -33,24 +63,6 @@
 				}
 				$data[$k] = $keys;
 			}
-		} else if(0 == strlen($book)){
-			$books = GetBooks($s, $catalog);
-			$reply["icon"] = $books["icon"];
-			foreach($books["book"] as $k => $v){
-				$data[] = $k;
-			}
-		} else if(0 == strlen($chapter)){
-			$chapters = GetChapters($s, $catalog, $book);
-			$reply["icon"] = $chapters["icon"];
-			$reply["summary"] = $chapters["info"];
-			foreach($chapters["chapter"] as $k => $v){
-				$data[] = $k;
-			}
-		} else {
-			$reply["catalog"] = $catalog;
-			$reply["book"] = $book;
-			$reply["chapter"] = $chapter;
-			$data = GetAudio($s, $catalog, $book, $chapter);
 		}
 	}
 
@@ -128,27 +140,27 @@
 		return $books;
 	}
 
-	function GetBookUri($s, $catalog, $book)
-	{
-		$books = GetBooks($s, $catalog);
-		foreach($books["book"] as $k => $v){
-			if(0 == strcmp($k, $book))
-				return $v;
-		}
-		return "";
-	}
+	// function GetBookUri($s, $catalog, $bookid)
+	// {
+		// $books = GetBooks($s, $catalog);
+		// foreach($books["book"] as $k => $v){
+			// if(0 == strcmp($k, $bookid))
+				// return $v;
+		// }
+		// return "";
+	// }
 
-	function GetChapters($s, $catalog, $book)
+	function GetChapters($s, $catalog, $bookid)
 	{
 		global $mc;
-		$mckey = "ts-server-" . $s->GetName() . "-catalog-" . $catalog . "-book-" . $book;
+		$mckey = "ts-server-" . $s->GetName() . "-catalog-" . $catalog . "-book-" . $bookid;
 		$chapters = $mc->get($mckey);
 
 		if(!$chapters){
-			$uri = GetBookUri($s, $catalog, $book);
-			if(0 == strlen($uri))
-				return "";
-			$chapters = $s->GetChapters($uri);
+			// $uri = GetBookUri($s, $catalog, $book);
+			// if(0 == strlen($uri))
+				// return "";
+			$chapters = $s->GetChapters($bookid);
 			$mc->set($mckey, json_encode($chapters), 24*60*60-1);
 		} else {
 			$chapters = json_decode($chapters, True);
@@ -157,24 +169,25 @@
 		return $chapters;
 	}
 	
-	function GetChapterUri($s, $catalog, $book, $chapter)
+	function GetChapterUri($s, $catalog, $bookid, $chapter)
 	{
-		$chapters = GetChapters($s, $catalog, $book);
-		foreach($chapters["chapter"] as $k => $v){
-			if(0 == strcmp($k, $chapter))
-				return $v;
-		}
-		return "";
+		$chapters = GetChapters($s, $catalog, $bookid);
+		// foreach($chapters["chapter"] as $k => $v){
+			// if(0 == strcmp($k, $chapter))
+				// return $v;
+		// }
+		//return "";
+		return $chapters["chapter"][$chapter-1]["uri"];
 	}
 
-	function GetAudio($s, $catalog, $book, $chapter)
+	function GetAudio($s, $catalog, $bookid, $chapter)
 	{
 		global $mc;
-		$mckey = "ts-server-" . $s->GetName() . "-catalog-" . $catalog . "-book-" . $book . "-chapter-" . $chapter;
+		$mckey = "ts-server-" . $s->GetName() . "-catalog-" . $catalog . "-book-" . $bookid . "-chapter-" . $chapter;
 		$audio = $mc->get($mckey);
 
 		if(!$audio){
-			$uri = GetChapterUri($s, $catalog, $book, $chapter);
+			$uri = GetChapterUri($s, $catalog, $bookid, $chapter);
 			if(0 == strlen($uri))
 				return "";
 			$audio = $s->GetAudio($uri);
@@ -184,6 +197,24 @@
 		}
 
 		return $audio;
+	}
+	
+	function Search($s, $keyword)
+	{
+		$data = array();
+		$result = $s->Search($keyword);
+		if(count($result) > 1){
+			foreach($result["catalog"] as $catalog){
+				$books = GetBooks($s, $catalog);
+				foreach($books["book"] as $k => $v){
+					$data[] = array("book" => $v, "bookid" => $k);
+				}
+			}
+		}
+		foreach($result["book"] as $k => $v){
+			$data[] = array("book" => $v, "bookid" => $k);
+		}
+		return $data;
 	}
 
 	// print_r($all);

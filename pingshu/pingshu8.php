@@ -1,8 +1,4 @@
 <?php
-	require("php/http.inc");
-	require("php/dom.inc");
-	require("php/util.inc");
-
 	class CPingShu8 
 	{
 		function GetName()
@@ -46,7 +42,7 @@
 					$chapter = $element->nodeValue;
 
 					if(strlen($href) > 0 && strlen($chapter) > 0){
-						$chapters[$chapter] = 'http://' . $host["host"] . $href;
+						$chapters[] = array("name" => $chapter, "uri" => 'http://' . $host["host"] . $href);
 					}
 				}
 			}
@@ -54,8 +50,9 @@
 			return $chapters;
 		}
 		
-		function GetChapters($uri)
+		function GetChapters($bookid)
 		{
+			$uri = "http://www.pingshu8.com/MusicList/mmc_" . $bookid . ".htm";
 			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
@@ -142,7 +139,8 @@
 					$book = $element->nodeValue;
 
 					if(strlen($href) > 0 && strlen($book) > 0){
-						$books[$book] = 'http://' . $host["host"] . $href;
+						$bookid = basename($href, ".Htm");
+						$books[substr($bookid, 4)] = $book;
 					}
 				}
 			}
@@ -220,18 +218,17 @@
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
 			$xpath = new DOMXpath($doc);
-			$elements = $xpath->query("//table[@class='TableLine']/tr");
+			$elements = $xpath->query("//table[@class='TableLine']/tr/td[1]/div/a");
 
 			$books = array();
 			if (!is_null($elements)) {
 				$host = parse_url($uri);
 				foreach ($elements as $element) {
-					$author = $xpath->query("td[2]/a", $element);
-					$book = $xpath->query("td[1]/div/a", $element);
-					if(0==$author->length || 0==$book->length)
-						continue;
+					$href = $element->getattribute('href');
+					$book = $element->nodeValue;
 
-					$books[] = array("catalog" => $author->item(0)->nodeValue, "book" => $book->item(0)->nodeValue);
+					$bookid = basename($href, ".Htm");
+					$books[substr($bookid, 4)] = $book;
 				}
 			}
 			return $books;
@@ -239,8 +236,8 @@
 
 		function Search($keyword)
 		{
-			$authors = __SearchAuthor($keyword);
-			$books = __SearchBook($keyword);
+			$authors = $this->__SearchAuthor($keyword);
+			$books = $this->__SearchBook($keyword);
 			return array("catalog" => $authors, "book" => $books);
 		}
 	}

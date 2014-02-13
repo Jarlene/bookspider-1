@@ -49,11 +49,27 @@
 	"code"  : 0,
 	"msg	: "ok",
 	"icon"	: "http://www.pingshu8.com/bzmtv_Music_Pic/2006110135110.jpg", // 分类图标
-	"data"	: [ "杨幺传", "龙虎风云会续集", "天下故事会之古代奇案" ]
+	"data"	: 
+	[ 
+		{
+			"book"	: "杨幺传", 
+			"bookid": "7_3283_1"
+		},
+		
+		{
+			"book"	: "龙虎风云会续集", 
+			"bookid": "7_3276_1"
+		},
+		
+		{
+			"book"	: "天下故事会之古代奇案",
+			"bookid": "7_3200_1"
+		}
+	]
 }
 
 4. 获取作品章节
-/pingshu/pingshu.php?server=0&catalog=单田芳&book=天下故事会之古代奇案
+/pingshu/pingshu.php?server=0&bookid=7_3200_1
 
 返回格式：
 {
@@ -61,29 +77,39 @@
 	"msg		: "ok",
 	"icon"		: "http://www.pingshu8.com/bzmtv_Music_Pic/200872611627.jpg", // 作品图标
 	"summary"	: "评书 天下故事会之古代奇案", // 作品简介
-	"data"		: [ "1.01_水塘乡走尸1", "2.02_水塘乡走尸2", "3.03_水塘乡走尸3" ]
+	"data"		: 
+	[ 
+		{
+			"chapter" : "01_水塘乡走尸1", 
+			"chapterid" : "1"
+		},
+		
+		{
+			"chapter" : "02_水塘乡走尸2", 
+			"chapterid" : "2"
+		},
+		
+		{
+			"chapter" : "03_水塘乡走尸3",
+			"chapterid" : "3"
+		}
+	]
 }
 
 5. 获取作品章节对应的音频文件
-/pingshu/pingshu.php?server=0&catalog=单田芳&book=天下故事会之古代奇案&chapter=01_水塘乡走尸1
+/pingshu/pingshu.php?server=0&bookid=7_3200_1&chapterid=1
 
 返回格式：
 {
 	"code"  	: 0,
 	"msg		: "ok",
-	"catalog"	: "单田芳",
-	"book"		: "天下故事会之古代奇案",
-	"chapter"	: "01_水塘乡走尸1",
+	"bookid"	: "7_3200_1",
+	"chapterid"	: "1",
 	"uri"		: "http://pl1.pingshu8.com:8000/2/xs/jiangkun/01.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"
 }
 
 6. 搜索
-/pingshu/search.php?server=0&keyword=乱世枭雄
-
-返回结果说明：
-若返回的结果只有catalog字段，表明搜索的结果是个分类（或人名），
-若返回的结果包含book，表明搜索结果是书籍
-这两种结果需要分别对待
+/pingshu/pingshu.php?keyword=乱世枭雄
 
 返回格式：
 {
@@ -92,23 +118,27 @@
 	"data"	:
 	[
 		{
-			"catalog"	: "纪实文学",
+			"server"	: "0",
 			"book"		: "乱世枭雄东北王张作霖"
+			"bookid"	: "7_3200_1"
 		},
 
 		{
-			"catalog" 	: "单田芳",
+			"server"	: "1",
 			"book"		: "乱世枭雄"
+			"bookid"	: "7_3201_1"
 		},
 
 		{
-			"catalog"	: "单田芳",
+			"server"	: "0",
 			"book"		: "乱世枭雄300回"
+			"bookid"	: "7_3202_1"
 		},
-		
+
 		{
-			"catalog"	: "历史军事",
+			"server"	: "0",
 			"book" 		: "话民国传奇,品乱世枭雄"
+			"bookid"	: "7_3203_1"
 		}
 	]
 }
