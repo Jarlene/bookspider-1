@@ -21,7 +21,7 @@
 		function GetChapters($bookid)
 		{
 			list($path, $id) = split("-", $bookid);
-			$uri = "http://http://www.77nt.com/" . $path . "/List_ID_" . $id . "html";
+			$uri = "http://www.77nt.com/" . $path . "/List_ID_" . $id . ".html";
 			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
@@ -63,10 +63,9 @@
 				$href = $element->getattribute('href');
 				$book = $element->getattribute('title');
 
-				print_r($book);
 				if(strlen($href) > 0 && strlen($book) > 0){
 					$bookid = basename($href, ".html");
-					$books[dirname($href) . '-' . substr($bookid, 8)] = $book;
+					$books[basename(dirname($href)) . '-' . substr($bookid, 8)] = $book;
 				}
 			}
 		}
@@ -82,11 +81,11 @@
 			$books = array();
 			foreach ($options as $option) {
 				if(1 != $i++){
-					$u = dirname($uri) . '/' . basename($href, ".html") . $i . ".html";
+					$u = dirname($uri) . '/' . basename($uri, ".html") . '-' . $i . ".html";
 					$response = http_get($u);
 					$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 				}
-				$this->__ParseBooks($u, $response, $books);
+				$this->__ParseBooks($response, $books);
 				
 				break;
 			}
@@ -154,7 +153,7 @@
 					$response = http_get($u);
 					$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 				}
-				$this->__ParseSearch($u, $response, $books);
+				$this->__ParseSearch($response, $books);
 			}
 
 			return array("book" => $books);
