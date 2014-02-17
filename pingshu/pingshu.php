@@ -4,6 +4,7 @@
 	require("php/util.inc");
 	require("pingshu8.php");
 	require("ysts8.php");
+	require("77nt.php");
 
 	$mc = new Memcached();
 	$mc->addServer("localhost", 11211);
@@ -73,10 +74,11 @@
 	{
 		$pingshu8 = new CPingShu8();
 		$ysts8 = new CYSTS8();
+		$c77nt = new C77NT();
 
 		$servers = array();
 		$servers["0"] = array("name" => "服务器1", "object" => $pingshu8);
-//		$servers["1"] = array("name" => "服务器2", "object" => $pingshu8);
+		$servers["1"] = array("name" => "服务器2", "object" => $c77nt);
 //		$servers["2"] = array("name" => "服务器3", "object" => $pingshu8);
 //		$servers["3"] = array("name" => "服务器4", "object" => $pingshu8);
 		$servers["4"] = array("name" => "服务器5", "object" => $ysts8);

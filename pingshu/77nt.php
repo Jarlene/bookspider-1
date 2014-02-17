@@ -1,17 +1,12 @@
 <?php
-	require("php/http.inc");
-	require("php/dom.inc");
-	require("php/util.inc");
-
-	
 	class C77NT
 	{
 		function GetName()
 		{
 			return "77nt";
 		}
-		
-		function _77nt_audio($uri)
+
+		function GetAudio($uri)
 		{
 			$uri = str_replace("Play", "zyurl", $uri);
 			$headers = http_get_headers($uri, "Location");
@@ -68,8 +63,9 @@
 				$href = $element->getattribute('href');
 				$book = $element->getattribute('title');
 
+				print_r($book);
 				if(strlen($href) > 0 && strlen($book) > 0){
-					$bookid = basename($href, ".Htm");
+					$bookid = basename($href, ".html");
 					$books[dirname($href) . '-' . substr($bookid, 8)] = $book;
 				}
 			}
@@ -80,23 +76,19 @@
 			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
-			$options = xpath_query($doc, "//select[@name='select']/option");
-			$elements = xpath_query($doc, "//div[@class='pingshu_ysts8']/ul/li/a");
+			$options = xpath_query($doc, "//div[@class='page']/form/select/option");
 
+			$i = 1;
 			$books = array();
-
-			$host = parse_url($uri);
 			foreach ($options as $option) {
-				$href = $option->getattribute('value');
-				if(strlen($href) > 0){
-					$u = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $href;
-					if(0 != strcmp($u, $uri)){
-						$response = http_get($u);
-						$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-					}
-
-					$this->__ParseBooks($u, $response, $books);
+				if(1 != $i++){
+					$u = dirname($uri) . '/' . basename($href, ".html") . $i . ".html";
+					$response = http_get($u);
+					$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 				}
+				$this->__ParseBooks($u, $response, $books);
+				
+				break;
 			}
 
 			$data = array();
@@ -105,96 +97,68 @@
 			return $data;
 		}
 
-		function ysts8_artist($uri)
+		function GetCatalog()
 		{
-			$uri = 'http://www.pingshu8.com/Music/bzmtv_1.Htm';
+			$uri = 'http://www.77nt.com/';
 			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
-			$elements = xpath_query($doc, "//div[@class='t2']/ul/li/a");
+			$elements = xpath_query($doc, "//div[@id='nav']/li[@class='menu_test']/a");
 
-			$artists = array();
+			$subcatalogs = array();
 
-			if (!is_null($elements)) {
-				$host = parse_url($uri);
-				foreach ($elements as $element) {
-					$href = $element->getattribute('href');
-					$artist = $element->nodeValue;
-
-					//$artist = mb_convert_encoding($artist, "gb2312", "UTF-8");
-					//$artist = mb_convert_encoding($artist, "UTF-8", "gb2312");
-					//$artist = iconv("GB18030", "UTF-8", $artist);
-					if(strlen($href) > 0 && strlen($artist) > 0){
-						$artists[$artist] = 'http://' . $host["host"] . $href;
-					}
+			$host = parse_url($uri);
+			foreach ($elements as $element) {
+				$href = $element->getattribute('href');
+				$subcatalog = $element->nodeValue;
+				if(strlen($href) > 0 && strlen($subcatalog) > 0){
+					$subcatalogs[$subcatalog] = 'http://' . $host["host"] . '/' . $href;
 				}
 			}
 
-			return $artists;
+			$catalog = array();
+			$catalog["小说"] = $subcatalogs;
+			return $catalog;
 		}
-	}
 
-	function ysts8_all()
-	{
-		$all = array();
-		$artists = pingshu8_artist('http://www.pingshu8.com/Music/bzmtv_1.Htm');
-		foreach($artists as $artist => $href){
-			$all[$artist] = $href;
-		}
-		
-		$artists = pingshu8_artist('http://www.pingshu8.com/Music/bzmtv_2.Htm');
-		foreach($artists as $artist => $href){
-			$all[$artist] = $href;
-		}
-		return $all;
-	}
-	
-	function ysts8_api_artist()
-	{
-		$mc = new Memcached();
-		$mc->addServer("localhost", 11211);
-		
-		$mckey = "artists";
-		$artists = $mc->get($mckey);
+		function __ParseSearch($response, &$books)
+		{
+			$doc = dom_parse($response);
+			$elements = xpath_query($doc, "//div[@class='clist3']/ul/li/a");
 
-		if(!$artists){
-			$artists = pingshu8_all();
-			$mc->set($mckey, json_encode($artists), 23*60*60);
-		} else {
-			$artists = json_decode($artists, True);
-		}
-		
-		return $artists;
-	}
-	
-	function ysts8_api_works($artist)
-	{
-		$mc = new Memcached();
-		$mc->addServer("localhost", 11211);
+			foreach ($elements as $element) {
+				$href = $element->getattribute('href');
+				$book = $element->getattribute('title');
 
-		$mckey = "artists-" . $artist;
-		$artists = $mc->get($mckey);
-
-		if(!$artists){
-			$uri = "";
-			$artists = pingshu8_api_artist();
-			foreach($artists as $key => $href){
-				if(0==strcmp($key, $artist)){
-					$uri = $href;
-					break;
+				if(strlen($href) > 0 && strlen($book) > 0){
+					$bookid = basename($href, ".html");
+					$books[dirname($href) . '-' . substr($bookid, 8)] = $book;
 				}
 			}
-
-			if(strlen($uri) < 1)
-				return array();
-
-			$works = pingshu8_works($uri);
-			$mc->set($mckey, json_encode($works), 23*60*60);
-		} else {
-			$works = json_decode($artists, True);
 		}
+		
+		function Search($keyword)
+		{
+			$uri = 'http://www.77nt.com/SoClass.aspx';
+			$data = 'class=' . urlencode(iconv("UTF-8", "gb2312", $keyword)) . '&submit=&ctl00%24Sodaohang=';
+			$response = http_post($uri, $data);
+			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+			$doc = dom_parse($response);
+			$options = xpath_query($doc, "//div[@class='page']/form/select/option");
 
-		return $works;
+			$i = 0;
+			$books = array();
+			foreach ($options as $option) {
+				if(0 != $i++){
+					$u = 'http://www.77nt.com/Soclass.aspx?class=' . urlencode(iconv("UTF-8", "gb2312", $keyword)) . "&page=" . $i;
+					$response = http_get($u);
+					$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+				}
+				$this->__ParseSearch($u, $response, $books);
+			}
+
+			return array("book" => $books);
+		}
 	}
 
 	// print_r($all);
