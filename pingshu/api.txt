@@ -99,16 +99,32 @@
 5. 获取作品章节对应的音频文件
 /pingshu/pingshu.php?server=0&bookid=7_3200_1&chapterid=1
 
+请注意：
+1. code值为300时，需要客户端从原始网站获取内容，然后调用/pingshu/pingshu.php?server=0&redirect=1命令获取真正音频文件uri
+2. 客户端从原始服务器（如77nt.com）读取音频文件时，服务器可能会返回重定向状态码，客户端必须支持HTTP重定向功能（HTTP Header Location字段为真正网址）
+
 返回格式：
 {
 	"code"  	: 0,
 	"msg		: "ok",
 	"bookid"	: "7_3200_1",
 	"chapterid"	: "1",
-	"uri"		: "http://pl1.pingshu8.com:8000/2/xs/jiangkun/01.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"
+	"data"		: "http://pl1.pingshu8.com:8000/2/xs/jiangkun/01.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"
 }
 
-6. 搜索
+6. 服务器解析功能
+/pingshu/pingshu.php?server=0&redirect=1
+
+请注意：必须使用post方式发送命令，post内容为原始服务器返回的HTML内容
+
+返回格式：
+{
+	"code"  	: 0,
+	"msg		: "ok",
+	"data"		: "http://pl1.pingshu8.com:8000/2/xs/jiangkun/01.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"
+}
+
+7. 搜索
 /pingshu/pingshu.php?keyword=乱世枭雄
 
 返回格式：

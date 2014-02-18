@@ -1,14 +1,25 @@
 <?php
 	class C77NT
 	{
+		public $cache = array(
+							"catalog" => 30*24*60*60 - 1,
+							"book" => 7*24*60*60,
+							"chapter" => 30*24*60*60 - 1,
+							"audio" => 30*24*60*60 - 1,
+							"search" => 7*24*60*60
+						);
+						
+		public $redirect = 0;
+
 		function GetName()
 		{
 			return "77nt";
 		}
-
+		
 		function GetAudio($uri)
 		{
 			$uri = str_replace("Play", "zyurl", $uri);
+			return $uri;
 			$headers = http_get_headers($uri, "Location");
 
 			if(!preg_match("/Location:([^\r\n]*)/i", $headers, $matches)){

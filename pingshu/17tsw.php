@@ -1,14 +1,24 @@
 <?php
 	class C17TSW
 	{
+		public $cache = array(
+						"catalog" => 30*24*60*60 - 1,
+						"book" => 7*24*60*60,
+						"chapter" => 30*24*60*60 - 1,
+						"audio" => 0,
+						"search" => 7*24*60*60
+					);
+
+		public $redirect = 1;
+
 		function GetName()
 		{
 			return "17tsw";
 		}
-		
-		function GetAudio($uri)
+
+		function GetAudio($response)
 		{
-			$response = http_get($uri);
+//			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			
 			$doc = dom_parse($response);

@@ -15,12 +15,16 @@
 	$bookid = php_reqvar("bookid", '');
 	$chapter = php_reqvar("chapterid", '');
 	$keyword = php_reqvar("keyword", '');
+	$redirect = php_reqvar("redirect", 0);
 
 	$reply["code"] = 0;
 	$reply["msg"] = "ok";
 
 	$data = array();
-	if(strlen($keyword) > 0){
+	if(0 != $redirect){
+		$s = GetServerObj($server);
+		$data = $s->GetAudio($$HTTP_RAW_POST_DATA);
+	} else if(strlen($keyword) > 0){
 		$servers = GetServers();
 		foreach($servers as $k => $v){
 			$result = Search($v["object"], $keyword);
@@ -40,6 +44,8 @@
 			$reply["catalog"] = $catalog;
 			$reply["bookid"] = $bookid;
 			$reply["chapterid"] = $chapter;
+			if(1 == $s->redirect)
+				$reply["code"] = 300;
 			$data = GetAudio($s, $catalog, $bookid, $chapter);
 		} else if(strlen($bookid) > 0) {
 			$chapters = GetChapters($s, $catalog, $bookid);
@@ -105,7 +111,7 @@
 
 		if(!$catalog){
 			$catalog = $s->GetCatalog();
-			$mc->set($mckey, json_encode($catalog), 24*60*60-1);
+			$mc->set($mckey, json_encode($catalog), $s->cache["catalog"]);
 		} else {
 			$catalog = json_decode($catalog, True);
 		}
@@ -136,7 +142,7 @@
 			if(0 == strlen($uri))
 				return "";
 			$books = $s->GetBooks($uri);
-			$mc->set($mckey, json_encode($books), 24*60*60-1);
+			$mc->set($mckey, json_encode($books), $s->cache["book"]);
 		} else {
 			$books = json_decode($books, True);
 		}
@@ -165,7 +171,7 @@
 			// if(0 == strlen($uri))
 				// return "";
 			$chapters = $s->GetChapters($bookid);
-			$mc->set($mckey, json_encode($chapters), 24*60*60-1);
+			$mc->set($mckey, json_encode($chapters), $s->cache["chapter"]);
 		} else {
 			$chapters = json_decode($chapters, True);
 		}
@@ -187,15 +193,23 @@
 	function GetAudio($s, $catalog, $bookid, $chapter)
 	{
 		global $mc;
-		$mckey = "ts-server-" . $s->GetName() . "-catalog-" . $catalog . "-book-" . $bookid . "-chapter-" . $chapter;
-		$audio = $mc->get($mckey);
+		if(0 != $s->cache["audio"]){
+			$mckey = "ts-server-" . $s->GetName() . "-catalog-" . $catalog . "-book-" . $bookid . "-chapter-" . $chapter;
+			$audio = $mc->get($mckey);
+		}
 
 		if(!$audio){
 			$uri = GetChapterUri($s, $catalog, $bookid, $chapter);
 			if(0 == strlen($uri))
 				return "";
+				
+			if(1 == $s->redirect)
+				return $uri; // client get remote content
+
 			$audio = $s->GetAudio($uri);
-			$mc->set($mckey, $audio, 5*60);
+
+			if(0 != $s->cache["audio"])
+				$mc->set($mckey, $audio, $s->cache["audio"]);
 		} else {
 			//$chapters = json_decode($chapters, True);
 		}
