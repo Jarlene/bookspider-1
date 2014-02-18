@@ -80,10 +80,10 @@
 
 		$servers = array();
 		$servers["0"] = array("name" => "服务器1", "object" => $pingshu8);
-		$servers["1"] = array("name" => "服务器2", "object" => $c77nt);
-		$servers["2"] = array("name" => "服务器3", "object" => $c17tsw);
-//		$servers["3"] = array("name" => "服务器4", "object" => $pingshu8);
 		$servers["4"] = array("name" => "服务器5", "object" => $ysts8);
+//		$servers["1"] = array("name" => "服务器2", "object" => $c77nt);
+		$servers["2"] = array("name" => "服务器3", "object" => $c77nt);
+		$servers["3"] = array("name" => "服务器4", "object" => $c17tsw);
 		return $servers;
 	}
 
