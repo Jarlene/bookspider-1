@@ -2,11 +2,11 @@
 	class CYSTS8
 	{
 		public $cache = array(
-					"catalog" => 1*24*60*60,
-					"book" => 1*24*60*60,
-					"chapter" => 1*24*60*60,
-					"audio" => 10*60,
-					"search" => 1*24*60*60
+					"catalog" => 86400,
+					"book" => 86400,
+					"chapter" => 86400,
+					"audio" => 600,
+					"search" => 86400
 				);
 
 		public $redirect = 0;
@@ -38,15 +38,11 @@
 			$elements = xpath_query($doc, "//div[@class='ny_l']/ul/li/a[1]");
 
 			$summary = "";
-			if(is_null($infos)){
-				print_r("parse book icon/information error.");
-			} else {
-				foreach($infos as $info){
-					foreach($info->childNodes as $node){
-						if(XML_TEXT_NODE == $node->nodeType){
-							$summary = $summary . $node->nodeValue;
-							$summary = $summary . "\r\n";
-						}
+			foreach($infos as $info){
+				foreach($info->childNodes as $node){
+					if(XML_TEXT_NODE == $node->nodeType){
+						$summary = $summary . $node->nodeValue;
+						$summary = $summary . "\r\n";
 					}
 				}
 			}

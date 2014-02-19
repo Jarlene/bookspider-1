@@ -2,11 +2,11 @@
 	class CPingShu8 
 	{
 		public $cache = array(
-						"catalog" => 1*24*60*60,
-						"book" => 1*24*60*60,
-						"chapter" => 1*24*60*60,
-						"audio" => 10*60,
-						"search" => 1*24*60*60
+						"catalog" => 86400, // 24*60*60
+						"book" => 86400,
+						"chapter" => 86400,
+						"audio" => 600,
+						"search" => 86400
 					);
 
 		public $redirect = 0;
@@ -73,20 +73,16 @@
 			$host = parse_url($uri);
 			$iconuri = "";
 			$summary = "";
-			if(is_null($icons) || is_null($infos)){
-				print_r("parse book icon/information error.");
-			} else {
-				foreach($icons as $icon){
-					$href = $icon->getattribute('src');
-					if(0==strncmp("../", $href, 3)){
-						$iconuri = 'http://' . $host["host"] . dirname(dirname($host["path"])) . '/' . substr($href, 3);
-					} else {
-						$iconuri = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $href;
-					}
+			foreach($icons as $icon){
+				$href = $icon->getattribute('src');
+				if(0==strncmp("../", $href, 3)){
+					$iconuri = 'http://' . $host["host"] . dirname(dirname($host["path"])) . '/' . substr($href, 3);
+				} else {
+					$iconuri = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $href;
 				}
-				foreach($infos as $info){
-					$summary = $info->nodeValue;
-				}
+			}
+			foreach($infos as $info){
+				$summary = $info->nodeValue;
 			}
 
 			$chapters = array();

@@ -2,13 +2,13 @@
 	class C77NT
 	{
 		public $cache = array(
-							"catalog" => 30*24*60*60 - 1,
-							"book" => 7*24*60*60,
-							"chapter" => 30*24*60*60 - 1,
-							"audio" => 30*24*60*60 - 1,
-							"search" => 7*24*60*60
+							"catalog" => 2592000,
+							"book" => 604800,
+							"chapter" => 2592000,
+							"audio" => 2592000,
+							"search" => 604800
 						);
-						
+
 		public $redirect = 0;
 
 		function GetName()
@@ -37,6 +37,7 @@
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
 			$icons = xpath_query($doc, "//div[@class='conlist']/ul/li[1]/img");
+			$infos = xpath_query($doc, "//ul[@class='introbox']/p/span");
 			$elements = xpath_query($doc, "//ul[@class='compress']/ul/div/li/span/a");
 
 			$host = parse_url($uri);
@@ -46,6 +47,9 @@
 			foreach($icons as $icon){
 				$href = $icon->getattribute('src');
 				$iconuri = 'http://' . $host["host"] . $href;
+			}
+			foreach($infos as $info){
+				$summary = $info->nodeValue;
 			}
 
 			$chapters = array();
