@@ -150,7 +150,6 @@
 			$uri = 'http://www.17tsw.com/SoClass.aspx';
 			$data = 'class=' . urlencode(iconv("UTF-8", "gb2312", $keyword)) . '&submit=&ctl00%24Sodaohang=';
 			$response = http_post($uri, $data);
-			print_r($response);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
 			$options = xpath_query($doc, "//div[@class='page']/form/select/option");

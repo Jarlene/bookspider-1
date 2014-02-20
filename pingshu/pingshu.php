@@ -114,7 +114,13 @@
 
 		if(!$catalog){
 			$catalog = $s->GetCatalog();
-			$mc->set($mckey, json_encode($catalog), $s->cache["catalog"]);
+			$ok = true;
+			foreach($catalog as $k => $v){
+				if(count($v) < 1)
+					$ok = false;
+			}
+			if($ok)
+				$mc->set($mckey, json_encode($catalog), $s->cache["catalog"]);
 		} else {
 			$catalog = json_decode($catalog, True);
 		}
@@ -145,7 +151,8 @@
 			if(0 == strlen($uri))
 				return "";
 			$books = $s->GetBooks($uri);
-			$mc->set($mckey, json_encode($books), $s->cache["book"]);
+			if(count($books["book"]) > 0)
+				$mc->set($mckey, json_encode($books), $s->cache["book"]);
 		} else {
 			$books = json_decode($books, True);
 		}
@@ -174,7 +181,8 @@
 			// if(0 == strlen($uri))
 				// return "";
 			$chapters = $s->GetChapters($bookid);
-			$mc->set($mckey, json_encode($chapters), $s->cache["chapter"]);
+			if(count($chapters["chapter"]) > 0)
+				$mc->set($mckey, json_encode($chapters), $s->cache["chapter"]);
 		} else {
 			$chapters = json_decode($chapters, True);
 		}
@@ -211,7 +219,7 @@
 
 			$audio = $s->GetAudio($uri);
 
-			if(0 != $s->cache["audio"])
+			if(0 != $s->cache["audio"] && strlen($audio) > 0)
 				$mc->set($mckey, $audio, $s->cache["audio"]);
 		} else {
 			//$chapters = json_decode($chapters, True);
