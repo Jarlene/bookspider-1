@@ -23,7 +23,10 @@
 	$data = array();
 	if(0 != $redirect){
 		$s = GetServerObj($server);
-		$data = $s->GetAudio($$HTTP_RAW_POST_DATA);
+		$req = file_get_contents("php://input");
+		$data = $s->GetAudio($req);
+		$reply["bookid"] = $bookid;
+		$reply["chapterid"] = $chapter;
 	} else if(strlen($keyword) > 0){
 		$servers = GetServers();
 		foreach($servers as $k => $v){

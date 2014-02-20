@@ -19,19 +19,18 @@
 		function GetAudio($response)
 		{
 //			$response = http_get($uri);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+			//$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+			$response = str_replace("text/html; charset=gb2312", "text/html; charset=utf-8", $response);
 			
 			$doc = dom_parse($response);
 			$elements = xpath_query($doc, "//param[@name='url']");
 
-			if (!is_null($elements)) {
-				$host = parse_url($uri);
-				foreach ($elements as $element) {
-					$href = $element->getattribute('value');
-					if(strlen($href) > 0){
-						$uri = iconv("gb18030", "UTF-8", $href);
-						return $uri;
-					}
+			foreach ($elements as $element) {
+				$href = $element->getattribute('value');
+				if(strlen($href) > 0){
+					return $href;
+//					$uri = iconv("gb2312", "UTF-8", $href);
+//					return $uri;
 				}
 			}
 
