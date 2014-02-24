@@ -18,6 +18,7 @@
 
 		function GetAudio($response)
 		{
+			//file_put_contents ("/app/joke/a.html", $response);
 //			$response = http_get($uri);
 			//$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=utf-8", $response);

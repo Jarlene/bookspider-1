@@ -182,7 +182,7 @@
 
 				if(strlen($href) > 0 && strlen($book) > 0){
 					$bookid = basename($href, ".html");
-					$books[dirname($href) . '-' . substr($bookid, 8)] = $book;
+					$books[basename(dirname($href)) . '-' . substr($bookid, 8)] = $book;
 				}
 			}
 		}
