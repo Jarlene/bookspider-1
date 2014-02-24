@@ -21,11 +21,22 @@
 			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			
-			if(!preg_match('/\"\/play\/flv\.html\?(.+?)\"/', $response, $matches)){
-				return "";
+			if(preg_match('/\"\/play\/flv\.html\?(.+?)\"/', $response, $matches)){
+				return 2 == count($matches) ? iconv("gb18030", "UTF-8", $matches[1]) : "";
+			} else {
+				$doc = dom_parse($response);
+				$params = xpath_query($doc, "//param[@name='URL']");
+				$host = parse_url($uri);
+				foreach ($params as $param) {
+					$href = $param->getattribute('value');
+					if(strlen($href) > 0){
+						$uri = iconv("gb18030", "UTF-8", $href);
+						return $uri;
+					}
+				}
 			}
-
-			return 2 == count($matches) ? iconv("gb2312", "UTF-8", $matches[1]) : "";
+			
+			return "";
 		}
 
 		function GetChapters($bookid)
@@ -68,10 +79,10 @@
 			return $data;
 		}
 
-		function __ParseBooks($uri, $response, &$books)
+		function __ParseBooks($uri, $response, &$books, $xpath)
 		{
 			$doc = dom_parse($response);
-			$elements = xpath_query($doc, "//div[@class='pingshu_ysts8']/ul/li/a");
+			$elements = xpath_query($doc, $xpath);
 
 			if (!is_null($elements)) {
 				$host = parse_url($uri);
@@ -80,8 +91,9 @@
 					$book = $element->firstChild->wholeText;
 
 					if(strlen($href) > 0 && strlen($book) > 0){
-						$bookid = basename($href, ".html");
-						$books[substr($bookid, 2)] = $book;
+						$bookid = basename($href);
+						$n = strpos($bookid, '.');
+						$books[substr($bookid, 2, $n-2)] = $book;
 					}
 				}
 			}
@@ -92,11 +104,14 @@
 			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
-			$options = xpath_query($doc, "//select[@name='select']/option");
-
+			
 			$books = array();
-
-			if (!is_null($options)) {
+			if(0 == strcmp($uri, 'http://www.ysts8.com/index_tim.html')){
+				$this->__ParseBooks($u, $response, $books, "//div[@class='pingshu_ysts8_i']/ul/li/a");
+			} else if(0 == strcmp($uri, 'http://www.ysts8.com/index_hot.html')){
+				$this->__ParseBooks($u, $response, $books, "//div[@class='pingshu_ysts8_i']/ul/li/a");
+			} else {
+				$options = xpath_query($doc, "//select[@name='select']/option");
 				$host = parse_url($uri);
 				foreach ($options as $option) {
 					$href = $option->getattribute('value');
@@ -107,11 +122,9 @@
 							$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 						}
 
-						$this->__ParseBooks($u, $response, $books);
+						$this->__ParseBooks($u, $response, $books, "//div[@class='pingshu_ysts8']/ul/li/a");
 					}
 				}
-			} else {
-				$this->__ParseBooks($uri, $response, $books);
 			}
 			
 			$data = array();
@@ -119,7 +132,7 @@
 			$data["book"] = $books;
 			return $data;
 		}
-		
+
 		function GetCatalog()
 		{
 			$uri = 'http://www.ysts8.com/index_ys.html';
@@ -129,6 +142,8 @@
 			$elements = xpath_query($doc, "//div[@class='link']/a");
 
 			$subcatalogs = array();
+			$subcatalogs["最近更新"] = 'http://www.ysts8.com/index_tim.html';
+			$subcatalogs["排行榜"] = 'http://www.ysts8.com/index_hot.html';
 
 			if (!is_null($elements)) {
 				$host = parse_url($uri);
@@ -182,7 +197,7 @@
 					$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 				}
 				
-				$this->__ParseBooks($uri, $response, $books);
+				$this->__ParseBooks($uri, $response, $books, "//div[@class='pingshu_ysts8']/ul/li/a");
 			}
 			return array("book" => $books);
 		}

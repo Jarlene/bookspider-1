@@ -35,7 +35,7 @@
 			$uri = str_replace("play0.", "pl0.", $uri);
 			$uri = str_replace("play1.", "pl1.", $uri);
 
-			return iconv("gb2312", "UTF-8", $uri);
+			return iconv("gb18030", "UTF-8", $uri);
 		}
 
 		function __ParseChapters($uri, $response)
@@ -115,18 +115,43 @@
 
 		function GetBooks($uri)
 		{
+			$books = array();
+			$iconuri = "";
+
 			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
-			$icons = xpath_query($doc, "//div[@class='z4']/img");
-			$elements = xpath_query($doc, "//div[@class='jj2']/div/div/a");
+			
+			if(0 == strcmp($uri, 'http://www.pingshu8.com/music/newzj.htm')){
+				$elements = xpath_query($doc, "//div[@class='tab3']/ul/li[2]/a[2]");
+				foreach ($elements as $element) {
+					$href = $element->getattribute('href');
+					$book = $element->nodeValue;
 
-			$host = parse_url($uri);
-			$iconuri = "";
+					if(strlen($href) > 0 && strlen($book) > 0){
+						$bookid = basename($href);
+						$n = strpos($bookid, '.');
+						$books[substr($bookid, 4, $n-4)] = $book;
+					}
+				}
+			} else if(0 == strcmp($uri, 'http://www.pingshu8.com/top/pingshu.htm')){
+				$elements = xpath_query($doc, "//div[@class='tab3']/a");
+				foreach ($elements as $element) {
+					$href = $element->getattribute('href');
+					$book = $element->nodeValue;
 
-			if(is_null($icons)){
-				print_r("parse books icon error.");
+					if(strlen($href) > 0 && strlen($book) > 0){
+						$bookid = basename($href);
+						$n = strpos($bookid, '.');
+						$books[substr($bookid, 4, $n-4)] = $book;
+					}
+				}
 			} else {
+				$icons = xpath_query($doc, "//div[@class='z4']/img");
+				$elements = xpath_query($doc, "//div[@class='jj2']/div/div/a");
+
+				$host = parse_url($uri);
+
 				foreach($icons as $icon){
 					$href = $icon->getattribute('src');
 					if(0==strncmp("../", $href, 3)){
@@ -135,18 +160,15 @@
 						$iconuri = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $href;
 					}
 				}
-			}
 
-			$books = array();
-
-			if (!is_null($elements)) {
 				foreach ($elements as $element) {
 					$href = $element->getattribute('href');
 					$book = $element->nodeValue;
 
 					if(strlen($href) > 0 && strlen($book) > 0){
-						$bookid = basename($href, ".Htm");
-						$books[substr($bookid, 4)] = $book;
+						$bookid = basename($href);
+						$n = strpos($bookid, '.');
+						$books[substr($bookid, 4, $n-4)] = $book;
 					}
 				}
 			}
@@ -165,6 +187,8 @@
 			$elements = xpath_query($doc, "//div[@class='t2']/ul/li/a");
 
 			$artists = array();
+			$artists["最近更新"] = 'http://www.pingshu8.com/music/newzj.htm';
+			$artists["排行榜"] = 'http://www.pingshu8.com/top/pingshu.htm';
 
 			if (!is_null($elements)) {
 				$host = parse_url($uri);
@@ -233,8 +257,9 @@
 					$href = $element->getattribute('href');
 					$book = $element->nodeValue;
 
-					$bookid = basename($href, ".Htm");
-					$books[substr($bookid, 4)] = $book;
+					$bookid = basename($href);
+					$n = strpos($bookid, '.');
+					$books[substr($bookid, 4, $n-4)] = $book;
 				}
 			}
 			return $books;
