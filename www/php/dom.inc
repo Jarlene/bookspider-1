@@ -22,9 +22,49 @@ function xpath_query($doc, $path, $parent=null)
 function xpath_get($doc, $path, $parent=null)
 {
 	$elements = xpath_query($doc, $path, $parent);
-	if(!is_null($elements) && 1==$elements->length) 
+	if(1 == $elements->length) 
 		return $elements->item[0];
 	return null;
 }
+
+class XPath
+{
+	function __construct($html)
+	{
+		libxml_use_internal_errors(true);
+
+		$doc = new DOMDocument();
+		$doc->loadHTML($html);
+		$m_xpath = new DOMXpath($doc);
+	}
+	
+	function query($path, $parent=null)
+	{
+		if(is_null($parent)){
+			$elements = $m_xpath->query($path);
+		} else {
+			$elements = $m_xpath->query($path, $parent);
+		}
+		return $elements;
+	}
+	
+	function get_value($path, $parent=null, $default=null)
+	{
+		$elements = $this->query($path, $parent);
+		if(1 == $elements->length) 
+			return $elements->item[0]->nodeValue;
+		return $default;
+	}
+
+	function get_attribute($path, $attr, $parent=null, $default=null)
+	{
+		$elements = $this->query($path, $parent);
+		if(1 == $elements->length) 
+			return $elements->item[0]->getattribute($attr);
+		return $default;
+	}
+	
+	private $m_xpath;
+};
 
 ?>
