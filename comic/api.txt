@@ -1,0 +1,160 @@
+1. 获取服务器列表
+/comic/comic.php
+
+返回格式：
+{
+	"code"  : 0,
+	"msg	: "ok",
+	"data"	: 
+	[ 
+		{
+			"id"	: 0,
+			"name"	: "服务器1"
+		}
+		
+		{
+			"id"	: 1,
+			"name"	: "服务器2"
+		}
+		
+		{
+			"id"	: 2,
+			"name"	: "服务器3" 
+		}
+	]
+}
+
+2. 获取分类
+/comic/comic.php?server=0
+
+返回格式：
+{
+	"code"  : 0,
+	"msg	: "ok",
+	"data"	: 
+	{
+		"评书" : [ "单田芳", "博韬", "王传林" ],
+		"相声" : [ "郭德纲", "牛群", "侯耀文" ],
+		"小说" : [ "恐怖科幻", "经典文学", "武侠小说", "玄幻小说" ],
+		"金庸" : [ "金庸作品全集" ],
+		"综艺" : [ "百家讲坛", "经典珍藏", "梨园戏曲" ]
+	}
+}
+
+3. 获取作品集
+/comic/comic.php?server=0&catalog=单田芳
+
+返回格式：
+{
+	"code"  : 0,
+	"msg	: "ok",
+	"icon"	: "http://www.pingshu8.com/bzmtv_Music_Pic/2006110135110.jpg", // 分类图标
+	"data"	: 
+	[ 
+		{
+			"book"	: "杨幺传", 
+			"bookid": "7_3283_1"
+		},
+		
+		{
+			"book"	: "龙虎风云会续集", 
+			"bookid": "7_3276_1"
+		},
+		
+		{
+			"book"	: "天下故事会之古代奇案",
+			"bookid": "7_3200_1"
+		}
+	]
+}
+
+4. 获取作品章节
+/comic/comic.php?server=0&bookid=7_3200_1
+
+返回格式：
+{
+	"code"  	: 0,
+	"msg		: "ok",
+	"icon"		: "http://www.pingshu8.com/bzmtv_Music_Pic/200872611627.jpg", // 作品图标
+	"summary"	: "评书 天下故事会之古代奇案", // 作品简介
+	"data"		: 
+	[ 
+		{
+			"chapter" : "01_水塘乡走尸1", 
+			"chapterid" : "1"
+		},
+		
+		{
+			"chapter" : "02_水塘乡走尸2", 
+			"chapterid" : "2"
+		},
+		
+		{
+			"chapter" : "03_水塘乡走尸3",
+			"chapterid" : "3"
+		}
+	]
+}
+
+5. 获取作品章节对应的音频文件
+/comic/comic.php?server=0&bookid=7_3200_1&chapterid=1
+
+请注意：
+1. code值为300时，需要客户端从原始网站获取内容，然后调用/pingshu/pingshu.php?server=0&redirect=1命令获取真正音频文件uri
+2. 客户端从原始服务器（如77nt.com）读取音频文件时，服务器可能会返回重定向状态码，客户端必须支持HTTP重定向功能（HTTP Header Location字段为真正网址）
+
+返回格式：
+{
+	"code"  	: 0,
+	"msg		: "ok",
+	"bookid"	: "7_3200_1",
+	"chapterid"	: "1",
+	"data"		: "http://pl1.pingshu8.com:8000/2/xs/jiangkun/01.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"
+}
+
+6. 服务器解析功能
+/comic/comic.php?server=0&redirect=1
+
+请注意：必须使用post方式发送命令，post内容为原始服务器返回的HTML内容
+
+返回格式：
+{
+	"code"  	: 0,
+	"msg		: "ok",
+	"data"		: "http://pl1.pingshu8.com:8000/2/xs/jiangkun/01.mp3?1151671027570x1390487333x1151676806312-4b8fbf3b2afdcb2e78a724ee2d500fbd"
+}
+
+7. 搜索
+/comic/comic.php?keyword=乱世枭雄
+
+返回格式：
+{
+	"code"  : 0,
+	"msg	: "ok",
+	"data"	:
+	[
+		{
+			"server"	: "0",
+			"book"		: "乱世枭雄东北王张作霖"
+			"bookid"	: "7_3200_1"
+		},
+
+		{
+			"server"	: "1",
+			"book"		: "乱世枭雄"
+			"bookid"	: "7_3201_1"
+		},
+
+		{
+			"server"	: "0",
+			"book"		: "乱世枭雄300回"
+			"bookid"	: "7_3202_1"
+		},
+
+		{
+			"server"	: "0",
+			"book" 		: "话民国传奇,品乱世枭雄"
+			"bookid"	: "7_3203_1"
+		}
+	]
+}
