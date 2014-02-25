@@ -37,73 +37,41 @@
 
 			return iconv("gb18030", "UTF-8", $uri);
 		}
-
-		function __ParseChapters($uri, $response)
-		{
-			$doc = dom_parse($response);
-			$elements = xpath_query($doc, "//li[@class='a1']/a");
-
-			$chapters = array();
-
-			if (!is_null($elements)) {
-				$host = parse_url($uri);
-				foreach ($elements as $element) {
-					$href = $element->getattribute('href');
-					$chapter = $element->nodeValue;
-
-					if(strlen($href) > 0 && strlen($chapter) > 0){
-						$chapters[] = array("name" => $chapter, "uri" => 'http://' . $host["host"] . $href);
-					}
-				}
-			}
-
-			return $chapters;
-		}
 		
 		function GetChapters($bookid)
 		{
-			$uri = "http://www.pingshu8.com/MusicList/mmc_" . $bookid . ".htm";
+			$uri = "http://www.imanhua.com/comic/" . $bookid . "/";
 			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			$doc = dom_parse($response);
-			$icons = xpath_query($doc, "//div[@class='a']/img");
-			$infos = xpath_query($doc, "//div[@class='c']/div");
-			$options = xpath_query($doc, "//select[@name='turnPage']/option");
-
+			$xpath = new XPath($response);
 			$host = parse_url($uri);
-			$iconuri = "";
+
+			$iconuri = $xpath->get_attribute("//div[@class='fl bookCover']/img", "src");
 			$summary = "";
-			foreach($icons as $icon){
-				$href = $icon->getattribute('src');
-				if(0==strncmp("../", $href, 3)){
-					$iconuri = 'http://' . $host["host"] . dirname(dirname($host["path"])) . '/' . substr($href, 3);
-				} else {
-					$iconuri = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $href;
-				}
-			}
-			foreach($infos as $info){
-				$summary = $info->nodeValue;
-			}
-
 			$chapters = array();
+	
+			$i = 0;
+			$elements = $xpath->query("//div[@class='intro']/p");
+			foreach($elements as $element){
+				if($i++ == 0)
+					continue; // skip the first catalog
 
-			if (!is_null($options)) {
-				foreach ($options as $option) {
-					$href = $option->getattribute('value');
-					if(strlen($href) > 0){
-						$u = 'http://' . $host["host"] . $href;
-						if(0 != strcmp($u, $uri)){
-							$response = http_get($u);
-							$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-						}
+				$p = $element->nodeValue;
+				$summary = $summary . $p . "\r\n";
+			}
 
-						$nchapters = $this->__ParseChapters($u, $response);
-						$chapters = array_merge($chapters, $nchapters);
-					}
+			$elements = $xpath->query("//div[@class='chapterList']/ul/li/a");
+			if($elements->length < 1){
+				$elements = $xpath->query("//ul[@id='subBookList']/li/a");
+			}
+
+			foreach ($elements as $element) {
+				$href = $element->getattribute('href');
+				$chapter = $element->getattribute('title');
+
+				if(strlen($href) > 0 && strlen($chapter) > 0){
+					$chapters[] = array("name" => $chapter, "uri" => 'http://' . $host["host"] . $href);
 				}
-			} else {
-				$nchapters = $this->__ParseChapters($uri, $response);
-				$chapters = array_merge($chapters, $nchapters);
 			}
 
 			$data = array();
@@ -113,37 +81,39 @@
 			return $data;
 		}
 
-		function __ParseBooks($uri, $response, &$books, $xpath)
-		{
-			$doc = dom_parse($response);
-			$elements = xpath_query($doc, $xpath);
-
-			if (!is_null($elements)) {
-				$host = parse_url($uri);
-				foreach ($elements as $element) {
-					$href = $element->getattribute('href');
-					$book = $element->firstChild->wholeText;
-
-					if(strlen($href) > 0 && strlen($book) > 0){
-						$bookid = basename($href);
-						$n = strpos($bookid, '.');
-						$books[substr($bookid, 2, $n-2)] = $book;
-					}
-				}
-			}
-		}
-
 		function GetBooks($uri)
 		{
 			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$xpath = new XPath($response);
-			
+
 			$books = array();
-			if(0 == strcmp($uri, 'http://www.ysts8.com/index_tim.html')){
-				$this->__ParseBooks($u, $response, $books, "//div[@class='pingshu_ysts8_i']/ul/li/a");
-			} else if(0 == strcmp($uri, 'http://www.ysts8.com/index_hot.html')){
-				$this->__ParseBooks($u, $response, $books, "//div[@class='pingshu_ysts8_i']/ul/li/a");
+			if(0 == strcmp($uri, 'http://www.imanhua.com/recent.html')){
+				$elements = $xpath->query("//div[@class='updateList']//li");
+				foreach ($elements as $element) {
+					$book = $xpath->get_attribute("a", "title", $element, "");
+					$href = $xpath->get_attribute("a", "href", $element, "");
+					$author = $xpath->get_value("acronym", $element, "");
+					$icon = "";
+					$time = $xpath->get_value("span", $element, "");
+					$status = $xpath->get_value("a[2]", $element, "");
+
+					if(strlen($href) > 0 && strlen($book) > 0){
+						$bookid = basename($href);
+						$books[$bookid] = array("bookid" => $bookid, "book" => $book, "author" => $author, "icon" => $icon, "time" => $time, "status" => $status);
+					}
+				}
+			} else if(0 == strcmp($uri, 'http://www.imanhua.com/top.html')){
+				$elements = $xpath->query("//div[@class='topHits']/ul/li");
+				foreach ($elements as $element) {
+					$book = $xpath->get_attribute("a", "title", $element, "");
+					$href = $xpath->get_attribute("a", "href", $element, "");
+
+					if(strlen($href) > 0 && strlen($book) > 0){
+						$bookid = basename($href);
+						$books[$bookid] = array("bookid" => $bookid, "book" => $book);
+					}
+				}
 			} else {
 				$page = $xpath->get_value("//div[@class='pagerHead']/strong[3]", null, 1);
 
@@ -156,7 +126,7 @@
 						$xpath = new XPath($response);
 					}
 					
-					$elements = $xpath->query("//div[@class='main']/div/ul/li");
+					$elements = $xpath->query("//ul[@class='bookList']/li");
 					foreach ($elements as $element) {
 						$book = $xpath->get_attribute("a", "title", $element, "");
 						$href = $xpath->get_attribute("a", "href", $element, "");
@@ -166,7 +136,7 @@
 
 						if(strlen($href) > 0 && strlen($book) > 0){
 							$bookid = basename($href);
-							$books[$bookid] = array("book" => $book, "uri" => $href, "icon" => $icon, "time" => $time, "status" => $status);
+							$books[$bookid] = array("bookid" => $bookid, "book" => $book, "icon" => $icon, "time" => $time, "status" => $status);
 						}
 					}
 				}
@@ -190,10 +160,13 @@
 			$subcatalogs["最近更新"] = 'http://www.imanhua.com/recent.html';
 			$subcatalogs["排行榜"] = 'http://www.imanhua.com/top.html';
 
+			$i = 0;
 			$host = parse_url($uri);
 			foreach ($elements as $element) {
 				$href = $element->getattribute('href');
 				$subcatalog = $element->nodeValue;
+				if($i++ == 0)
+					continue; // skip the first catalog
 
 				//$artist = mb_convert_encoding($artist, "gb2312", "UTF-8");
 				//$artist = mb_convert_encoding($artist, "UTF-8", "gb2312");

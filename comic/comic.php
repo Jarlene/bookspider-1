@@ -2,12 +2,12 @@
 	require("php/http.inc");
 	require("php/dom.inc");
 	require("php/util.inc");
-	require("bengou.php");
-	require("9lala.php");
-	require("99comic.php");
+//	require("bengou.php");
+//	require("9lala.php");
+//	require("99comic.php");
 	require("imanhua.php");
-	require("veryim.php");
-	require("xxbh.php");
+//	require("veryim.php");
+//	require("xxbh.php");
 
 	$mc = new Memcached();
 	$mc->addServer("localhost", 11211);
@@ -65,7 +65,7 @@
 			$books = GetBooks($s, $catalog);
 			$reply["icon"] = $books["icon"];
 			foreach($books["book"] as $k => $v){
-				$data[] = array("book" => $v, "bookid" => "$k");
+				$data[] = $v;
 			}
 		} else {
 			$catalogs = GetCatalog($s);
@@ -79,17 +79,18 @@
 		}
 	}
 
+	print_r($data);
 	$reply["data"] = $data;
 	echo json_encode($reply);
 
 	function GetServers()
 	{
 		$imanhua = new CIManHua();
-		$xxbh = new CXXBH();
-		$c9lala = new C9LaLa();
-		$c99comic = new C99Comic();
-		$bengou = new CBenGou();
-		$veryim = new CVeryIm();
+//		$xxbh = new CXXBH();
+//		$c9lala = new C9LaLa();
+//		$c99comic = new C99Comic();
+//		$bengou = new CBenGou();
+//		$veryim = new CVeryIm();
 
 		$servers = array();
 //		$servers["0"] = array("name" => "服务器1", "object" => $bengou);
@@ -114,7 +115,7 @@
 	function GetCatalog($s)
 	{
 		global $mc;
-		$mckey = "ts-server-" . $s->GetName();
+		$mckey = "comic-" . $s->GetName();
 		$catalog = $mc->get($mckey);
 
 		if(!$catalog){
@@ -148,7 +149,7 @@
 	function GetBooks($s, $catalog)
 	{
 		global $mc;
-		$mckey = "ts-server-" . $s->GetName() . "-catalog-" . $catalog;
+		$mckey = "comic-" . $s->GetName() . "-catalog-" . $catalog;
 		$books = $mc->get($mckey);
 
 		if(!$books){
@@ -178,7 +179,7 @@
 	function GetChapters($s, $catalog, $bookid)
 	{
 		global $mc;
-		$mckey = "ts-server-" . $s->GetName() . "-catalog-" . $catalog . "-book-" . $bookid;
+		$mckey = "comic-" . $s->GetName() . "-catalog-" . $catalog . "-book-" . $bookid;
 		$chapters = $mc->get($mckey);
 
 		if(!$chapters){
@@ -210,7 +211,7 @@
 	{
 		global $mc;
 		if(0 != $s->cache["audio"]){
-			$mckey = "ts-server-" . $s->GetName() . "-catalog-" . $catalog . "-book-" . $bookid . "-chapter-" . $chapter;
+			$mckey = "comic-" . $s->GetName() . "-catalog-" . $catalog . "-book-" . $bookid . "-chapter-" . $chapter;
 			$audio = $mc->get($mckey);
 		}
 
