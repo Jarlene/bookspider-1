@@ -35,15 +35,15 @@ class XPath
 
 		$doc = new DOMDocument();
 		$doc->loadHTML($html);
-		$m_xpath = new DOMXpath($doc);
+		$this->m_xpath = new DOMXpath($doc);
 	}
 	
 	function query($path, $parent=null)
 	{
 		if(is_null($parent)){
-			$elements = $m_xpath->query($path);
+			$elements = $this->m_xpath->query($path);
 		} else {
-			$elements = $m_xpath->query($path, $parent);
+			$elements = $this->m_xpath->query($path, $parent);
 		}
 		return $elements;
 	}
@@ -52,7 +52,7 @@ class XPath
 	{
 		$elements = $this->query($path, $parent);
 		if(1 == $elements->length) 
-			return $elements->item[0]->nodeValue;
+			return $elements->item(0)->nodeValue;
 		return $default;
 	}
 
@@ -60,7 +60,7 @@ class XPath
 	{
 		$elements = $this->query($path, $parent);
 		if(1 == $elements->length) 
-			return $elements->item[0]->getattribute($attr);
+			return $elements->item(0)->getattribute($attr);
 		return $default;
 	}
 	
