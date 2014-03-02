@@ -30,6 +30,8 @@
 	} else if(strlen($keyword) > 0){
 		$servers = GetServers();
 		foreach($servers as $k => $v){
+			if(2==$k || 3==$k)
+				continue;
 			$result = Search($v["object"], $keyword);
 			foreach($result as $b){
 				$bid = $b["bookid"];
