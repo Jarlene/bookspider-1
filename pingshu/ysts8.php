@@ -5,7 +5,7 @@
 					"catalog" => 86400,
 					"book" => 86400,
 					"chapter" => 86400,
-					"audio" => 600,
+					"audio" => 0,
 					"search" => 86400
 				);
 

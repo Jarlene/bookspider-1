@@ -5,11 +5,40 @@
 						"catalog" => 86400, // 24*60*60
 						"book" => 86400,
 						"chapter" => 86400,
-						"audio" => 600,
+						"audio" => 0,
 						"search" => 86400
 					);
 
 		public $redirect = 0;
+
+		function HttpGet($uri)
+		{
+			$base = time();
+			$proxies = array("113.57.230.83", 
+				"114.80.120.53:8080", 
+				"117.40.160.45:3128", 
+				"117.59.224.62:80", 
+				"118.126.5.149:9001", 
+				"115.238.191.146:3128", 
+				"218.207.83.141:3128", 
+				"219.216.110.96:3259",
+				"221.130.17.39:80");
+
+			for($i = 0; $i < count($proxies); $i++){
+				$proxy = $proxies[($base + $i) % count($proxies)];
+				//print_r("proxy: " . $proxy . "\r\n");
+				$r = http_get($uri, 5, $proxy);
+				if(!$r){
+					continue;
+				}
+				
+				if(false !== stripos($r, "pingshu8")){
+					return $r;
+				}
+			}
+			
+			return http_get($uri, 10, "");
+		}
 
 		function GetName()
 		{
@@ -18,7 +47,7 @@
 
 		function GetAudio($uri)
 		{
-			$response = http_get($uri);
+			$response = $this->HttpGet($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 
 			if(!preg_match('/encodeURI\(\"(.+)\"\)/', $response, $matches)){
@@ -63,7 +92,7 @@
 		function GetChapters($bookid)
 		{
 			$uri = "http://www.pingshu8.com/MusicList/mmc_" . $bookid . ".htm";
-			$response = http_get($uri);
+			$response = $this->HttpGet($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
 			$icons = xpath_query($doc, "//div[@class='a']/img");
@@ -93,7 +122,7 @@
 					if(strlen($href) > 0){
 						$u = 'http://' . $host["host"] . $href;
 						if(0 != strcmp($u, $uri)){
-							$response = http_get($u);
+							$response = $this->HttpGet($u);
 							$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 						}
 
@@ -118,7 +147,7 @@
 			$books = array();
 			$iconuri = "";
 
-			$response = http_get($uri);
+			$response = $this->HttpGet($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
 			
@@ -181,27 +210,26 @@
 
 		function __GetSubcatalog($uri)
 		{
-			$response = http_get($uri);
+			$response = $this->HttpGet($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			$doc = dom_parse($response);
-			$elements = xpath_query($doc, "//div[@class='t2']/ul/li/a");
+
+			$xpath = new XPath($response);
+			$elements = $xpath->query("//div[@class='t2']/ul/li/a");
 
 			$artists = array();
 			$artists["最近更新"] = 'http://www.pingshu8.com/music/newzj.htm';
 			$artists["排行榜"] = 'http://www.pingshu8.com/top/pingshu.htm';
 
-			if (!is_null($elements)) {
-				$host = parse_url($uri);
-				foreach ($elements as $element) {
-					$href = $element->getattribute('href');
-					$artist = $element->nodeValue;
+			$host = parse_url($uri);
+			foreach ($elements as $element) {
+				$href = $element->getattribute('href');
+				$artist = $element->nodeValue;
 
-					//$artist = mb_convert_encoding($artist, "gb2312", "UTF-8");
-					//$artist = mb_convert_encoding($artist, "UTF-8", "gb2312");
-					//$artist = iconv("GB18030", "UTF-8", $artist);
-					if(strlen($href) > 0 && strlen($artist) > 0){
-						$artists[$artist] = 'http://' . $host["host"] . $href;
-					}
+				//$artist = mb_convert_encoding($artist, "gb2312", "UTF-8");
+				//$artist = mb_convert_encoding($artist, "UTF-8", "gb2312");
+				//$artist = iconv("GB18030", "UTF-8", $artist);
+				if(strlen($href) > 0 && strlen($artist) > 0){
+					$artists[$artist] = 'http://' . $host["host"] . $href;
 				}
 			}
 
@@ -222,7 +250,7 @@
 		function __SearchAuthor($keyword)
 		{
 			$uri = "http://www.pingshu8.com/bzmtv_inc/SingerSearch.asp?keyword="  . urlencode(iconv("UTF-8", "gb2312", $keyword));
-			$response = http_get($uri);
+			$response = $this->HttpGet($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
 			$elements = xpath_query($doc, "//table[@class='TableLine']/form/tr/td[1]/div/a");
@@ -244,7 +272,7 @@
 		function __SearchBook($keyword)
 		{
 			$uri = "http://www.pingshu8.com/bzmtv_inc/SpecialSearch.asp?keyword=" . urlencode(iconv("UTF-8", "gb2312", $keyword));
-			$response = http_get($uri);
+			$response = $this->HttpGet($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
 			$xpath = new DOMXpath($doc);
