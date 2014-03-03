@@ -1,21 +1,42 @@
 <?php
-function http_get($uri, $timeout=20, $headers=array())
+function http_options($timeout, $proxy)
 {
-	$http = new Http(array('timeout' => $timeout));
+	$options = array('timeout' => $timeout);
+	if(strlen($proxy) > 0){
+		$items = split(":", $proxy);
+		$options["proxy"] = true;
+		$options["proxyType"] = CURLPROXY_HTTP;
+		$options["proxyHost"] = $items[0];
+		if(count($items) > 1){
+			$options["proxyPort"] = $items[1];
+		} else {
+			$options["proxyPort"] = 80;
+		}
+	}
+
+	return $options;
+}
+
+function http_get($uri, $timeout=20, $proxy="", $headers=array())
+{
+	$options = http_options($timeout, $proxy);
+	$http = new Http($options);
 	$r = $http->get($uri, $headers);
 	return $r ? $r['body'] : "";
 }
 
-function http_post($uri, $data, $timeout=20, $headers=array())
+function http_post($uri, $data, $timeout=20, $proxy="", $headers=array())
 {
-	$http = new Http(array('timeout' => $timeout));
+	$options = http_options($timeout, $proxy);
+	$http = new Http($options);
 	$r = $http->post($uri, $data, $headers);
 	return $r ? $r['body'] : "";
 }
 
-function http_get_headers($uri, $timeout=20, $headers=array())
+function http_get_headers($uri, $timeout=20, $proxy="", $headers=array())
 {
-	$http = new Http(array('timeout' => $timeout));
+	$options = http_options($timeout, $proxy);
+	$http = new Http($options);
 	$r = $http->get($uri, $headers);
 	return $r ? $r['header'] : "";
 }
@@ -69,7 +90,8 @@ class Http
 			'cookie' => false,
 			'ssl' => false,
 			'gzip' => true,
-			'proxy' => false);
+			'proxy' => false,
+			'proxyAuth' => false);
 
 		$options = array_merge($options0, $options);
 
