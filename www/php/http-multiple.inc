@@ -3,7 +3,6 @@ class HttpMultiple
 {
 	function __construct($options=array())
 	{
-		$this->m_multi = curl_multi_init();
 		$this->m_proxies = array();
 		$this->m_options = array(
 			'port' => 80,
@@ -19,6 +18,8 @@ class HttpMultiple
 			'Accept-Encoding: gzip, deflate',
 			'Accept-Language: en-US,en;q=0.5'
 		);
+		
+		$this->m_multi = curl_multi_init();
 	}
 
 	function __destruct()
@@ -39,64 +40,77 @@ class HttpMultiple
 		return $this->_request("POST", $urls, $data, $callback, $param, $timeout, $headers);
 	}
 
-	// setproxy("1.1.36.27", "120.197.85.173:33942", "120.197.85.182:10080", "221.130.162.242:82", "221.130.162.242:9000")
+	// setproxy(array("1.1.36.27", "120.197.85.173:33942", "120.197.85.182:10080", "221.130.162.242:82", "221.130.162.242:9000"))
 	function setproxy($hosts)
 	{
-		$this->m_proxies = array();
-
 		$proxies = array();
 		foreach($hosts as $host){
 			$proxy = split(":", $host);
 			if(count($proxy) > 1){
-				$this->m_proxies[] = array("proxy" => CURLPROXY_HTTP, "host" => $proxy[0], "port" => $proxy[1]);
+				$proxies[] = array("proxy" => CURLPROXY_HTTP, "host" => $proxy[0], "port" => $proxy[1]);
 			} else {
-				$this->m_proxies[] = array("proxy" => CURLPROXY_HTTP, "host" => $proxy[0], "port" => 80);
+				$proxies[] = array("proxy" => CURLPROXY_HTTP, "host" => $proxy[0], "port" => 80);
 			}
 		}
+		
+		$this->m_proxies = $proxies;
 	}
 
 	private function _request($method, $urls, $data, $callback, $param, $timeout, $headers)
 	{
-		$pxidx = 0;
 		//$proxies = http_get_proxies();
-		assert(count($urls) == count($data));
+		if($data){
+			assert(count($urls) == count($data));
+		}
 
 		$curls = array();
 		for($i=0; $i < count($urls); $i++){
 			$curl = curl_init($urls[$i]);
-			$this->_setopt($method, $curl, $data[$i], $headers);
-
-			if(count($proxies) > 0){
-				$idx = $pxidx++ % count($proxies);
-				curl_setopt($curl, CURLOPT_PROXY, $proxies[$idx]['host']);
-				curl_setopt($curl, CURLOPT_PROXYPORT, $proxies[$idx]['port']);
-				curl_setopt($curl, CURLOPT_PROXYTYPE, $proxies[$idx]['proxy']);
-			}
-
-			curl_multi_add_handle($multi, $curl);
+			$this->_setopt($method, $curl, $data ? $data[$i] : null, $headers);
+			curl_multi_add_handle($this->m_multi, $curl);
 			$curls[] =  $curl;
 		}
 
-		$r = $this->_perform($this->m_multi, $curls, $timeout, $callback, $param);
-		if(0 != $r){
-			assert(0 != count($curls), "HttpMultiple _perform error.");
-
-			// disable proxy
-			if(count($proxies) > 0){
+		// try all proxy
+		$r = -1;
+		if(0 == count($this->m_proxies)){
+			$r = $this->_perform($this->m_multi, $curls, $timeout, $callback, $param);
+		} else {
+			$pxidx = time();
+			for($i = 0; 0 != $r && $i < count($this->m_proxies); $i++){
+				$idx = ($i + $pxidx) % count($this->m_proxies);
 				foreach($curls as $curl){
-					curl_setopt($curl, CURLOPT_PROXYPORT, "");
+					curl_setopt($curl, CURLOPT_PROXY, $this->m_proxies[$idx]['host']);
+					curl_setopt($curl, CURLOPT_PROXYPORT, $this->m_proxies[$idx]['port']);
+					curl_setopt($curl, CURLOPT_PROXYTYPE, $this->m_proxies[$idx]['proxy']);
 				}
 				$r = $this->_perform($this->m_multi, $curls, $timeout, $callback, $param);
 			}
-		} else {
-			assert(0 == count($curls), "HttpMultiple _perform error.");
 		}
 
-		// close
-		foreach($curls as $curl){
+		if(0 != $r)
+			return $r;
+
+		for($i = 0; $i < count($curls); $i++){
+			$curl = $curls[$i];
+			$response = curl_multi_getcontent($curl);
+			$headerSize = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
+			$header = substr($response, 0, $headerSize);
+			$body = substr($response, $headerSize);
+
+			if(is_callable($callback) && strlen($header) > 0 && strlen($body) > 0) {
+				call_user_func($callback, $param, $header, $body, $i);
+			}
+
 			curl_multi_remove_handle($this->m_multi, $curl);
 			curl_close($curl);
 		}
+
+		// close
+		// foreach($curls as $curl){
+			// curl_multi_remove_handle($this->m_multi, $curl);
+			// curl_close($curl);
+		// }
 
 		return $r;
 	}
@@ -151,7 +165,7 @@ class HttpMultiple
 //		curl_setopt($curl, CURLOPT_URL, $uri);
 		curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
 
-		if($method == "POST"){
+		if($method == "POST" && $data){
 			curl_setopt($curl, CURLOPT_POST, true);
 			curl_setopt($curl, CURLOPT_POSTFIELDS, $data);	
 		}
@@ -177,34 +191,21 @@ class HttpMultiple
 				return -1;
 			}
 
-			$info = curl_multi_info_read($multi);
-			while($info){
-				$curl = $info['handle'];
-				$idx = array_search($curl, $curls, true);
-				$response = curl_multi_getcontent($curl);
-				$headerSize = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
-				$header = substr($response, 0, $headerSize);
-				$body = substr($response, $headerSize);
-				if (is_callable($callback)) {
-					call_user_func($callback, $param, $header, $body, $idx);
-				}
-				curl_multi_remove_handle($multi, $curl);
-				unset($curls[$idx]);
-				curl_close($curl);
-
-				//ob_flush();flush();
-
-				$info = curl_multi_info_read($multi);
-			}
+			// $info = curl_multi_info_read($multi);
+			// while($info){
+				// print_r($info);
+				// //ob_flush();flush();
+				// $info = curl_multi_info_read($multi);
+			// }
 
 			do{
 				$status = curl_multi_exec($multi, $active);
 			} while($status === CURLM_CALL_MULTI_PERFORM);
 		}
 
-		$t1 = gettimeofday(true);
-		echo "time: " . ($t1-$t0) . "\r\n";
-		return ($status === CURLM_OK && $active) ? 0 : -1;
+		// $t1 = gettimeofday(true);
+		// echo "time: " . ($t1-$t0) . "\r\n";
+		return (CURLM_OK === $status && 0 === $active) ? 0 : -1;
 	}
 
 	private $m_multi = null;
@@ -213,19 +214,19 @@ class HttpMultiple
 	private $m_headers = null;
 };
 
-function OnReadData($param, $header, $body, $idx)
-{
-	file_put_contents($idx . ".html", $body);
-	//echo 'OnReadData[' . $idx . '] ' . strlen($content);
-}
+// function OnReadData($param, $header, $body, $idx)
+// {
+	// file_put_contents($idx . ".html", $body);
+	// //echo 'OnReadData[' . $idx . '] ' . strlen($content);
+// }
 
-$urls = array("http://www.baidu.com/", "http://www.bing.com/", "http://www.google.com/");
-http_get_multiple($urls, 'OnReadData', "param", -1);
-
-// print_r($all);
-//print_r(pingshu8_artist('http://www.pingshu8.com/Music/bzmtv_1.Htm'));
-//print_r(ysts8_artist('http://www.pingshu8.com/Music/bzmtv_2.Htm'));
-//print_r(ysts8_works('http://www.ysts8.com/Ysmp3/40_1.html'));
-//print_r(ysts8_chapters('http://www.ysts8.com/Yshtml/Ys12073.html'));
-//print_r(ysts8_audio('http://www.ysts8.com/play_12073_46_2_1.html'));
+// $urls = array(
+	// "http://www.youdaili.cn/Daili/guonei/1740.html", 
+	// "http://www.youdaili.cn/Daili/guonei/1740_2.html", 
+	// "http://www.youdaili.cn/Daili/guonei/1740_3.html", 
+	// "http://www.youdaili.cn/Daili/guonei/1740_4.html", 
+	// "http://www.youdaili.cn/Daili/guonei/1740_5.html");
+// $http = new HttpMultiple();
+// $http->setproxy(array("113.57.230.83", "113.57.252.103", "113.78.190.30:1111", "114.80.136.112:7780"));
+// $http->get($urls, 'OnReadData', "param");
 ?>
