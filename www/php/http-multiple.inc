@@ -29,7 +29,7 @@ class HttpMultiple
 
 	function get($urls, $callback, $param, $timeout=20, $headers=array())
 	{
-		return $this->_request("GET", $urls, null, $callback, $param, $timeout, $headers);
+		return $this->_requestX("GET", $urls, null, $callback, $param, $timeout, $headers);
 	}
 
 	function post($urls, $data, $callback, $param, $timeout=20, $headers=array())
@@ -37,7 +37,7 @@ class HttpMultiple
 		if(count($urls) != count($data))
 			return -1;
 
-		return $this->_request("POST", $urls, $data, $callback, $param, $timeout, $headers);
+		return $this->_requestX("POST", $urls, $data, $callback, $param, $timeout, $headers);
 	}
 
 	// setproxy(array("1.1.36.27", "120.197.85.173:33942", "120.197.85.182:10080", "221.130.162.242:82", "221.130.162.242:9000"))
@@ -56,61 +56,73 @@ class HttpMultiple
 		$this->m_proxies = $proxies;
 	}
 
-	private function _request($method, $urls, $data, $callback, $param, $timeout, $headers)
+	private function _requestX($method, $urls, $data, $callback, $param, $timeout, $headers)
 	{
-		//$proxies = http_get_proxies();
-		if($data){
-			assert(count($urls) == count($data));
+		while(count($urls) > 0 && count($this->m_proxies) > 0){
+			$this->_request($method, $urls, $data, $callback, $param, $timeout, $headers);
 		}
+		
+		if(count($urls) > 0){
+			$this->_request($method, $urls, $data, $callback, $param, $timeout, $headers);
+		}
+	}
+
+	private function _request($method, &$urls, &$data, $callback, $param, $timeout, $headers)
+	{
+		assert(!$data || count($urls) == count($data));
+		
+		$nTask = count($urls);
+		$nProxy = count($this->m_proxies);
 
 		$curls = array();
-		for($i=0; $i < count($urls); $i++){
-			$curl = curl_init($urls[$i]);
+//		for($i=0; $i < count($urls); $i++){
+		foreach($urls as $i => $url){
+			$curl = curl_init($url);
 			$this->_setopt($method, $curl, $data ? $data[$i] : null, $headers);
 			curl_multi_add_handle($this->m_multi, $curl);
-			$curls[] =  $curl;
+			$curls[$i] = $curl;
 		}
 
-		// try all proxy
-		$r = -1;
-		if(0 == count($this->m_proxies)){
-			$r = $this->_perform($this->m_multi, $curls, $timeout, $callback, $param);
-		} else {
-			$pxidx = time();
-			for($i = 0; 0 != $r && $i < count($this->m_proxies); $i++){
-				$idx = ($i + $pxidx) % count($this->m_proxies);
-				foreach($curls as $curl){
-					curl_setopt($curl, CURLOPT_PROXY, $this->m_proxies[$idx]['host']);
-					curl_setopt($curl, CURLOPT_PROXYPORT, $this->m_proxies[$idx]['port']);
-					curl_setopt($curl, CURLOPT_PROXYTYPE, $this->m_proxies[$idx]['proxy']);
-				}
-				$r = $this->_perform($this->m_multi, $curls, $timeout, $callback, $param);
+		srand(time());
+		$n = rand();
+		$proxies = $this->m_proxies;
+		if(count($this->m_proxies) > 0){
+			foreach($curls as $i => $curl){
+				$j = ($i + $n) % count($proxies);
+				echo "proxy: " . $proxies[$j]['host'] . ":" . $proxies[$j]['port'] . "\r\n";
+				curl_setopt($curl, CURLOPT_PROXY, $proxies[$j]['host']);
+				curl_setopt($curl, CURLOPT_PROXYPORT, $proxies[$j]['port']);
+				curl_setopt($curl, CURLOPT_PROXYTYPE, $proxies[$j]['proxy']);
 			}
 		}
 
-		if(0 != $r)
-			return $r;
+		$r = $this->_perform($this->m_multi, $timeout);
+		if(0 != $r){
+			// write error log
+		}
 
-		for($i = 0; $i < count($curls); $i++){
-			$curl = $curls[$i];
-			$response = curl_multi_getcontent($curl);
-			$headerSize = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
-			$header = substr($response, 0, $headerSize);
-			$body = substr($response, $headerSize);
-
-			if(is_callable($callback) && strlen($header) > 0 && strlen($body) > 0) {
-				call_user_func($callback, $param, $header, $body, $i);
+		foreach($curls as $i => $curl){
+			if(0 == $this->_read($curl, $i, $callback, $param)){
+				unset($urls[$i]); // remove task
+				unset($data[$i]);
+			} else if(count($this->m_proxies) > 0){
+				$j = ($i + $n) % count($this->m_proxies);
+				unset($proxies[$j]); // remove proxy
 			}
 
 			curl_multi_remove_handle($this->m_multi, $curl);
 			curl_close($curl);
 		}
 
-		// close
-		// foreach($curls as $curl){
-			// curl_multi_remove_handle($this->m_multi, $curl);
-			// curl_close($curl);
-		// }
+		// tidy proxy list
+		$this->m_proxies = array();
+		foreach($proxies as $proxy){
+			$this->m_proxies[] = $proxy;
+		}
+
+		$rTask = count($urls);
+		$rProxy = count($this->m_proxies);
+		echo "Task $rTask/$nTask, Proxy: $rProxy/$nProxy \r\n";
 
 		return $r;
 	}
@@ -171,7 +183,7 @@ class HttpMultiple
 		}
 	}
 
-	private function _perform($multi, $curls, $timeout, $callback, $param)
+	private function _perform($multi, $timeout)
 	{
 		$t0 = gettimeofday(true);
 
@@ -182,12 +194,12 @@ class HttpMultiple
 
 		while($status === CURLM_OK && $active){
 			$t1 = gettimeofday(true);
-			if(0 != $timeout && $t0 + $timeout < $t1){
-				return -1;
+			if($t0 + $timeout < $t1){
+				$t = 0;
+			} else {
+				$t = $timeout - ($t1 - $t0);
 			}
-
-			$t = $timeout - ($t1 - $t0);
-			if(curl_multi_select($multi, -1==$timeout?-1:$t) < 1) {
+			if(curl_multi_select($multi, $timeout<0?-1:$t) < 1) {
 				return -1;
 			}
 
@@ -203,9 +215,27 @@ class HttpMultiple
 			} while($status === CURLM_CALL_MULTI_PERFORM);
 		}
 
-		// $t1 = gettimeofday(true);
-		// echo "time: " . ($t1-$t0) . "\r\n";
+		$t1 = gettimeofday(true);
+		echo "time: " . ($t1-$t0) . "\r\n";
 		return (CURLM_OK === $status && 0 === $active) ? 0 : -1;
+	}
+	
+	private function _read($curl, $idx, $callback, $param)
+	{
+		$r = curl_errno($curl);
+		if(0 == $r){
+			$response = curl_multi_getcontent($curl);
+			$headerSize = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
+			if($headerSize > 0 && strlen($response) >= $headerSize){
+				$header = substr($response, 0, $headerSize);
+				$body = substr($response, $headerSize);
+
+				if(is_callable($callback)) {
+					call_user_func($callback, $param, $header, $body, $idx);
+				}
+			}
+		}
+		return $r;
 	}
 
 	private $m_multi = null;
