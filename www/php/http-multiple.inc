@@ -18,7 +18,7 @@ class HttpMultiple
 			'Accept-Encoding: gzip, deflate',
 			'Accept-Language: en-US,en;q=0.5'
 		);
-		
+
 		$this->m_multi = curl_multi_init();
 	}
 
@@ -27,17 +27,17 @@ class HttpMultiple
 		curl_multi_close($this->m_multi);
 	}
 
-	function get($urls, $callback, $param, $timeout=20, $headers=array())
+	function get($urls, $callback, &$param, $timeout=20, $headers=array())
 	{
-		return $this->_requestX("GET", $urls, null, $callback, $param, $timeout, $headers);
+		return $this->_request("GET", $urls, null, $callback, $param, $timeout, $headers);
 	}
 
-	function post($urls, $data, $callback, $param, $timeout=20, $headers=array())
+	function post($urls, $data, $callback, &$param, $timeout=20, $headers=array())
 	{
 		if(count($urls) != count($data))
 			return -1;
 
-		return $this->_requestX("POST", $urls, $data, $callback, $param, $timeout, $headers);
+		return $this->_request("POST", $urls, $data, $callback, $param, $timeout, $headers);
 	}
 
 	// setproxy(array("1.1.36.27", "120.197.85.173:33942", "120.197.85.182:10080", "221.130.162.242:82", "221.130.162.242:9000"))
@@ -52,44 +52,26 @@ class HttpMultiple
 				$proxies[] = array("proxy" => CURLPROXY_HTTP, "host" => $proxy[0], "port" => 80);
 			}
 		}
-		
+
 		$this->m_proxies = $proxies;
 	}
 
-	private function _requestX($method, $urls, $data, $callback, $param, $timeout, $headers)
-	{
-		while(count($urls) > 0 && count($this->m_proxies) > 0){
-			$this->_request($method, $urls, $data, $callback, $param, $timeout, $headers);
-		}
-		
-		if(count($urls) > 0){
-			$this->_request($method, $urls, $data, $callback, $param, $timeout, $headers);
-		}
-	}
-
-	private function _request($method, &$urls, &$data, $callback, $param, $timeout, $headers)
+	private function _request($method, $urls, $data, $callback, &$param, $timeout, $headers)
 	{
 		assert(!$data || count($urls) == count($data));
-		
-		$nTask = count($urls);
-		$nProxy = count($this->m_proxies);
 
 		$curls = array();
-//		for($i=0; $i < count($urls); $i++){
-		foreach($urls as $i => $url){
+		for($i=0; $i < count($urls); $i++){
 			$curl = curl_init($url);
 			$this->_setopt($method, $curl, $data ? $data[$i] : null, $headers);
 			curl_multi_add_handle($this->m_multi, $curl);
 			$curls[$i] = $curl;
 		}
 
-		srand(time());
-		$n = rand();
 		$proxies = $this->m_proxies;
-		if(count($this->m_proxies) > 0){
+		if(count($proxies) > 0){
 			foreach($curls as $i => $curl){
-				$j = ($i + $n) % count($proxies);
-				echo "proxy: " . $proxies[$j]['host'] . ":" . $proxies[$j]['port'] . "\r\n";
+				$j = $i % count($proxies);
 				curl_setopt($curl, CURLOPT_PROXY, $proxies[$j]['host']);
 				curl_setopt($curl, CURLOPT_PROXYPORT, $proxies[$j]['port']);
 				curl_setopt($curl, CURLOPT_PROXYTYPE, $proxies[$j]['proxy']);
@@ -97,32 +79,12 @@ class HttpMultiple
 		}
 
 		$r = $this->_perform($this->m_multi, $timeout);
-		if(0 != $r){
-			// write error log
-		}
 
 		foreach($curls as $i => $curl){
-			if(0 == $this->_read($curl, $i, $callback, $param)){
-				unset($urls[$i]); // remove task
-				unset($data[$i]);
-			} else if(count($this->m_proxies) > 0){
-				$j = ($i + $n) % count($this->m_proxies);
-				unset($proxies[$j]); // remove proxy
-			}
-
+			$this->_read($curl, $i, $callback, $param);
 			curl_multi_remove_handle($this->m_multi, $curl);
 			curl_close($curl);
 		}
-
-		// tidy proxy list
-		$this->m_proxies = array();
-		foreach($proxies as $proxy){
-			$this->m_proxies[] = $proxy;
-		}
-
-		$rTask = count($urls);
-		$rProxy = count($this->m_proxies);
-		echo "Task $rTask/$nTask, Proxy: $rProxy/$nProxy \r\n";
 
 		return $r;
 	}
@@ -222,6 +184,9 @@ class HttpMultiple
 	
 	private function _read($curl, $idx, $callback, $param)
 	{
+		$header = "";
+		$body = "";
+
 		$r = curl_errno($curl);
 		if(0 == $r){
 			$response = curl_multi_getcontent($curl);
@@ -229,13 +194,12 @@ class HttpMultiple
 			if($headerSize > 0 && strlen($response) >= $headerSize){
 				$header = substr($response, 0, $headerSize);
 				$body = substr($response, $headerSize);
-
-				if(is_callable($callback)) {
-					call_user_func($callback, $param, $header, $body, $idx);
-				}
 			}
 		}
-		return $r;
+
+		if(is_callable($callback)) {
+			call_user_func($callback, $param, $idx, $r, $header, $body);
+		}
 	}
 
 	private $m_multi = null;
@@ -244,9 +208,9 @@ class HttpMultiple
 	private $m_headers = null;
 };
 
-// function OnReadData($param, $header, $body, $idx)
+// function OnReadData($p, $i, $r, $header, $body)
 // {
-	// file_put_contents($idx . ".html", $body);
+	// file_put_contents($i . ".html", $body);
 	// //echo 'OnReadData[' . $idx . '] ' . strlen($content);
 // }
 
