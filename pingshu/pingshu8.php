@@ -14,17 +14,9 @@
 		function HttpGet($uri)
 		{
 			$base = time();
-			$proxies = array("113.57.230.83", 
-				"114.80.120.53:8080", 
-				"117.40.160.45:3128", 
-				"117.59.224.62:80", 
-				"118.126.5.149:9001", 
-				"115.238.191.146:3128", 
-				"218.207.83.141:3128", 
-				"219.216.110.96:3259",
-				"221.130.17.39:80");
-
-			for($i = 0; $i < count($proxies); $i++){
+			$proxies = split(",", file_get_contents("proxy.cfg"));
+			
+			for($i = 0; $i < count($proxies) && $i < 10; $i++){
 				$proxy = $proxies[($base + $i) % count($proxies)];
 				//print_r("proxy: " . $proxy . "\r\n");
 				$r = http_get($uri, 5, $proxy);
@@ -45,7 +37,41 @@
 			return "pingshu8";
 		}
 
-		function GetAudio($uri)
+		function GetAudio($bookid, $chapter, $uri)
+		{
+			$mc = new Memcached();
+			$mc->addServer("localhost", 11211);
+			$mckey = "ts-server-" . $this->GetName() . "-audio-$bookid";
+			$rawuri = $mc->get($mckey);
+			if(!$rawuri){
+				$uri = $this->__GetAudio($uri);
+				if($uri){
+					$rawuri = substr($uri, 0, strpos($uri, '?'));
+					$mc->set($mckey, $rawuri);
+				}
+			} else {
+				$mp3 = basename($rawuri);
+				$ps = strrpos($mp3, '_');
+				$pe = strrpos($mp3, '.');
+				$cid = substr($mp3, $ps, $pe-$ps-1);
+				$n = strlen($cid);
+				 if(2 == $n) {
+					$cidNew = sprintf("%02d", $chapter);
+				} else if(3 == $n) {
+					$cidNew = sprintf("%03d", $chapter);
+				} else if(4 == $n) {
+					$cidNew = sprintf("%04d", $chapter);
+				} else {
+					$cidNew = sprintf("%d", $chapter);
+				}
+				
+				$postfix = sprintf("?116024996452122x%ux116025002230864-6618f00ff155173c7dddb190142ace21", time());
+				$uri = dirname($rawuri) . '/' . substr($mp3, 0, $ps+1) . $cidNew . substr($mp3, $pe) . $postfix;
+			}
+			return $uri;
+		}
+		
+		function __GetAudio($uri)
 		{
 			$response = $this->HttpGet($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);

@@ -16,7 +16,7 @@
 			return "17tsw";
 		}
 
-		function GetAudio($response)
+		function GetAudio($bookid, $chapter, $response)
 		{
 			//file_put_contents ("/app/joke/a.html", $response);
 //			$response = http_get($uri);

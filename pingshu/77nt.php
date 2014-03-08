@@ -15,8 +15,8 @@
 		{
 			return "77nt";
 		}
-		
-		function GetAudio($uri)
+
+		function GetAudio($bookid, $chapter, $uri)
 		{
 			$uri = str_replace("Play", "zyurl", $uri);
 			return $uri;

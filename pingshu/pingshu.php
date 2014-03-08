@@ -24,13 +24,13 @@
 	if(0 != $redirect){
 		$s = GetServerObj($server);
 		$req = file_get_contents("php://input");
-		$data = $s->GetAudio($req);
+		$data = $s->GetAudio($bookid, $chapter, $req);
 		$reply["bookid"] = $bookid;
 		$reply["chapterid"] = $chapter;
 	} else if(strlen($keyword) > 0){
 		$servers = GetServers();
 		foreach($servers as $k => $v){
-			if(2==$k || 3==$k)
+			if( (strlen($server) > 0 && 0 != strcmp($k, $server)) || 2==$k || 3==$k)
 				continue;
 			$result = Search($v["object"], $keyword);
 			foreach($result as $b){
@@ -91,7 +91,7 @@
 
 		$servers = array();
 		$servers["0"] = array("name" => "服务器1", "object" => $pingshu8);
-		$servers["4"] = array("name" => "服务器5", "object" => $ysts8);
+		$servers["4"] = array("name" => "服务器5", "object" => $ysts8);		
 //		$servers["1"] = array("name" => "服务器2", "object" => $c77nt);
 		$servers["2"] = array("name" => "服务器3", "object" => $c77nt);
 		$servers["3"] = array("name" => "服务器4", "object" => $c17tsw);
@@ -105,7 +105,7 @@
 			if(0 == strcmp($k, $s))
 				return $v["object"];
 		}
-		return "";
+		return false;
 	}
 
 	function GetCatalog($s)
@@ -219,7 +219,7 @@
 			if(1 == $s->redirect)
 				return $uri; // client get remote content
 
-			$audio = $s->GetAudio($uri);
+			$audio = $s->GetAudio($bookid, $chapter, $uri);
 
 			if(0 != $s->cache["audio"] && strlen($audio) > 0)
 				$mc->set($mckey, $audio, $s->cache["audio"]);

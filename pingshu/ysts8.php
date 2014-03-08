@@ -16,11 +16,11 @@
 			return "ysts8";
 		}
 
-		function GetAudio($uri)
+		function GetAudio($bookid, $chapter, $uri)
 		{
 			$response = http_get($uri);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			
+
 			if(preg_match('/\"\/play\/flv\.html\?(.+?)\"/', $response, $matches)){
 				return 2 == count($matches) ? iconv("gb18030", "UTF-8", $matches[1]) : "";
 			} else {
