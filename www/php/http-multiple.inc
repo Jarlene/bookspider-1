@@ -62,7 +62,7 @@ class HttpMultiple
 
 		$curls = array();
 		for($i=0; $i < count($urls); $i++){
-			$curl = curl_init($url);
+			$curl = curl_init($urls[$i]);
 			$this->_setopt($method, $curl, $data ? $data[$i] : null, $headers);
 			curl_multi_add_handle($this->m_multi, $curl);
 			$curls[$i] = $curl;
@@ -177,12 +177,10 @@ class HttpMultiple
 			} while($status === CURLM_CALL_MULTI_PERFORM);
 		}
 
-		$t1 = gettimeofday(true);
-		echo "time: " . ($t1-$t0) . "\r\n";
 		return (CURLM_OK === $status && 0 === $active) ? 0 : -1;
 	}
 	
-	private function _read($curl, $idx, $callback, $param)
+	private function _read($curl, $idx, $callback, &$param)
 	{
 		$header = "";
 		$body = "";
@@ -198,7 +196,7 @@ class HttpMultiple
 		}
 
 		if(is_callable($callback)) {
-			call_user_func($callback, $param, $idx, $r, $header, $body);
+			call_user_func($callback, &$param, $idx, $r, $header, $body);
 		}
 	}
 
@@ -207,20 +205,4 @@ class HttpMultiple
 	private $m_options = null;
 	private $m_headers = null;
 };
-
-// function OnReadData($p, $i, $r, $header, $body)
-// {
-	// file_put_contents($i . ".html", $body);
-	// //echo 'OnReadData[' . $idx . '] ' . strlen($content);
-// }
-
-// $urls = array(
-	// "http://www.youdaili.cn/Daili/guonei/1740.html", 
-	// "http://www.youdaili.cn/Daili/guonei/1740_2.html", 
-	// "http://www.youdaili.cn/Daili/guonei/1740_3.html", 
-	// "http://www.youdaili.cn/Daili/guonei/1740_4.html", 
-	// "http://www.youdaili.cn/Daili/guonei/1740_5.html");
-// $http = new HttpMultiple();
-// $http->setproxy(array("113.57.230.83", "113.57.252.103", "113.78.190.30:1111", "114.80.136.112:7780"));
-// $http->get($urls, 'OnReadData', "param");
 ?>

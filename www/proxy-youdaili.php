@@ -1,8 +1,28 @@
 <?php
 	require("php/dom.inc");
-	require("php/http-multiple.inc");	
-	require("http-multiple-proxy.inc");
-	
+	require("php/http-multiple.inc");
+
+	// $urls = array("http://www.youdaili.cn/Daili/guonei/1773.html");
+	// $dir = dirname($urls[0]);
+	// $name = basename($urls[0], ".html");
+	// for($i = 2; $i <= 5; $i++){
+		// $urls[] = "$dir/$name" . "_$i.html";
+	// }
+
+	// $proxies = array();
+	// $http = new HttpMultiple();
+	// $http->get($urls, 'OnReadData', &$proxies);
+	// print_r(count($proxies) . "\r\n");
+	 $today = date('Y-m-d');
+	// file_put_contents("proxy-$today.cfg", implode(",", $proxies));
+
+	$f = file_get_contents("proxy-$today.cfg");
+	$proxies = split(",", $f);
+	print_r(count($proxies) . "\r\n");
+	$proxies = CheckProxy($proxies);
+	print_r(count($proxies) . "\r\n");
+	//file_put_contents("proxy-$today.cfg", implode(",", $proxies));
+
 	function Parse($response)
 	{
 		$doc = dom_parse($response);
@@ -23,7 +43,7 @@
 		return $proxies;
 	}
 	
-	function OnReadData(&$proxies, $header, $body, $idx)
+	function OnReadData($proxies, $idx, $r, $header, $body)
 	{
 		//file_put_contents("0_" . $idx . ".html", $body);
 		//global $proxies;
@@ -32,45 +52,54 @@
 			$proxies[] = $proxy;
 		}
 	}
-
-	function OnCheckProxy(&$param, $header, $body, $idx)
-	{
-		if(strpos($body, "ProxyTestWebPage")){
-		}
-	}
-
+	
 	function CheckProxy($proxies)
 	{
-		$urls = array();
-		for($i = 0; $i < 100; i++){
-			$urls[] = "http://115.28.54.237/joke/proxy.html";
-		}
+		$rs = array();
+		for($i = 0; $i < count($proxies)/100; $i += 1){
+			$subproxies = array();
+			for($j = $i * 100; $j < ($i+1) * 100 && $j < count($proxies); $j += 1){
+				$subproxies[] = $proxies[$j];
+			}
 
+			$result = __CheckNProxy($subproxies, 20);
+			foreach($result as $proxy){
+				$rs[] = $proxy;
+			}
+		}
+		return $rs;
+	}
+
+	function __CheckNProxy($proxies, $timeout)
+	{
+		$t0 = gettimeofday(true);
+	
+		$urls = array();
+		for($i = 0; $i < count($proxies); $i++){
+			$urls[] = "http://115.28.51.131/joke/proxy.html";
+		}
+		
 		$result = array();
 		$http = new HttpMultiple();
-		for($i = 0; $i < count($proxies); $i += 100){
-			$subproxies = array();
-			for($j = 0; $j < 100; j++){
-			$subproxies = $proxies[i];			
-			$http->setproxy($proxies);
-			$http->get($urls, 'OnCheckProxy', $result);
+		$http->setproxy($proxies);
+		$http->get($urls, '__OnCheckProxy', &$result, $timeout);
+
+		$r = array();
+		foreach($result as $j){
+			$r[] = $proxies[$j];
+		}
+		
+		$t1 = gettimeofday(true);
+		echo "time: " . ($t1-$t0) . "\r\n";
+		print_r("result: " . count($r) . "\r\n");
+		return $r;
+	}
+
+	function __OnCheckProxy($result, $idx, $r, $header, $body)
+	{
+		$n = strpos($body, "ProxyTestWebPage");
+		if($n){
+			$result[] = $idx;
 		}
 	}
-
-	$urls = array("http://www.youdaili.cn/Daili/guonei/1755.html");
-	$dir = dirname($urls[0]);
-	$name = basename($urls[0], ".html");
-	for($i = 2; $i <= 5; $i++){
-		$urls[] = "$dir/$name" . "_$i.html";
-	}
-	
-	$proxies = array();
-	$http = new HttpMultiple();
-	$http->get($urls, 'OnReadData', $proxies);
-	//print_r(count($proxies));	
-	$today = date('Y-m-d');
-	file_put_contents("proxy-$doday.cfg", implode(",", $proxies));
-
-	//$f = file_get_contents("proxy-$doday.cfg");
-	//CheckProxy(split(",", $f));
 ?>
