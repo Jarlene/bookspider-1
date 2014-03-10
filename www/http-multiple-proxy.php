@@ -17,7 +17,7 @@ class HttpMultipleProxy
 	function get($urls, $callback, &$param, $timeout=20, $headers=array())
 	{
 		$this->m_callback = $callback;
-		$this->m_param = $param;
+		$this->m_param = & $param;
 
 		for($i = 0; $i < count($urls); $i++){
 			$this->m_urls[] = array("uri" => $urls[$i], "data" => null);
@@ -44,7 +44,7 @@ class HttpMultipleProxy
 
 	private function _requestX($method, $timeout, $headers)
 	{
-		for($i = 0; $i < 5 && 0 != count($this->m_urls); $i++)
+		for($i = 0; $i < ($timeout+4)/5 && 0 != count($this->m_urls); $i++)
 		{
 			$r = $this->_request($method, 5, $headers);
 		}

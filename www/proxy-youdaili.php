@@ -2,26 +2,26 @@
 	require("php/dom.inc");
 	require("php/http-multiple.inc");
 
-	// $urls = array("http://www.youdaili.cn/Daili/guonei/1773.html");
-	// $dir = dirname($urls[0]);
-	// $name = basename($urls[0], ".html");
-	// for($i = 2; $i <= 5; $i++){
-		// $urls[] = "$dir/$name" . "_$i.html";
-	// }
+	$urls = array("http://www.youdaili.cn/Daili/guonei/1783.html");
+	$dir = dirname($urls[0]);
+	$name = basename($urls[0], ".html");
+	for($i = 2; $i <= 5; $i++){
+		$urls[] = "$dir/$name" . "_$i.html";
+	}
 
-	// $proxies = array();
-	// $http = new HttpMultiple();
-	// $http->get($urls, 'OnReadData', &$proxies);
+	$proxies = array();
+	$http = new HttpMultiple();
+	$http->get($urls, 'OnReadData', &$proxies);
 	// print_r(count($proxies) . "\r\n");
 	 $today = date('Y-m-d');
 	// file_put_contents("proxy-$today.cfg", implode(",", $proxies));
 
-	$f = file_get_contents("proxy-$today.cfg");
-	$proxies = split(",", $f);
+	//$f = file_get_contents("proxy-$today.cfg");
+	//$proxies = split(",", $f);
 	print_r(count($proxies) . "\r\n");
 	$proxies = CheckProxy($proxies);
 	print_r(count($proxies) . "\r\n");
-	//file_put_contents("proxy-$today.cfg", implode(",", $proxies));
+	file_put_contents("proxy-$today-checked.cfg", implode(",", $proxies));
 
 	function Parse($response)
 	{
@@ -47,6 +47,8 @@
 	{
 		//file_put_contents("0_" . $idx . ".html", $body);
 		//global $proxies;
+		print_r("OnReadData $idx : $r\n");
+		
 		$r = Parse($body);
 		foreach($r as $proxy){
 			$proxies[] = $proxy;
@@ -62,7 +64,7 @@
 				$subproxies[] = $proxies[$j];
 			}
 
-			$result = __CheckNProxy($subproxies, 20);
+			$result = __CheckNProxy($subproxies, 5);
 			foreach($result as $proxy){
 				$rs[] = $proxy;
 			}
@@ -76,7 +78,7 @@
 	
 		$urls = array();
 		for($i = 0; $i < count($proxies); $i++){
-			$urls[] = "http://115.28.51.131/joke/proxy.html";
+			$urls[] = "http://www.pingshu8.com/music/newzj.htm";
 		}
 		
 		$result = array();
@@ -97,9 +99,10 @@
 
 	function __OnCheckProxy($result, $idx, $r, $header, $body)
 	{
-		$n = strpos($body, "ProxyTestWebPage");
+		$n = strpos($body, "luckyzz@163.com");
 		if($n){
 			$result[] = $idx;
 		}
+		return 0;
 	}
 ?>

@@ -1,338 +1,361 @@
-<?php
-	class CPingShu8 
+<?php	
+class CPingShu8
+{
+	public $cache = array(
+					"catalog" => 604800, // 7*24*60*60
+					"book" => 604800,
+					"chapter" => 604800,
+					"audio" => 0,
+					"search" => 86400 // 24*60*60
+				);
+
+	public $redirect = 0;
+
+	function GetName()
 	{
-		public $cache = array(
-						"catalog" => 86400, // 24*60*60
-						"book" => 86400,
-						"chapter" => 86400,
-						"audio" => 0,
-						"search" => 86400
-					);
+		return "pingshu8";
+	}
 
-		public $redirect = 0;
-
-		function HttpGet($uri)
-		{
-			$base = time();
-			$proxies = split(",", file_get_contents("proxy.cfg"));
-			
-			for($i = 0; $i < count($proxies) && $i < 10; $i++){
-				$proxy = $proxies[($base + $i) % count($proxies)];
-				//print_r("proxy: " . $proxy . "\r\n");
-				$r = http_get($uri, 5, $proxy);
-				if(!$r){
-					continue;
-				}
-				
-				if(false !== stripos($r, "pingshu8")){
-					return $r;
-				}
+	function GetAudio($bookid, $chapter, $uri)
+	{
+		$mc = new Memcached();
+		$mc->addServer("localhost", 11211);
+		$mckey = "ts-server-" . $this->GetName() . "-audio-$bookid";
+		$rawuri = $mc->get($mckey);
+		if(!$rawuri){
+			$uri = $this->__GetAudio($uri);
+			if($uri){
+				$rawuri = substr($uri, 0, strpos($uri, '?'));
+				$mc->set($mckey, $rawuri);
 			}
-			
-			return http_get($uri, 10, "");
-		}
-
-		function GetName()
-		{
-			return "pingshu8";
-		}
-
-		function GetAudio($bookid, $chapter, $uri)
-		{
-			$mc = new Memcached();
-			$mc->addServer("localhost", 11211);
-			$mckey = "ts-server-" . $this->GetName() . "-audio-$bookid";
-			$rawuri = $mc->get($mckey);
-			if(!$rawuri){
-				$uri = $this->__GetAudio($uri);
-				if($uri){
-					$rawuri = substr($uri, 0, strpos($uri, '?'));
-					$mc->set($mckey, $rawuri);
-				}
+		} else {
+			$mp3 = basename($rawuri);
+			$ps = strrpos($mp3, '_');
+			$pe = strrpos($mp3, '.');
+			$cid = substr($mp3, $ps, $pe-$ps-1);
+			$n = strlen($cid);
+			 if(2 == $n) {
+				$cidNew = sprintf("%02d", $chapter);
+			} else if(3 == $n) {
+				$cidNew = sprintf("%03d", $chapter);
+			} else if(4 == $n) {
+				$cidNew = sprintf("%04d", $chapter);
 			} else {
-				$mp3 = basename($rawuri);
-				$ps = strrpos($mp3, '_');
-				$pe = strrpos($mp3, '.');
-				$cid = substr($mp3, $ps, $pe-$ps-1);
-				$n = strlen($cid);
-				 if(2 == $n) {
-					$cidNew = sprintf("%02d", $chapter);
-				} else if(3 == $n) {
-					$cidNew = sprintf("%03d", $chapter);
-				} else if(4 == $n) {
-					$cidNew = sprintf("%04d", $chapter);
-				} else {
-					$cidNew = sprintf("%d", $chapter);
-				}
-				
-				$postfix = sprintf("?116024996452122x%ux116025002230864-6618f00ff155173c7dddb190142ace21", time());
-				$uri = dirname($rawuri) . '/' . substr($mp3, 0, $ps+1) . $cidNew . substr($mp3, $pe) . $postfix;
+				$cidNew = sprintf("%d", $chapter);
 			}
-			return $uri;
+			
+			$t = time();
+			$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+2180930360242, $t, $t+5778742+2180930360242);
+			$uri = dirname($rawuri) . '/' . substr($mp3, 0, $ps+1) . $cidNew . substr($mp3, $pe) . $postfix;
 		}
+		return $uri;
+	}
+	
+	function __GetAudio($uri)
+	{
+		$html = http_proxy_get($uri, "luckyzz@163.com", 5);
+		//$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+
+		if(!preg_match('/encodeURI\(\"(.+)\"\)/', $html, $matches)){
+			return "";
+		}
+
+		if(2 != count($matches)){
+			return "";
+		}
+
+		$uri = $matches[1];
+		$n = strrpos($uri, '?');
+		$uri = substr($uri, 0, $n);
+
+		//$uri = str_replace("@123abc", "9", $uri);
+		$uri = str_replace(".flv", ".mp3", $uri);
+		$uri = str_replace("play0.", "pl0.", $uri);
+		$uri = str_replace("play1.", "pl1.", $uri);
+
+		$t = time();
+		$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+2180930360242, $t, $t+5778742+2180930360242);
+		$uri = $uri . $postfix;
 		
-		function __GetAudio($uri)
-		{
-			$response = $this->HttpGet($uri);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+		return iconv("gb18030", "UTF-8", $uri);
+	}
 
-			if(!preg_match('/encodeURI\(\"(.+)\"\)/', $response, $matches)){
-				return "";
-			}
-
-			if(2 != count($matches)){
-				return "";
-			}
-
-			$uri = $matches[1];
-			$uri = str_replace("@123abc", "9", $uri);
-			$uri = str_replace(".flv", ".mp3", $uri);
-			$uri = str_replace("play0.", "pl0.", $uri);
-			$uri = str_replace("play1.", "pl1.", $uri);
-
-			return iconv("gb18030", "UTF-8", $uri);
-		}
-
-		function __ParseChapters($uri, $response)
-		{
-			$doc = dom_parse($response);
-			$elements = xpath_query($doc, "//li[@class='a1']/a");
-
-			$chapters = array();
-
-			if (!is_null($elements)) {
-				$host = parse_url($uri);
-				foreach ($elements as $element) {
-					$href = $element->getattribute('href');
-					$chapter = $element->nodeValue;
-
-					if(strlen($href) > 0 && strlen($chapter) > 0){
-						$chapters[] = array("name" => $chapter, "uri" => 'http://' . $host["host"] . $href);
-					}
-				}
-			}
-
-			return $chapters;
-		}
-		
-		function GetChapters($bookid)
-		{
-			$uri = "http://www.pingshu8.com/MusicList/mmc_" . $bookid . ".htm";
-			$response = $this->HttpGet($uri);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			$doc = dom_parse($response);
-			$icons = xpath_query($doc, "//div[@class='a']/img");
-			$infos = xpath_query($doc, "//div[@class='c']/div");
-			$options = xpath_query($doc, "//select[@name='turnPage']/option");
-
-			$host = parse_url($uri);
-			$iconuri = "";
-			$summary = "";
-			foreach($icons as $icon){
-				$href = $icon->getattribute('src');
-				if(0==strncmp("../", $href, 3)){
-					$iconuri = 'http://' . $host["host"] . dirname(dirname($host["path"])) . '/' . substr($href, 3);
-				} else {
-					$iconuri = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $href;
-				}
-			}
-			foreach($infos as $info){
-				$summary = $info->nodeValue;
-			}
-
-			$chapters = array();
-
-			if (!is_null($options)) {
-				foreach ($options as $option) {
-					$href = $option->getattribute('value');
-					if(strlen($href) > 0){
-						$u = 'http://' . $host["host"] . $href;
-						if(0 != strcmp($u, $uri)){
-							$response = $this->HttpGet($u);
-							$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-						}
-
-						$nchapters = $this->__ParseChapters($u, $response);
-						$chapters = array_merge($chapters, $nchapters);
-					}
-				}
-			} else {
-				$nchapters = $this->__ParseChapters($uri, $response);
-				$chapters = array_merge($chapters, $nchapters);
-			}
-
+	function GetChapters($bookid)
+	{
+		$uri = "http://www.pingshu8.com/MusicList/mmc_" . $bookid . ".htm";
+		$html = http_proxy_get($uri, "luckyzz@163.com", 5);
+		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+		if(strlen($html) < 1){
 			$data = array();
-			$data["icon"] = $iconuri;
-			$data["info"] = $summary;
-			$data["chapter"] = $chapters;
+			$data["icon"] = "";
+			$data["info"] = "";
+			$data["chapter"] = array();
 			return $data;
 		}
 
-		function GetBooks($uri)
-		{
-			$books = array();
-			$iconuri = "";
+		$host = parse_url($uri);
+		$xpath = new XPath($html);
 
-			$response = $this->HttpGet($uri);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			$doc = dom_parse($response);
-			
-			if(0 == strcmp($uri, 'http://www.pingshu8.com/music/newzj.htm')){
-				$elements = xpath_query($doc, "//div[@class='tab3']/ul/li[2]/a[2]");
-				foreach ($elements as $element) {
-					$href = $element->getattribute('href');
-					$book = $element->nodeValue;
+		$iconuri = $xpath->get_attribute("//div[@class='a']/img", "src");
+		if(0==strncmp("../", $iconuri, 3)){
+			$iconuri = 'http://' . $host["host"] . dirname(dirname($host["path"])) . '/' . substr($iconuri, 3);
+		} else {
+			$iconuri = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $iconuri;
+		}
 
-					if(strlen($href) > 0 && strlen($book) > 0){
-						$bookid = basename($href);
-						$n = strpos($bookid, '.');
-						$books[substr($bookid, 4, $n-4)] = $book;
-					}
+		$summary = $xpath->get_value("//div[@class='c']/div");
+
+		$chapters = array();
+
+		$pages = array();
+		$selects = $xpath->query("//select[@name='turnPage']/option");
+		foreach ($selects as $select) {
+			$href = $select->getattribute('value');
+			if(strlen($href) > 0){
+				$u = 'http://' . $host["host"] . $href;
+				if(0 != strcmp($u, $uri)){
+					$pages[] = $u;
+				} else {
+					$chapters[] = $this->__ParseChapters($html);
 				}
-			} else if(0 == strcmp($uri, 'http://www.pingshu8.com/top/pingshu.htm')){
-				$elements = xpath_query($doc, "//div[@class='tab3']/a");
-				foreach ($elements as $element) {
-					$href = $element->getattribute('href');
-					$book = $element->nodeValue;
+			}
+		}
 
-					if(strlen($href) > 0 && strlen($book) > 0){
-						$bookid = basename($href);
-						$n = strpos($bookid, '.');
-						$books[substr($bookid, 4, $n-4)] = $book;
-					}
-				}
+		if(count($pages) > 0){
+			$result = array();
+			$http = new HttpMultipleProxy("proxy.cfg");
+			$r = $http->get($pages, array($this, '_OnReadChapter'), &$result, 20);
+
+			if(count($result) != count($pages)){
+				assert(0 != $r);
+				$chapters = array(); // empty data(some uri request failed)
 			} else {
-				$icons = xpath_query($doc, "//div[@class='z4']/img");
-				$elements = xpath_query($doc, "//div[@class='jj2']/div/div/a");
-
-				$host = parse_url($uri);
-
-				foreach($icons as $icon){
-					$href = $icon->getattribute('src');
-					if(0==strncmp("../", $href, 3)){
-						$iconuri = 'http://' . $host["host"] . dirname(dirname($host["path"])) . '/' . substr($href, 3);
-					} else {
-						$iconuri = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $href;
-					}
-				}
-
-				foreach ($elements as $element) {
-					$href = $element->getattribute('href');
-					$book = $element->nodeValue;
-
-					if(strlen($href) > 0 && strlen($book) > 0){
-						$bookid = basename($href);
-						$n = strpos($bookid, '.');
-						$books[substr($bookid, 4, $n-4)] = $book;
+				for($i = 0; $i < count($result); $i++){
+					foreach($result[$i] as $chapter){
+						$uri = 'http://' . $host["host"] . $chapter["uri"];
+						$chapters[] = array("name" => $chapter["name"], "uri" => $uri);
 					}
 				}
 			}
+		}
 
+		$data = array();
+		$data["icon"] = $iconuri;
+		$data["info"] = $summary;
+		$data["chapter"] = $chapters;
+		return $data;
+	}
+
+	function GetBooks($uri)
+	{
+		$books = array();
+		$iconuri = "";
+
+		$html = http_proxy_get($uri, "luckyzz@163.com", 5);
+		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+		if(strlen($html) < 1){
 			$data = array();
 			$data["icon"] = $iconuri;
 			$data["book"] = $books;
 			return $data;
 		}
 
-		function __GetSubcatalog($uri)
-		{
-			$response = $this->HttpGet($uri);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+		$xpath = new XPath($html);
 
-			$xpath = new XPath($response);
-			$elements = $xpath->query("//div[@class='t2']/ul/li/a");
-
-			$artists = array();
-			$artists["最近更新"] = 'http://www.pingshu8.com/music/newzj.htm';
-			$artists["排行榜"] = 'http://www.pingshu8.com/top/pingshu.htm';
-
-			$host = parse_url($uri);
+		if(0 == strcmp($uri, 'http://www.pingshu8.com/music/newzj.htm')){
+			$elements = $xpath->query($doc, "//div[@class='tab3']/ul/li[2]/a[2]");
 			foreach ($elements as $element) {
 				$href = $element->getattribute('href');
-				$artist = $element->nodeValue;
+				$book = $element->nodeValue;
 
-				//$artist = mb_convert_encoding($artist, "gb2312", "UTF-8");
-				//$artist = mb_convert_encoding($artist, "UTF-8", "gb2312");
-				//$artist = iconv("GB18030", "UTF-8", $artist);
-				if(strlen($href) > 0 && strlen($artist) > 0){
-					$artists[$artist] = 'http://' . $host["host"] . $href;
-				}
-			}
-
-			return $artists;
-		}
-
-		function GetCatalog()
-		{
-			$catalog = array();
-			$catalog["评书"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_1.Htm');
-			$catalog["相声小品"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_2.Htm');
-			$catalog["小说"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_3.Htm');
-			$catalog["金庸全集"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_4.Htm');
-			$catalog["综艺娱乐"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_5.Htm');
-			return $catalog;
-		}
-
-		function __SearchAuthor($keyword)
-		{
-			$uri = "http://www.pingshu8.com/bzmtv_inc/SingerSearch.asp?keyword="  . urlencode(iconv("UTF-8", "gb2312", $keyword));
-			$response = $this->HttpGet($uri);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			$doc = dom_parse($response);
-			$elements = xpath_query($doc, "//table[@class='TableLine']/form/tr/td[1]/div/a");
-
-			$artists = array();
-
-			if (!is_null($elements)) {
-				foreach ($elements as $element) {
-					$artist = $element->nodeValue;
-					if(strlen($artist) > 0){
-						$artists[] = $artist;
-					}
-				}
-			}
-
-			return $artists;
-		}
-
-		function __SearchBook($keyword)
-		{
-			$uri = "http://www.pingshu8.com/bzmtv_inc/SpecialSearch.asp?keyword=" . urlencode(iconv("UTF-8", "gb2312", $keyword));
-			$response = $this->HttpGet($uri);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			$doc = dom_parse($response);
-			$xpath = new DOMXpath($doc);
-			$elements = $xpath->query("//table[@class='TableLine']/tr/td[1]/div/a");
-
-			$books = array();
-			if (!is_null($elements)) {
-				$host = parse_url($uri);
-				foreach ($elements as $element) {
-					$href = $element->getattribute('href');
-					$book = $element->nodeValue;
-
+				if(strlen($href) > 0 && strlen($book) > 0){
 					$bookid = basename($href);
 					$n = strpos($bookid, '.');
 					$books[substr($bookid, 4, $n-4)] = $book;
 				}
 			}
-			return $books;
+		} else if(0 == strcmp($uri, 'http://www.pingshu8.com/top/pingshu.htm')){
+			$elements = $xpath->query($doc, "//div[@class='tab3']/a");
+			foreach ($elements as $element) {
+				$href = $element->getattribute('href');
+				$book = $element->nodeValue;
+
+				if(strlen($href) > 0 && strlen($book) > 0){
+					$bookid = basename($href);
+					$n = strpos($bookid, '.');
+					$books[substr($bookid, 4, $n-4)] = $book;
+				}
+			}
+		} else {
+			$iconuri = $xpath->get_attribute("//div[@class='z4']/img", "src");
+			$elements = $xpath->query("//div[@class='jj2']/div/div/a");
+
+			if(0==strncmp("../", $iconuri, 3)){
+				$iconuri = 'http://' . $host["host"] . dirname(dirname($host["path"])) . '/' . substr($iconuri, 3);
+			} else {
+				$iconuri = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $iconuri;
+			}
+
+			$host = parse_url($uri);
+			foreach ($elements as $element) {
+				$href = $element->getattribute('href');
+				$book = $element->nodeValue;
+
+				if(strlen($href) > 0 && strlen($book) > 0){
+					$bookid = basename($href);
+					$n = strpos($bookid, '.');
+					$books[substr($bookid, 4, $n-4)] = $book;
+				}
+			}
 		}
 
-		function Search($keyword)
-		{
-			$authors = $this->__SearchAuthor($keyword);
-			$books = $this->__SearchBook($keyword);
-			return array("catalog" => $authors, "book" => $books);
-		}
+		$data = array();
+		$data["icon"] = $iconuri;
+		$data["book"] = $books;
+		return $data;
+	}
+	
+	function GetCatalog()
+	{
+		$catalog = array();
+		$catalog["评书"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_1.Htm');
+		$catalog["相声小品"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_2.Htm');
+		$catalog["小说"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_3.Htm');
+		$catalog["金庸全集"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_4.Htm');
+		$catalog["综艺娱乐"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_5.Htm');
+		return $catalog;
 	}
 
-	//$pinshu8 = new CPingShu8();
-	//print_r($pinshu8->__SearchBook("王"));
-	//print_r($pinshu8->__SearchAuthor("王"));
-	// print_r($all);
-	//print_r(pingshu8_artist('http://www.pingshu8.com/Music/bzmtv_1.Htm'));
-	//print_r(pingshu8_artist('http://www.pingshu8.com/Music/bzmtv_2.Htm'));
-	//print_r(pingshu8_chapters('http://www.pingshu8.com/MusicList/mmc_99_255_1.Htm'));
-	//print_r(pingshu8_audio('http://www.pingshu8.com/play_24034.html'));
+	function Search($keyword)
+	{
+		$authors = $this->__SearchAuthor($keyword);
+		$books = $this->__SearchBook($keyword);
+		return array("catalog" => $authors, "book" => $books);
+	}
+
+	//---------------------------------------------------------------------------
+	// private function
+	//---------------------------------------------------------------------------
+	function _OnReadChapter($param, $i, $r, $header, $body)
+	{
+		if(0 != $r){
+			//error_log("_OnReadChapter $i: error: $r\n", 3, "pingshu.log");
+			return -1;
+		} else if(!stripos($body, "luckyzz@163.com")){
+			// check html content integrity
+			//error_log("Integrity check error $i\n", 3, "pingshu.log");
+			return -1;
+		}
+
+		$param[$i] = $this->__ParseChapters($body);
+		return 0;
+	}
+
+	private function __ParseChapters($html)
+	{
+		$chapters = array();
+
+		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+		if(strlen($html) < 1) return $chapters;
+		
+		$xpath = new XPath($html);
+		$elements = $xpath->query("//li[@class='a1']/a");
+		foreach ($elements as $element) {
+			$href = $element->getattribute('href');
+			$chapter = $element->nodeValue;
+
+			if(strlen($href) > 0 && strlen($chapter) > 0){
+				$chapters[] = array("name" => $chapter, "uri" => $href);
+			}
+		}
+
+		return $chapters;
+	}
+
+	private function __GetSubcatalog($uri)
+	{
+		$artists = array();
+		$artists["最近更新"] = 'http://www.pingshu8.com/music/newzj.htm';
+		$artists["排行榜"] = 'http://www.pingshu8.com/top/pingshu.htm';
+
+		$html = http_proxy_get($uri, "luckyzz@163.com", 5);
+		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+		if(strlen($html) < 1) return $artists;
+
+		$host = parse_url($uri);
+		$xpath = new XPath($html);
+		$elements = $xpath->query("//div[@class='t2']/ul/li/a");
+		foreach ($elements as $element) {
+			$href = $element->getattribute('href');
+			$artist = $element->nodeValue;
+
+			//$artist = mb_convert_encoding($artist, "gb2312", "UTF-8");
+			//$artist = mb_convert_encoding($artist, "UTF-8", "gb2312");
+			//$artist = iconv("GB18030", "UTF-8", $artist);
+			if(strlen($href) > 0 && strlen($artist) > 0){
+				$artists[$artist] = 'http://' . $host["host"] . $href;
+			}
+		}
+
+		return $artists;
+	}
+	
+	private function __SearchAuthor($keyword)
+	{
+		$artists = array();
+
+		$uri = "http://www.pingshu8.com/bzmtv_inc/SingerSearch.asp?keyword="  . urlencode(iconv("UTF-8", "gb2312", $keyword));
+		$html = http_proxy_get($uri, "luckyzz@163.com", 5);
+		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+		if(strlen($html) < 1) return $artists;
+
+		$xpath = new XPath($html);
+		$elements = $xpath->query("//table[@class='TableLine']/form/tr/td[1]/div/a");
+		foreach ($elements as $element) {
+			$artist = $element->nodeValue;
+			if(strlen($artist) > 0){
+				$artists[] = $artist;
+			}
+		}
+
+		return $artists;
+	}
+
+	private function __SearchBook($keyword)
+	{
+		$books = array();
+
+		$uri = "http://www.pingshu8.com/bzmtv_inc/SpecialSearch.asp?keyword=" . urlencode(iconv("UTF-8", "gb2312", $keyword));
+		$html = http_proxy_get($uri, "luckyzz@163.com", 5);
+		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+		if(strlen($html) < 1) return $books;
+
+		$host = parse_url($uri);
+		$xpath = new XPath($html);
+		$elements = $xpath->query("//table[@class='TableLine']/tr/td[1]/div/a");
+		foreach ($elements as $element) {
+			$href = $element->getattribute('href');
+			$book = $element->nodeValue;
+
+			$bookid = basename($href);
+			$n = strpos($bookid, '.');
+			$books[substr($bookid, 4, $n-4)] = $book;
+		}
+		return $books;
+	}
+}
+
+// require("php/dom.inc");
+// require("php/util.inc");
+// require("php/http.inc");
+require("php/http-multiple.inc");
+require("http-proxy.php");
+require("http-multiple-proxy.php");	
+// $obj = new CPingShu8();
+// print_r($obj->GetCatalog()); sleep(2);
+// print_r($obj->GetBooks("http://www.pingshu8.com/Special/Msp_7.Htm")); sleep(2);
+// print_r($obj->GetChapters('7_208_1')); sleep(2);
+// print_r($obj->GetAudio('7_208_1', '1', "http://www.pingshu8.com/play_19632.html")); sleep(2);
+// print_r($obj->Search("单田芳")); sleep(2);
+// print_r($obj->__GetAudio("http://www.pingshu8.com/play_161404.html"));
 ?>
