@@ -20,7 +20,7 @@ class CPingShu8
 	{
 		$mc = new Memcached();
 		$mc->addServer("localhost", 11211);
-		$mckey = "ts-server-" . $this->GetName() . "-audio-$bookid";
+		$mckey = "ts-server-" . $this->GetName() . "-audio-$bookid-$chapter";
 		$rawuri = $mc->get($mckey);
 		if(!$rawuri){
 			$uri = $this->__GetAudio($uri);
@@ -29,31 +29,36 @@ class CPingShu8
 				$mc->set($mckey, $rawuri);
 			}
 		} else {
-			$mp3 = basename($rawuri);
-			$ps = strrpos($mp3, '_');
-			$pe = strrpos($mp3, '.');
-			$cid = substr($mp3, $ps, $pe-$ps-1);
-			$n = strlen($cid);
-			 if(2 == $n) {
-				$cidNew = sprintf("%02d", $chapter);
-			} else if(3 == $n) {
-				$cidNew = sprintf("%03d", $chapter);
-			} else if(4 == $n) {
-				$cidNew = sprintf("%04d", $chapter);
-			} else {
-				$cidNew = sprintf("%d", $chapter);
-			}
+			// $mp3 = basename($rawuri);
+			// $ps = strrpos($mp3, '_');
+			// $pe = strrpos($mp3, '.');
+			// $cid = substr($mp3, $ps+1, $pe-$ps-1);
+			// $n = strlen($cid);
+			 // if(2 == $n) {
+				// $cidNew = sprintf("%02d", $chapter);
+			// } else if(3 == $n) {
+				// $cidNew = sprintf("%03d", $chapter);
+			// } else if(4 == $n) {
+				// $cidNew = sprintf("%04d", $chapter);
+			// } else {
+				// $cidNew = sprintf("%d", $chapter);
+			// }
+			
+			$ip = $this->__ip();
+			$ip = str_replace(".", "0", $ip);
 			
 			$t = time();
-			$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+2180930360242, $t, $t+5778742+2180930360242);
-			$uri = dirname($rawuri) . '/' . substr($mp3, 0, $ps+1) . $cidNew . substr($mp3, $pe) . $postfix;
+			$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+5778742+$ip);
+
+			$uri = $rawuri . $postfix;
 		}
+		
 		return $uri;
 	}
 	
 	function __GetAudio($uri)
 	{
-		$html = http_proxy_get($uri, "luckyzz@163.com", 5);
+		$html = http_proxy_get($uri, "luckyzz@163.com", 10);
 		//$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 
 		if(!preg_match('/encodeURI\(\"(.+)\"\)/', $html, $matches)){
@@ -68,22 +73,25 @@ class CPingShu8
 		$n = strrpos($uri, '?');
 		$uri = substr($uri, 0, $n);
 
-		//$uri = str_replace("@123abc", "9", $uri);
+		//$uri = str_replace("@123abcd", "9", $uri);
 		$uri = str_replace(".flv", ".mp3", $uri);
 		$uri = str_replace("play0.", "pl0.", $uri);
 		$uri = str_replace("play1.", "pl1.", $uri);
 
-		$t = time();
-		$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+2180930360242, $t, $t+5778742+2180930360242);
-		$uri = $uri . $postfix;
+		$ip = $this->__ip();
+		$ip = str_replace(".", "0", $ip);
 		
+		$t = time();
+		$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+5778742+$ip);
+		
+		$uri = $uri . $postfix;
 		return iconv("gb18030", "UTF-8", $uri);
 	}
 
 	function GetChapters($bookid)
 	{
 		$uri = "http://www.pingshu8.com/MusicList/mmc_" . $bookid . ".htm";
-		$html = http_proxy_get($uri, "luckyzz@163.com", 5);
+		$html = http_proxy_get($uri, "luckyzz@163.com", 10);
 		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 		if(strlen($html) < 1){
 			$data = array();
@@ -151,7 +159,7 @@ class CPingShu8
 		$books = array();
 		$iconuri = "";
 
-		$html = http_proxy_get($uri, "luckyzz@163.com", 5);
+		$html = http_proxy_get($uri, "luckyzz@163.com", 10);
 		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 		if(strlen($html) < 1){
 			$data = array();
@@ -163,7 +171,7 @@ class CPingShu8
 		$xpath = new XPath($html);
 
 		if(0 == strcmp($uri, 'http://www.pingshu8.com/music/newzj.htm')){
-			$elements = $xpath->query($doc, "//div[@class='tab3']/ul/li[2]/a[2]");
+			$elements = $xpath->query("//div[@class='tab3']/ul/li[2]/a[2]");
 			foreach ($elements as $element) {
 				$href = $element->getattribute('href');
 				$book = $element->nodeValue;
@@ -175,7 +183,7 @@ class CPingShu8
 				}
 			}
 		} else if(0 == strcmp($uri, 'http://www.pingshu8.com/top/pingshu.htm')){
-			$elements = $xpath->query($doc, "//div[@class='tab3']/a");
+			$elements = $xpath->query("//div[@class='tab3']/a");
 			foreach ($elements as $element) {
 				$href = $element->getattribute('href');
 				$book = $element->nodeValue;
@@ -278,7 +286,7 @@ class CPingShu8
 		$artists["最近更新"] = 'http://www.pingshu8.com/music/newzj.htm';
 		$artists["排行榜"] = 'http://www.pingshu8.com/top/pingshu.htm';
 
-		$html = http_proxy_get($uri, "luckyzz@163.com", 5);
+		$html = http_proxy_get($uri, "luckyzz@163.com", 10);
 		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 		if(strlen($html) < 1) return $artists;
 
@@ -343,6 +351,19 @@ class CPingShu8
 		}
 		return $books;
 	}
+	
+	private function __ip()
+	{
+		if (getenv("HTTP_CLIENT_IP"))
+			$ip = getenv("HTTP_CLIENT_IP");
+		else if(getenv("HTTP_X_FORWARDED_FOR"))
+			$ip = getenv("HTTP_X_FORWARDED_FOR");
+		else if(getenv("REMOTE_ADDR"))
+			$ip = getenv("REMOTE_ADDR");
+		else 
+			$ip = "0.0.0.0";
+		return $ip;
+	}
 }
 
 // require("php/dom.inc");
@@ -357,5 +378,6 @@ require("http-multiple-proxy.php");
 // print_r($obj->GetChapters('7_208_1')); sleep(2);
 // print_r($obj->GetAudio('7_208_1', '1', "http://www.pingshu8.com/play_19632.html")); sleep(2);
 // print_r($obj->Search("单田芳")); sleep(2);
-// print_r($obj->__GetAudio("http://www.pingshu8.com/play_161404.html"));
+// print_r($obj->__GetAudio("http://www.pingshu8.com/play_27123.html"));
+// print_r($obj->GetAudio("138_252_1", "8", "http://www.pingshu8.com/play_23860.html"));
 ?>
