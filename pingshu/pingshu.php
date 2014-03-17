@@ -1,7 +1,7 @@
 <?php
-	require("php/http.inc");
 	require("php/dom.inc");
 	require("php/util.inc");
+	require("php/http.inc");
 	require("pingshu8.php");
 	require("ysts8.php");
 	require("77nt.php");
@@ -90,8 +90,8 @@
 		$c17tsw = new C17TSW();
 
 		$servers = array();
+		$servers["4"] = array("name" => "服务器5", "object" => $ysts8);
 		$servers["0"] = array("name" => "服务器1", "object" => $pingshu8);
-		$servers["4"] = array("name" => "服务器5", "object" => $ysts8);		
 //		$servers["1"] = array("name" => "服务器2", "object" => $c77nt);
 		$servers["2"] = array("name" => "服务器3", "object" => $c77nt);
 		$servers["3"] = array("name" => "服务器4", "object" => $c17tsw);

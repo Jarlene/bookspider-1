@@ -42,12 +42,13 @@
 		{
 			list($path, $id) = split("-", $bookid);
 			$uri = "http://www.17tsw.com/" . $path . "/List_ID_" . $id . ".html";
-			$response = http_get($uri);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			$doc = dom_parse($response);
-			$icons = xpath_query($doc, "//div[@class='conlist']/ul/li[1]/img");
-			$infos = xpath_query($doc, "//ul[@class='introbox']/p/span");
-			$elements = xpath_query($doc, "//ul[@class='compress']/ul/div/li/span/a");
+			$html = http_get($uri);
+			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+			
+			$xpath = new XPath($html);
+			$icons = $xpath->query("//div[@class='conlist']/ul/li[1]/img");
+			$infos = $xpath->query("//ul[@class='introbox']/p/span");
+			$elements = $xpath->query("//ul[@class='compress']/ul/div/li/span/a");
 
 			$host = parse_url($uri);
 
@@ -158,10 +159,10 @@
 		function GetCatalog()
 		{
 			$uri = 'http://www.17tsw.com/';
-			$response = http_get($uri);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			$doc = dom_parse($response);
-			$elements = xpath_query($doc, "//div[@id='nav']/li[@class='menu_test']/a");
+			$html = http_proxy_get($uri);
+			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+			$xpath = new XPath($html);
+			$elements = $xpath->query("//div[@id='nav']/li[@class='menu_test']/a");
 
 			$subcatalogs = array();
 			$subcatalogs["最近更新"] = 'http://www.17tsw.com/1';
@@ -185,10 +186,11 @@
 		{
 			$uri = 'http://www.17tsw.com/SoClass.aspx';
 			$data = 'class=' . urlencode(iconv("UTF-8", "gb2312", $keyword)) . '&submit=&ctl00%24Sodaohang=';
-			$response = http_post($uri, $data);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			$doc = dom_parse($response);
-			$options = xpath_query($doc, "//div[@class='page']/form/select/option");
+			$html = http_post($uri, $data);
+			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+			
+			$xpath = new XPath($html);
+			$options = $xpath->query("//div[@class='page']/form/select/option");
 
 			$i = 0;
 			$books = array();
@@ -206,10 +208,17 @@
 		}
 	}
 
-	// print_r($all);
-	//print_r(pingshu8_artist('http://www.pingshu8.com/Music/bzmtv_1.Htm'));
-	//print_r(ysts8_artist('http://www.pingshu8.com/Music/bzmtv_2.Htm'));
-	//print_r(ysts8_works('http://www.ysts8.com/Ysmp3/40_1.html'));
-	//print_r(_17tsw_chapters('http://www.17tsw.com/LiShiPingShu_cmszygm/List_ID_8473.html'));
-	//print_r(_17tsw_audio('http://www.17tsw.com/Play.aspx?id=8473&page=0'));
+require("php/dom.inc");
+require("php/util.inc");
+require("php/http.inc");
+require("php/http-multiple.inc");
+require("http-proxy.php");
+require("http-multiple-proxy.php");
+
+$obj = new C17TSW();
+//print_r($obj->GetCatalog()); sleep(2);
+print_r($obj->GetBooks("http://www.77nt.com/DouFuXiaoShui/DouFuXiaoShui.html")); sleep(2);
+//print_r($obj->GetChapters('DouFuXiaoShui-8436')); sleep(2); // http://www.77nt.com/DouFuXiaoShui/List_ID_8436.html
+//print_r($obj->GetAudio('DouFuXiaoShui-8436', '1', "http://www.77nt.com/Play.aspx?id=8436&page=0")); sleep(2);
+//print_r($obj->Search("单田芳")); sleep(2);
 ?>

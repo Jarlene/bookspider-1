@@ -33,12 +33,13 @@
 		{
 			list($path, $id) = split("-", $bookid);
 			$uri = "http://www.77nt.com/" . $path . "/List_ID_" . $id . ".html";
-			$response = http_get($uri);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			$doc = dom_parse($response);
-			$icons = xpath_query($doc, "//div[@class='conlist']/ul/li[1]/img");
-			$infos = xpath_query($doc, "//ul[@class='introbox']/p/span");
-			$elements = xpath_query($doc, "//ul[@class='compress']/ul/div/li/span/a");
+			$html = http_get($uri);
+			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+			
+			$xpath = new XPath($html);
+			$icons = $xpath->query("//div[@class='conlist']/ul/li[1]/img");
+			$infos = $xpath->query("//ul[@class='introbox']/p/span");
+			$elements = $xpath->query("//ul[@class='compress']/ul/div/li/span/a");
 
 			$host = parse_url($uri);
 
@@ -69,32 +70,16 @@
 			return $data;
 		}
 
-		function __ParseBooks($response, &$books)
-		{
-			$doc = dom_parse($response);
-			$elements = xpath_query($doc, "//div[@class='clist']/ul/li/a");
-
-			foreach ($elements as $element) {
-				$href = $element->getattribute('href');
-				$book = $element->getattribute('title');
-
-				if(strlen($href) > 0 && strlen($book) > 0){
-					$bookid = basename($href, ".html");
-					$books[basename(dirname($href)) . '-' . substr($bookid, 8)] = $book;
-				}
-			}
-		}
-		
 		function GetBooks($uri)
 		{
 			$books = array();
 
-			if(0 == strcmp($uri, 'http://www.77nt.com/1')){
-				$response = http_get('http://www.77nt.com/');
-				$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-				$doc = dom_parse($response);
-				$elements = xpath_query($doc, "//div[@id='main']/div[2]/div/ul/li/a");
+			if(0 == strcmp($uri, 'http://www.77nt.com/1')){ // update
+				$html = http_get('http://www.77nt.com/');
+				$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 
+				$xpath = new XPath($html);
+				$elements = $xpath->query("//div[@id='main']/div[2]/div/ul/li/a");
 				foreach ($elements as $element) {
 					$href = $element->getattribute('href');
 					$book = $element->getattribute('title');
@@ -104,12 +89,12 @@
 						$books[basename(dirname($href)) . '-' . substr($bookid, 8)] = $book;
 					}
 				}
-			} else if(0 == strcmp($uri, 'http://www.77nt.com/2')){
-				$response = http_get('http://www.77nt.com/');
-				$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-				$doc = dom_parse($response);
-				$elements = xpath_query($doc, "//div[@id='main']/div[3]/div/ul/li/a");
+			} else if(0 == strcmp($uri, 'http://www.77nt.com/2')){ // top
+				$html = http_get('http://www.77nt.com/');
+				$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 
+				$xpath = new XPath($html);
+				$elements = $xpath->query("//div[@id='main']/div[3]/div/ul/li/a");
 				foreach ($elements as $element) {
 					$href = $element->getattribute('href');
 					$book = $element->getattribute('title');
@@ -119,23 +104,37 @@
 						$books[basename(dirname($href)) . '-' . substr($bookid, 8)] = $book;
 					}
 				}
-			} else {
-				$response = http_get($uri);
-				$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-				$doc = dom_parse($response);
-				
-				$options = xpath_query($doc, "//div[@class='page']/form/select/option");
+			} else { // books
+				$html = http_get($uri);
+				$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 
-				$i = 1;
+				$xpath = new XPath($html);
+				$options = $xpath->query("//div[@class='page']/form/select/option");
+
+				$pages = array();
+				$items = array();
 				foreach ($options as $option) {
-					if(1 != $i++){
-						$u = dirname($uri) . '/' . basename($uri, ".html") . '-' . $i . ".html";
-						$response = http_get($u);
-						$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+					$value = $option->getattribute('value');
+					if($value != '0')
+						$pages[] = dirname($uri) . '/' . basename($uri, ".html") . '-' . $value . ".html";
+				}
+				
+				print_r($pages);
+				
+				// page 1
+				$result = array();
+				$this->__ParseBooks($html, &$result);
+
+				// other pages
+				if(count($pages) > 0){
+					$http = new HttpMultipleProxy("proxy.cfg");
+					$r = $http->get($pages, array($this, '_OnReadBook'), &$result, 60);
+					if(0 != $r){
+						// log error
+						//$items = array(); // empty data(some uri request failed)
+					} else {
+						$books = $result;
 					}
-					$this->__ParseBooks($response, $books);
-					
-					break;
 				}
 			}
 
@@ -148,10 +147,10 @@
 		function GetCatalog()
 		{
 			$uri = 'http://www.77nt.com/';
-			$response = http_get($uri);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			$doc = dom_parse($response);
-			$elements = xpath_query($doc, "//div[@id='nav']/li[@class='menu_test']/a");
+			$html = http_proxy_get($uri);
+			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+			$xpath = new XPath($html);
+			$elements = $xpath->query("//div[@id='nav']/li[@class='menu_test']/a");
 
 			$subcatalogs = array();
 			$subcatalogs["最近更新"] = 'http://www.77nt.com/1';
@@ -171,7 +170,67 @@
 			return $catalog;
 		}
 
-		function __ParseSearch($response, &$books)
+		function Search($keyword)
+		{
+			$uri = 'http://www.77nt.com/SoClass.aspx';
+			$data = 'class=' . urlencode(iconv("UTF-8", "gb2312", $keyword)) . '&submit=&ctl00%24Sodaohang=';
+			$html = http_post($uri, $data);
+			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+
+			$xpath = new XPath($html);
+			$options = $xpath->query("//div[@class='page']/form/select/option");
+
+			$i = 0;
+			$books = array();
+			foreach ($options as $option) {
+				if(0 != $i++){
+					$u = 'http://www.77nt.com/Soclass.aspx?class=' . urlencode(iconv("UTF-8", "gb2312", $keyword)) . "&page=" . $i;
+					$html = http_get($u);
+					$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+				}
+				$this->__ParseSearch($html, $books);
+			}
+
+			return array("book" => $books);
+		}
+		
+		//---------------------------------------------------------------------------
+		// private function
+		//---------------------------------------------------------------------------
+		function _OnReadBook($param, $i, $r, $header, $body)
+		{
+			if(0 != $r){
+				//error_log("_OnReadBook $i: error: $r\n", 3, "77nt.log");
+				//print_r("_OnReadBook error: $i: $r\n");
+				return -1;
+			} else if(!stripos($body, "copy.js")){
+				// check html content integrity
+				//error_log("Integrity check error $i\n", 3, "77nt.log");
+				//print_r("Integrity check error $i\n");
+				return -1;
+			}
+
+			$this->__ParseBooks($body, &$param);
+			return 0;
+		}
+
+		private function __ParseBooks($html, &$books)
+		{
+			$xpath = new XPath($html);
+			$elements = $xpath->query("//div[@class='clist']/ul/li/a");
+
+			foreach ($elements as $element) {
+				$href = $element->getattribute('href');
+				$book = $element->getattribute('title');
+
+				if(strlen($href) > 0 && strlen($book) > 0){
+					$bookid = basename($href, ".html");
+					$books[basename(dirname($href)) . '-' . substr($bookid, 8)] = $book;
+				}
+			}
+		}
+		
+		private function __ParseSearch($response, &$books)
 		{
 			$doc = dom_parse($response);
 			$elements = xpath_query($doc, "//div[@class='clist3']/ul/li/a");
@@ -186,34 +245,19 @@
 				}
 			}
 		}
-		
-		function Search($keyword)
-		{
-			$uri = 'http://www.77nt.com/SoClass.aspx';
-			$data = 'class=' . urlencode(iconv("UTF-8", "gb2312", $keyword)) . '&submit=&ctl00%24Sodaohang=';
-			$response = http_post($uri, $data);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			$doc = dom_parse($response);
-			$options = xpath_query($doc, "//div[@class='page']/form/select/option");
-
-			$i = 0;
-			$books = array();
-			foreach ($options as $option) {
-				if(0 != $i++){
-					$u = 'http://www.77nt.com/Soclass.aspx?class=' . urlencode(iconv("UTF-8", "gb2312", $keyword)) . "&page=" . $i;
-					$response = http_get($u);
-					$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-				}
-				$this->__ParseSearch($response, $books);
-			}
-
-			return array("book" => $books);
-		}
 	}
 
-	// print_r($all);
-	//print_r(_77nt_artist('http://www.pingshu8.com/Music/bzmtv_2.Htm'));
-	//print_r(_77nt_works('http://www.ysts8.com/Ysmp3/40_1.html'));
-	//print_r(_77nt_chapters('http://www.77nt.com/LiShiPingShu/List_ID_8333.html'));
-	//print_r(_77nt_audio('http://www.77nt.com/Play.aspx?id=9184&page=0'));
+require("php/dom.inc");
+require("php/util.inc");
+require("php/http.inc");
+require("php/http-multiple.inc");
+require("http-proxy.php");
+require("http-multiple-proxy.php");
+
+$obj = new C77NT();
+// print_r($obj->GetCatalog()); sleep(2);
+print_r($obj->GetBooks("http://www.77nt.com/DouFuXiaoShui/DouFuXiaoShui.html")); sleep(2);
+// print_r($obj->GetChapters('DouFuXiaoShui-8436')); sleep(2); // http://www.77nt.com/DouFuXiaoShui/List_ID_8436.html
+// print_r($obj->GetAudio('DouFuXiaoShui-8436', '1', "http://www.77nt.com/Play.aspx?id=8436&page=0")); sleep(2);
+// print_r($obj->Search("单田芳")); sleep(2);
 ?>
