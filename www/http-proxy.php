@@ -43,12 +43,12 @@ class HttpProxy
 		curl_multi_close($this->m_multi);
 	}
 
-	function get($uri, $pattern, $timeout=20, $headers=array())
+	function get($uri, $pattern, $timeout=10, $headers=array())
 	{
 		return $this->_request("GET", $uri, null, $pattern, $timeout, $headers);
 	}
 
-	function post($uri, $data, $pattern, $timeout=20, $headers=array())
+	function post($uri, $data, $pattern, $timeout=10, $headers=array())
 	{
 		return $this->_request("POST", $uri, $data, $pattern, $timeout, $headers);
 	}
@@ -89,17 +89,13 @@ class HttpProxy
 
 	private function _perform($multi, $timeout, $pattern)
 	{
-		$t0 = gettimeofday(true);
-
 		// running
 		do{
 			do{
 				$status = curl_multi_exec($multi, $active);
 			} while($status === CURLM_CALL_MULTI_PERFORM);
 
-			$t1 = gettimeofday(true);
-			$t = ($t0 + $timeout < $t1) ? 0 : ($timeout - ($t1 - $t0));			
-			if(curl_multi_select($multi, $timeout<0?-1:$t) < 1) {
+			if(curl_multi_select($multi, $timeout) < 1) {
 				// log timeout
 				return False;
 			}
@@ -120,15 +116,18 @@ class HttpProxy
 	private function _read($multi, $pattern)
 	{
 		$info = curl_multi_info_read($multi);
-		while($info && CURLMSG_DONE===$info["msg"] && CURLE_OK==$info["result"]){
-			$curl = $info["handle"];
-			$response = curl_multi_getcontent($curl);
-			$headerSize = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
-			if($headerSize > 0 && strlen($response) >= $headerSize){
-				//$header = substr($response, 0, $headerSize);
-				$body = substr($response, $headerSize);
-				if(stripos($body, $pattern)){
-					return $body;
+		while($info){
+			assert(CURLMSG_DONE === $info["msg"]);
+			if(CURLE_OK === $info["result"]){
+				$curl = $info["handle"];
+				$html = curl_multi_getcontent($curl);
+				$size = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
+				if($size > 0 && strlen($html) >= $size){
+					//$head = substr($html, 0, $size);
+					$body = substr($html, $size);
+					if(stripos($body, $pattern)){
+						return $body;
+					}
 				}
 			}
 
