@@ -6,15 +6,17 @@ class HttpMultipleProxy
 		$this->m_file = $file;
 		$content = file_get_contents($file);
 		$this->m_proxies = split(",", $content);
+
 		srand(time());
+		$this->m_iProxy = rand() % count($this->m_proxies);
 	}
 
 	function __destruct()
 	{
 		//file_put_contents($this->m_file, implode(",", $this->m_proxies));
 	}
-	
-	function get($urls, $callback, &$param, $timeout=20, $headers=array())
+
+	function get($urls, $callback, &$param, $timeout=30, $headers=array())
 	{
 		$this->m_callback = $callback;
 		$this->m_param = & $param;
@@ -26,10 +28,10 @@ class HttpMultipleProxy
 		return $this->_requestX("GET", $timeout, $headers);
 	}
 
-	function post($urls, $data, $callback, &$param, $timeout=20, $headers=array())
+	function post($urls, $data, $callback, &$param, $timeout=30, $headers=array())
 	{
 		$this->m_callback = $callback;
-		$this->m_param = $param;
+		$this->m_param = & $param;
 
 		if($data && count($data) != count($urls)){
 			return -1;
@@ -46,12 +48,13 @@ class HttpMultipleProxy
 	{
 		for($i = 0; $i < ($timeout+4)/5 && 0 != count($this->m_urls); $i++)
 		{
+			print_r("round $i: proxy: " . count($this->m_proxies) . "\r\n");
 			$r = $this->_request($method, 5, $headers);
 		}
 
 		foreach($this->m_urls as $k => $v){
 			if(is_callable($this->m_callback)) {
-				call_user_func($this->m_callback, &$this->m_param, $k, -1, "", "");
+				call_user_func($this->m_callback, &$this->m_param, $k, CURLE_OPERATION_TIMEOUTED, "", "");
 			}
 		}
 
@@ -61,9 +64,9 @@ class HttpMultipleProxy
 	private function _request($method, $timeout, $headers)
 	{
 		$proxies = array();
-		$this->m_iProxy = rand();
-		for($i = 0; $i < count($this->m_urls) && $i < count($this->m_proxies); $i++){
-			$j = ($i + $this->m_iProxy) % count($this->m_proxies);
+		$nproxy = count($this->m_proxies);
+		for($i = 0; $i < count($this->m_urls) && $i < $nproxy; $i++){
+			$j = ($i + $this->m_iProxy) % $nproxy;
 			$proxies[] = $this->m_proxies[$j];
 		}
 
@@ -76,32 +79,31 @@ class HttpMultipleProxy
 			$this->m_mapUrls[] = $k;
 		}
 
+		print_r($urls);
+		print_r($proxies);
 		$result = array();
 		$http = new HttpMultiple();
-		$http->setproxy($proxies);		
+		$http->setproxy($proxies);
 		if(0 == strcmp("POST", $method)){
 			$r = $http->post($urls, $data, array($this, '_on_request'), $result, $timeout, $headers);
 		} else {
 			$r = $http->get($urls, array($this, '_on_request'), $result, $timeout, $headers);
 		}
 
-		if(0 == count($result)){
-			// all proxy connection failed, so use other proxies
-			for($i = 0; $i < count($this->m_urls) && $i < count($this->m_proxies); $i++){
-				$j = ($i + $this->m_iProxy) % count($this->m_proxies);
-				unset($this->m_proxies[$j]);
-			}
-			$this->m_proxies = array_values($this->m_proxies);
-		} else {
-			$this->m_proxies = $result; // update proxy list	
+		// remove bad proxy
+		foreach($result as $i){
+			$j = ($i + $this->m_iProxy) % $nproxy;
+			unset($this->m_proxies[$j]);
 		}
-		
+		// update proxy list(reuse validate proxy)
+		$this->m_proxies = array_values($this->m_proxies);
 		return $r;
 	}
 
 	// callback function can't be private
 	function _on_request(&$proxies, $i, $r, $header, $body)
 	{
+		print_r("_on_request $i : $r \r\n");
 		if(0 == $r){
 			$idx = $this->m_mapUrls[$i];
 			if(is_callable($this->m_callback)) {
@@ -110,12 +112,12 @@ class HttpMultipleProxy
 
 			if(0 == $r){
 				unset($this->m_urls[$idx]); // work done, remove from work list
-
-				if(count($this->m_proxies) > 0){
-					$proxy = ($i + $this->m_iProxy) % count($this->m_proxies);
-					$proxies[] = $this->m_proxies[$proxy]; // reuse validate proxy
-				}
 			}
+		}
+		
+		if(0 != $r){
+			$j = ($i + $this->m_iProxy) % count($this->m_proxies);
+			$proxies[] = $j; // bad proxy
 		}
 	}
 
@@ -128,26 +130,27 @@ class HttpMultipleProxy
 	private $m_callback = null;
 };
 
-// require("php/http-multiple.inc");
-// function OnReadData($param, $idx, $r, $header, $body)
-// {
-	// print_r("onreaddata $idx : $r\r\n");
-	// if(strpos($body, "2011-2014, YOUDAILI.CN, Inc. All Rights Reserved")){	
-		// print_r("onreaddata $idx : ok\r\n");
-		// return 0;
-	// }
-	// return -1;
-// }
+require("http-multiple2.inc");
+function OnReadData($param, $idx, $r, $header, $body)
+{
+	print_r("onreaddata $idx : $r\r\n");
+	if(strpos($body, "2011-2014, YOUDAILI.CN, Inc. All Rights Reserved")){	
+		print_r("onreaddata $idx : ok\r\n");
+		return 0;
+	}
+	return -1;
+}
 
-// $urls = array("http://www.youdaili.cn/Daili/guonei/1773.html");
-// $dir = dirname($urls[0]);
-// $name = basename($urls[0], ".html");
-// for($i = 2; $i <= 5; $i++){
-	// $urls[] = "$dir/$name" . "_$i.html";
-// }
+$urls = array("http://www.youdaili.cn/Daili/guonei/1773.html");
+$dir = dirname($urls[0]);
+$name = basename($urls[0], ".html");
+for($i = 2; $i <= 5; $i++){
+	$urls[] = "$dir/$name" . "_$i.html";
+}
 
-// $proxies = array();
-// $http = new HttpMultipleProxy("proxy.cfg");
-// $http->get($urls, 'OnReadData', &$proxies);
-// print_r(count($proxies) . "\r\n");
+print_r($urls);
+$proxies = array();
+$http = new HttpMultipleProxy("proxy.cfg");
+$http->get($urls, 'OnReadData', &$proxies);
+print_r(count($proxies) . "\r\n");
 ?>

@@ -3,6 +3,8 @@ class HttpMultiple
 {
 	function __construct($options=array())
 	{
+		function_exists('curl_init') || die('CURL Library Not Loaded');     //exit if don't install curl
+
 		$this->m_proxies = array();
 		$this->m_options = array(
 			'port' => 80,
@@ -12,8 +14,10 @@ class HttpMultiple
 			'gzip' => true,
 			'proxy' => false
 		);
+		
+		$t = gettimeofday(true);
 		$this->m_headers = array( // http headers
-			'User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) Gecko/20100101 Firefox/27.0',
+			"User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:28.0) Gecko/20100101 Firefox/$t",
 			'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
 			'Accept-Encoding: gzip, deflate',
 			'Accept-Language: en-US,en;q=0.5'
@@ -27,12 +31,12 @@ class HttpMultiple
 		curl_multi_close($this->m_multi);
 	}
 
-	function get($urls, $callback, &$param, $timeout=20, $headers=array())
+	function get($urls, $callback, &$param, $timeout=10, $headers=array())
 	{
 		return $this->_request("GET", $urls, null, $callback, $param, $timeout, $headers);
 	}
 
-	function post($urls, $data, $callback, &$param, $timeout=20, $headers=array())
+	function post($urls, $data, $callback, &$param, $timeout=10, $headers=array())
 	{
 		if(count($urls) != count($data))
 			return -1;
@@ -43,45 +47,41 @@ class HttpMultiple
 	// setproxy(array("1.1.36.27", "120.197.85.173:33942", "120.197.85.182:10080", "221.130.162.242:82", "221.130.162.242:9000"))
 	function setproxy($hosts)
 	{
-		$proxies = array();
-		foreach($hosts as $host){
-			$proxy = split(":", $host);
-			if(count($proxy) > 1){
-				$proxies[] = array("proxy" => CURLPROXY_HTTP, "host" => $proxy[0], "port" => $proxy[1]);
-			} else {
-				$proxies[] = array("proxy" => CURLPROXY_HTTP, "host" => $proxy[0], "port" => 80);
-			}
-		}
-
-		$this->m_proxies = $proxies;
+		$this->m_proxies = $hosts;
 	}
 
 	private function _request($method, $urls, $data, $callback, &$param, $timeout, $headers)
 	{
 		assert(!$data || count($urls) == count($data));
 
-		$curls = array();
+		$this->m_curls = array();
 		for($i=0; $i < count($urls); $i++){
 			$curl = curl_init($urls[$i]);
 			$this->_setopt($method, $curl, $data ? $data[$i] : null, $headers);
 			curl_multi_add_handle($this->m_multi, $curl);
-			$curls[$i] = $curl;
+			$this->m_curls[$i] = $curl;
 		}
 
-		$proxies = $this->m_proxies;
-		if(count($proxies) > 0){
-			foreach($curls as $i => $curl){
-				$j = $i % count($proxies);
-				curl_setopt($curl, CURLOPT_PROXY, $proxies[$j]['host']);
-				curl_setopt($curl, CURLOPT_PROXYPORT, $proxies[$j]['port']);
-				curl_setopt($curl, CURLOPT_PROXYTYPE, $proxies[$j]['proxy']);
+		if(count($this->m_proxies) > 0){
+			foreach($this->m_curls as $i => $curl){
+				$j = $i % count($this->m_proxies);
+				$proxy = split(":", $this->m_proxies[$j]);
+				if(count($proxy) > 1){
+					curl_setopt($curl, CURLOPT_PROXYPORT, $proxy[1]);
+				} else {
+					curl_setopt($curl, CURLOPT_PROXYPORT, 80);
+				}
+				curl_setopt($curl, CURLOPT_PROXY, $proxy[0]);
+				curl_setopt($curl, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
 			}
 		}
 
-		$r = $this->_perform($this->m_multi, $timeout);
+		$r = $this->_perform($this->m_multi, $timeout, $callback, $param);
 
-		foreach($curls as $i => $curl){
-			$this->_read($curl, $i, $callback, $param);
+		foreach($this->m_curls as $i => $curl){
+			if(is_callable($callback)) {
+				call_user_func($callback, &$param, $i, CURLE_OPERATION_TIMEOUTED, "", "");
+			}
 			curl_multi_remove_handle($this->m_multi, $curl);
 			curl_close($curl);
 		}
@@ -89,10 +89,72 @@ class HttpMultiple
 		return $r;
 	}
 
+	private function _perform($multi, $timeout, $callback, &$param)
+	{
+		// running
+		do{
+			do{
+				$status = curl_multi_exec($multi, $active);
+			} while($status === CURLM_CALL_MULTI_PERFORM);
+
+			if(curl_multi_select($multi, $timeout) < 1) {
+				// log timeout
+				return -1;
+			}
+
+			$this->_read($multi, $callback, $param);
+			
+		} while($status === CURLM_OK && $active);
+
+		if(CURLM_OK !== $status || 0 !== $active){
+			// log
+			return -1;
+		}
+		return 0;
+	}
+
+	private function _read($multi, $callback, &$param)
+	{
+		$info = curl_multi_info_read($multi);
+		while($info){
+			assert(CURLMSG_DONE === $info["msg"]); // Other return values are currently not available.
+
+			$head = "";
+			$body = "";
+			$code = $info["result"];
+			$curl = $info["handle"];
+			if(CURLE_OK === $code){				
+				$html = curl_multi_getcontent($curl);
+				$size = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
+				if($size > 0 && strlen($html) >= $size){
+					$head = substr($html, 0, $size);
+					$body = substr($html, $size);
+				}
+			}
+
+			// find curl
+			foreach($this->m_curls as $idx => $v){
+				if($v == $curl)
+					break;
+			}
+			
+			// callback
+			if(is_callable($callback)) {
+				call_user_func($callback, &$param, $idx, $code, $head, $body);
+			}
+
+			// remove
+			unset($this->m_curls[$idx]);
+			curl_multi_remove_handle($this->m_multi, $curl);
+			curl_close($curl);
+
+			// next
+			$info = curl_multi_info_read($multi);
+		}
+	}
+
 	private function _setopt($method, $curl, $data, $headers)
 	{
-		function_exists('curl_init') || die('CURL Library Not Loaded');     //exit if don't install curl
-
 		$options = $this->m_options;
 		curl_setopt($curl, CURLOPT_PORT, $options['port']); // HTTP default port
 		curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true); // enable HTTP Location header
@@ -145,64 +207,10 @@ class HttpMultiple
 		}
 	}
 
-	private function _perform($multi, $timeout)
-	{
-		$t0 = gettimeofday(true);
-
-		// running
-		do{
-			$status = curl_multi_exec($multi, $active);
-		} while($status === CURLM_CALL_MULTI_PERFORM);
-
-		while($status === CURLM_OK && $active){
-			$t1 = gettimeofday(true);
-			if($t0 + $timeout < $t1){
-				$t = 0;
-			} else {
-				$t = $timeout - ($t1 - $t0);
-			}
-			if(curl_multi_select($multi, $timeout<0?-1:$t) < 1) {
-				return -1;
-			}
-
-			// $info = curl_multi_info_read($multi);
-			// while($info){
-				// print_r($info);
-				// //ob_flush();flush();
-				// $info = curl_multi_info_read($multi);
-			// }
-
-			do{
-				$status = curl_multi_exec($multi, $active);
-			} while($status === CURLM_CALL_MULTI_PERFORM);
-		}
-
-		return (CURLM_OK === $status && 0 === $active) ? 0 : -1;
-	}
-	
-	private function _read($curl, $idx, $callback, &$param)
-	{
-		$header = "";
-		$body = "";
-
-		$r = curl_errno($curl);
-		if(0 == $r){
-			$response = curl_multi_getcontent($curl);
-			$headerSize = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
-			if($headerSize > 0 && strlen($response) >= $headerSize){
-				$header = substr($response, 0, $headerSize);
-				$body = substr($response, $headerSize);
-			}
-		}
-
-		if(is_callable($callback)) {
-			call_user_func($callback, &$param, $idx, $r, $header, $body);
-		}
-	}
-
 	private $m_multi = null;
+	private $m_curls = null;
 	private $m_proxies = null;
 	private $m_options = null;
-	private $m_headers = null;
+	private $m_headers = null;	
 };
 ?>
