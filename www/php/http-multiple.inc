@@ -91,20 +91,23 @@ class HttpMultiple
 
 	private function _perform($multi, $timeout, $callback, &$param)
 	{
-		// running
+		// running		
 		do{
-			do{
-				$status = curl_multi_exec($multi, $active);
-			} while($status === CURLM_CALL_MULTI_PERFORM);
+			$status = curl_multi_exec($multi, $active);
+		} while($status === CURLM_CALL_MULTI_PERFORM);
 
+		while(CURLM_OK === $status && $active > 0){
 			if(curl_multi_select($multi, $timeout) < 1) {
 				// log timeout
 				return -1;
 			}
 
+			do{
+				$status = curl_multi_exec($multi, $active);
+			} while($status === CURLM_CALL_MULTI_PERFORM);
+
 			$this->_read($multi, $callback, $param);
-			
-		} while($status === CURLM_OK && $active);
+		}
 
 		if(CURLM_OK !== $status || 0 !== $active){
 			// log
@@ -137,7 +140,7 @@ class HttpMultiple
 				if($v == $curl)
 					break;
 			}
-			
+
 			// callback
 			if(is_callable($callback)) {
 				call_user_func($callback, &$param, $idx, $code, $head, $body);

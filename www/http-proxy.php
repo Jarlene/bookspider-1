@@ -92,21 +92,24 @@ class HttpProxy
 	{
 		// running
 		do{
-			do{
-				$status = curl_multi_exec($multi, $active);
-			} while($status === CURLM_CALL_MULTI_PERFORM);
-
+			$status = curl_multi_exec($multi, $active);
+		} while($status === CURLM_CALL_MULTI_PERFORM);
+			
+		while(CURLM_OK === $status && $active > 0){
 			if(curl_multi_select($multi, $timeout) < 1) {
 				// log timeout
 				return False;
 			}
+			
+			do{
+				$status = curl_multi_exec($multi, $active);
+			} while($status === CURLM_CALL_MULTI_PERFORM);
 
 			$v = $this->_read($multi, $pattern);
 			if($v){
 				return $v;
 			}
-
-		} while($status === CURLM_OK && $active);
+		}
 
 		if(CURLM_OK !== $status || 0 !== $active){
 			// log
