@@ -16,26 +16,17 @@
 			return "17tsw";
 		}
 
-		function GetAudio($bookid, $chapter, $response)
+		function GetAudio($bookid, $chapter, $html)
 		{
 			//file_put_contents ("/app/joke/a.html", $response);
 //			$response = http_get($uri);
-			//$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=utf-8", $response);
+			//$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+			$html = str_replace("text/html; charset=gb2312", "text/html; charset=utf-8", $html);
 			
-			$doc = dom_parse($response);
-			$elements = xpath_query($doc, "//param[@name='url']");
-
-			foreach ($elements as $element) {
-				$href = $element->getattribute('value');
-				if(strlen($href) > 0){
-					return $href;
-//					$uri = iconv("gb2312", "UTF-8", $href);
-//					return $uri;
-				}
-			}
-
-			return "";
+			$xpath = new XPath($html);
+			$uri = $xpath->get_attribute("//param[@name='url']", "value");
+//			$uri = iconv("gb2312", "UTF-8", $uri);
+			return $uri ? $uri : "";
 		}
 
 		function GetChapters($bookid)
@@ -46,21 +37,12 @@
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			
 			$xpath = new XPath($html);
-			$icons = $xpath->query("//div[@class='conlist']/ul/li[1]/img");
-			$infos = $xpath->query("//ul[@class='introbox']/p/span");
+			$iconuri = $xpath->get_attribute("//div[@class='conlist']/ul/li/img", "src");
+			$summary = $xpath->get_value("//ul[@class='introbox']/p/span");
 			$elements = $xpath->query("//ul[@class='compress']/ul/div/li/span/a");
 
 			$host = parse_url($uri);
-
-			$iconuri = "";
-			$summary = "";
-			foreach($icons as $icon){
-				$href = $icon->getattribute('src');
-				$iconuri = 'http://' . $host["host"] . $href;
-			}
-			foreach($infos as $info){
-				$summary = $info->nodeValue;
-			}
+			$iconuri = 'http://' . $host["host"] . $iconuri;
 
 			$chapters = array();
 			foreach ($elements as $element) {
@@ -79,32 +61,16 @@
 			return $data;
 		}
 
-		function __ParseBooks($response, &$books)
-		{
-			$doc = dom_parse($response);
-			$elements = xpath_query($doc, "//div[@class='clist']/ul/li/a");
-
-			foreach ($elements as $element) {
-				$href = $element->getattribute('href');
-				$book = $element->getattribute('title');
-
-				if(strlen($href) > 0 && strlen($book) > 0){
-					$bookid = basename($href, ".html");
-					$books[basename(dirname($href)) . '-' . substr($bookid, 8)] = $book;
-				}
-			}
-		}
-		
 		function GetBooks($uri)
 		{
 			$books = array();
 
 			if(0 == strcmp($uri, 'http://www.17tsw.com/1')){
-				$response = http_get('http://www.17tsw.com/');
-				$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-				$doc = dom_parse($response);
-				$elements = xpath_query($doc, "//div[@id='main']/div[2]/div/ul/li/a");
+				$html = http_get('http://www.17tsw.com/');
+				$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 
+				$xpath = new XPath($html);
+				$elements = $xpath->query("//div[@id='main']/div[2]/div/ul/li/a");
 				foreach ($elements as $element) {
 					$href = $element->getattribute('href');
 					$book = $element->getattribute('title');
@@ -115,11 +81,11 @@
 					}
 				}
 			} else if(0 == strcmp($uri, 'http://www.17tsw.com/2')){
-				$response = http_get('http://www.17tsw.com/');
-				$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-				$doc = dom_parse($response);
-				$elements = xpath_query($doc, "//div[@id='main']/div[3]/div/ul/li/a");
+				$html = http_get('http://www.17tsw.com/');
+				$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 
+				$xpath = new XPath($html);
+				$elements = $xpath->query("//div[@id='main']/div[3]/div/ul/li/a");
 				foreach ($elements as $element) {
 					$href = $element->getattribute('href');
 					$book = $element->getattribute('title');
@@ -130,23 +96,38 @@
 					}
 				}
 			} else {
-				$response = http_get($uri);
-				$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-				$doc = dom_parse($response);
-				$options = xpath_query($doc, "//div[@class='page']/form/select/option");
+				$html = http_get($uri);
+				$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 
-				$i = 0;
+				$xpath = new XPath($html);
+				$options = $xpath->query("//div[@class='page']/form/select/option");
+
+				$pages = array();
 				foreach ($options as $option) {
-					if(0 != $i){
-						$u = dirname($uri) . '/' . basename($uri, ".html") . '-' . $i . ".html";
-						$response = http_get($u);
-						$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+					$value = $option->getattribute('value');
+					if($value != '0')
+						$pages[] = dirname($uri) . '/' . basename($uri, ".html") . '-' . $value . ".html";
+				}
+
+				// page 1
+				$result = array();
+				$result[0] = $this->__ParseBooks($html);
+
+				// other pages
+				if(count($pages) > 0){
+					$http = new HttpMultipleProxy("proxy.cfg");
+					$r = $http->get($pages, array($this, '_OnReadBook'), &$result, 60);
+					if(0 != $r){
+						// log error
 					}
-					$this->__ParseBooks($response, $books);
-					
-					++$i;
-					if($i >= 3)
-						break;
+				}
+
+				if(count($pages) == count($result)){
+					for($i = 0; $i < count($result); $i++){
+						foreach($result[$i] as $bid => $book){
+							$books[$bid] = $book;
+						}
+					}
 				}
 			}
 
@@ -194,31 +175,90 @@
 
 			$i = 0;
 			$books = array();
+			$pages = array();
 			foreach ($options as $option) {
-				if(0 != $i++){
-					$u = 'http://www.17tsw.com/SoClass.aspx?class=' . urlencode(iconv("UTF-8", "gb2312", $keyword)) . "&page=" . $i;
-					$response = http_get($u);
-					$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+				$value = $option->getattribute('value');
+				if($value != '0')
+					$pages[] = 'http://www.17tsw.com/Soclass.aspx?class=' . urlencode(iconv("UTF-8", "gb2312", $keyword)) . "&page=" . $i;
+				++$i;
+			}
+			
+			// page 1
+			$result = array();
+			$result[0] = $this->__ParseBooks($html);
+
+			// other pages
+			if(count($pages) > 0){
+				$http = new HttpMultipleProxy("proxy.cfg");
+				$r = $http->get($pages, array($this, '_OnReadBook'), &$result, 60);
+				if(0 != $r){
+					// log error
 				}
-				$this->__ParseBooks($response, $books);
-				break;
+			}
+
+			if(count($pages) == count($result)){
+				for($i = 0; $i < count($result); $i++){
+					foreach($result[$i] as $bid => $book){						
+						$books[$bid] = $book;
+					}
+				}
 			}
 
 			return array("book" => $books);
 		}
+		
+		//---------------------------------------------------------------------------
+		// private function
+		//---------------------------------------------------------------------------
+		function _OnReadBook($param, $i, $r, $header, $body)
+		{
+			if(0 != $r){
+				//print_r("_OnReadBook $i error: $r\n");
+				return -1;
+			} else if(!stripos($body, "</body></html>")){
+				// check html content integrity
+				//print_r("_OnReadBook $i Integrity check error.\n");
+				return -1;
+			}
+
+			$param[$i] = $this->__ParseBooks($body);
+			//print_r("17tsw _OnReadBook $i: " . count($param[$i]) . "\n");
+			return 0;
+		}
+
+		private function __ParseBooks($html)
+		{
+			$books = array();
+			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+
+			$xpath = new XPath($html);
+			$elements = $xpath->query("//div[@class='border']/div/ul/li/a");
+			foreach ($elements as $element) {
+				$href = $element->getattribute('href');
+				$book = $element->getattribute('title');
+
+				if(strlen($href) > 0 && strlen($book) > 0){
+					$bookid = basename($href, ".html");
+					$books[basename(dirname($href)) . '-' . substr($bookid, 8)] = $book;
+				}
+			}
+			
+			return $books;
+		}
+		
 	}
 
-require("php/dom.inc");
-require("php/util.inc");
-require("php/http.inc");
-require("php/http-multiple.inc");
-require("http-proxy.php");
-require("http-multiple-proxy.php");
+// require("php/dom.inc");
+// require("php/util.inc");
+// require("php/http.inc");
+// require("php/http-multiple.inc");
+// require("http-proxy.php");
+// require("http-multiple-proxy.php");
 
-$obj = new C17TSW();
+// $obj = new C17TSW();
 //print_r($obj->GetCatalog()); sleep(2);
-print_r($obj->GetBooks("http://www.77nt.com/DouFuXiaoShui/DouFuXiaoShui.html")); sleep(2);
+//print_r($obj->GetBooks("http://www.77nt.com/DouFuXiaoShui/DouFuXiaoShui.html")); sleep(2);
 //print_r($obj->GetChapters('DouFuXiaoShui-8436')); sleep(2); // http://www.77nt.com/DouFuXiaoShui/List_ID_8436.html
 //print_r($obj->GetAudio('DouFuXiaoShui-8436', '1', "http://www.77nt.com/Play.aspx?id=8436&page=0")); sleep(2);
-//print_r($obj->Search("单田芳")); sleep(2);
+// print_r($obj->Search("单田芳")); sleep(2);
 ?>
