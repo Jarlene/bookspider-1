@@ -51,6 +51,8 @@ class CPingShu8
 			$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+5778742+$ip);
 
 			$uri = $rawuri . $postfix;
+			$uri = str_replace("pl0.", "pp0.", $uri);
+			$uri = str_replace("pl1.", "p11a.", $uri);
 		}
 		
 		return $uri;
@@ -75,8 +77,8 @@ class CPingShu8
 
 		//$uri = str_replace("@123abcd", "9", $uri);
 		$uri = str_replace(".flv", ".mp3", $uri);
-		$uri = str_replace("play0.", "pl0.", $uri);
-		$uri = str_replace("play1.", "pl1.", $uri);
+		$uri = str_replace("play0.", "pp0.", $uri);
+		$uri = str_replace("play1.", "p11a.", $uri);
 
 		$ip = $this->__ip();
 		$ip = str_replace(".", "0", $ip);
