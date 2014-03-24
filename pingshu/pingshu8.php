@@ -123,7 +123,7 @@ class CPingShu8
 			$href = $select->getattribute('value');
 			if(strlen($href) > 0){
 				$u = 'http://' . $host["host"] . $href;
-				if(0 != strcmp($u, $uri)){
+				if(0 != strcasecmp($u, $uri)){
 					$pages[] = $u;
 				} else {
 					$chapters[] = $this->__ParseChapters($html);
