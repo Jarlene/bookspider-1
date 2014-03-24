@@ -140,7 +140,7 @@
 		function GetCatalog()
 		{
 			$uri = 'http://www.17tsw.com/';
-			$html = http_proxy_get($uri);
+			$html = http_proxy_get($uri, "copy.js");
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			$xpath = new XPath($html);
 			$elements = $xpath->query("//div[@id='nav']/li[@class='menu_test']/a");
@@ -215,7 +215,7 @@
 			if(0 != $r){
 				//print_r("_OnReadBook $i error: $r\n");
 				return -1;
-			} else if(!stripos($body, "</body></html>")){
+			} else if(!stripos($body, "copy.js")){
 				// check html content integrity
 				//print_r("_OnReadBook $i Integrity check error.\n");
 				return -1;

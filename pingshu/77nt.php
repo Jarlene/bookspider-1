@@ -140,7 +140,7 @@
 		function GetCatalog()
 		{
 			$uri = 'http://www.77nt.com/';
-			$html = http_proxy_get($uri);
+			$html = http_proxy_get($uri, "xiaoya_6384@qq.com");
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			$xpath = new XPath($html);
 			$elements = $xpath->query("//div[@id='nav']/li[@class='menu_test']/a");
