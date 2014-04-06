@@ -7,8 +7,8 @@
 	require("77nt.php");
 	require("17tsw.php");
 
-	$mc = new Memcached();
-	$mc->addServer("localhost", 11211);
+	$mdb = new Redis();
+	$mdb->connect('127.0.0.1', 6379);
 
 	$server = php_reqvar("server", '');
 	$catalog = php_reqvar("catalog", '');
@@ -110,9 +110,9 @@
 
 	function GetCatalog($s)
 	{
-		global $mc;
-		$mckey = "ts-server-" . $s->GetName();
-		$catalog = $mc->get($mckey);
+		global $mdb;
+		$mdbkey = "ts-server-" . $s->GetName();
+		$catalog = $mdb->get($mdbkey);
 
 		if(!$catalog){
 			$catalog = $s->GetCatalog();
@@ -122,7 +122,7 @@
 					$ok = false;
 			}
 			if($ok)
-				$mc->set($mckey, json_encode($catalog), $s->cache["catalog"]);
+				$mdb->set($mdbkey, json_encode($catalog), $s->cache["catalog"]);
 		} else {
 			$catalog = json_decode($catalog, True);
 		}
@@ -144,9 +144,9 @@
 
 	function GetBooks($s, $catalog)
 	{
-		global $mc;
-		$mckey = "ts-server-" . $s->GetName() . "-catalog-" . $catalog;
-		$books = $mc->get($mckey);
+		global $mdb;
+		$mdbkey = "ts-server-" . $s->GetName() . "-catalog-" . $catalog;
+		$books = $mdb->get($mdbkey);
 
 		if(!$books){
 			$uri = GetCatalogUri($s, $catalog);
@@ -154,7 +154,7 @@
 				return "";
 			$books = $s->GetBooks($uri);
 			if(count($books["book"]) > 0)
-				$mc->set($mckey, json_encode($books), $s->cache["book"]);
+				$mdb->set($mdbkey, json_encode($books), $s->cache["book"]);
 		} else {
 			$books = json_decode($books, True);
 		}
@@ -174,9 +174,9 @@
 
 	function GetChapters($s, $catalog, $bookid)
 	{
-		global $mc;
-		$mckey = "ts-server-" . $s->GetName() . "-catalog-" . $catalog . "-book-" . $bookid;
-		$chapters = $mc->get($mckey);
+		global $mdb;
+		$mdbkey = "ts-server-" . $s->GetName() . "-catalog-" . $catalog . "-book-" . $bookid;
+		$chapters = $mdb->get($mdbkey);
 
 		if(!$chapters){
 			// $uri = GetBookUri($s, $catalog, $book);
@@ -184,7 +184,7 @@
 				// return "";
 			$chapters = $s->GetChapters($bookid);
 			if(count($chapters["chapter"]) > 0)
-				$mc->set($mckey, json_encode($chapters), $s->cache["chapter"]);
+				$mdb->set($mdbkey, json_encode($chapters), $s->cache["chapter"]);
 		} else {
 			$chapters = json_decode($chapters, True);
 		}
@@ -205,10 +205,10 @@
 
 	function GetAudio($s, $catalog, $bookid, $chapter)
 	{
-		global $mc;
+		global $mdb;
 		if(0 != $s->cache["audio"]){
-			$mckey = "ts-server-" . $s->GetName() . "-catalog-" . $catalog . "-book-" . $bookid . "-chapter-" . $chapter;
-			$audio = $mc->get($mckey);
+			$mdbkey = "ts-server-" . $s->GetName() . "-catalog-" . $catalog . "-book-" . $bookid . "-chapter-" . $chapter;
+			$audio = $mdb->get($mdbkey);
 		}
 
 		if(!$audio){
@@ -222,7 +222,7 @@
 			$audio = $s->GetAudio($bookid, $chapter, $uri);
 
 			if(0 != $s->cache["audio"] && strlen($audio) > 0)
-				$mc->set($mckey, $audio, $s->cache["audio"]);
+				$mdb->set($mdbkey, $audio, $s->cache["audio"]);
 		} else {
 			//$chapters = json_decode($chapters, True);
 		}

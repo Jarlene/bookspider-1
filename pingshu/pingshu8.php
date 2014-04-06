@@ -18,15 +18,15 @@ class CPingShu8
 
 	function GetAudio($bookid, $chapter, $uri)
 	{
-		$mc = new Memcached();
-		$mc->addServer("localhost", 11211);
-		$mckey = "ts-server-" . $this->GetName() . "-audio-$bookid-$chapter";
-		$rawuri = $mc->get($mckey);
+		$mdb = new Redis();
+		$mdb->connect('127.0.0.1', 6379);
+		$mdbkey = "ts-server-" . $this->GetName() . "-audio-$bookid-$chapter";
+		$rawuri = $mdb->get($mdbkey);
 		if(!$rawuri){
 			$uri = $this->__GetAudio($uri);
 			if($uri){
 				$rawuri = substr($uri, 0, strpos($uri, '?'));
-				$mc->set($mckey, $rawuri);
+				$mdb->set($mdbkey, $rawuri);
 			}
 		} else {
 			// $mp3 = basename($rawuri);
@@ -60,18 +60,27 @@ class CPingShu8
 	
 	function __GetAudio($uri)
 	{
-		$html = http_proxy_get($uri, "luckyzz@163.com", 10);
+		$bookid = basename($uri);
+		$n = strpos($bookid, '_');
+		$id = substr($bookid, $n+1);
+		$uri = "http://www.pingshu8.com/path_" . $id;
+		//$html = http_proxy_post($uri, "", "luckyzz@163.com", 10, "proxy.cfg", array("Referer: http://www.pingshu8.com/play_161404.html"));
+		$html = http_proxy_post($uri, "", ":8000", 10, "proxy.cfg", array("Referer: http://www.pingshu8.com/play_161404.html"));
 		//$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+		$obj = json_decode($html);
+		//var_dump($obj);
+		//file_put_contents ("a.html", $obj->{"urlpath"});
 
-		if(!preg_match('/encodeURI\(\"(.+)\"\)/', $html, $matches)){
-			return "";
-		}
+		// if(!preg_match('/encodeURI\(\"(.+)\"\)/', $html, $matches)){
+			// return "";
+		// }
 
-		if(2 != count($matches)){
-			return "";
-		}
+		// if(2 != count($matches)){
+			// return "";
+		// }
 
-		$uri = $matches[1];
+		//$uri = $matches[1];
+		$uri = $obj->{"urlpath"};
 		$n = strrpos($uri, '?');
 		$uri = substr($uri, 0, $n);
 
@@ -82,12 +91,13 @@ class CPingShu8
 
 		$ip = $this->__ip();
 		$ip = str_replace(".", "0", $ip);
-		
+
 		$t = time();
 		$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+5778742+$ip);
 		
 		$uri = $uri . $postfix;
-		return iconv("gb18030", "UTF-8", $uri);
+		//return iconv("gb18030", "UTF-8", $uri);
+		return $uri;
 	}
 
 	function GetChapters($bookid)
