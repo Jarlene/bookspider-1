@@ -71,7 +71,6 @@ inline int joke_node_push(struct joke_node* nodes, int count, time_t t, struct j
 	struct joke_node *node;
 	struct joke_cache *old;
 
-	joke = NULL;
 	idx = t % count;
 	node = nodes+idx;
 
@@ -82,7 +81,8 @@ inline int joke_node_push(struct joke_node* nodes, int count, time_t t, struct j
 	InterlockedIncrement(&joke->ref);
 	joke_node_unlock(node);
 
-	joke_cache_release(old);
+	if(old)
+		joke_cache_release(old);
 	return 0;
 }
 

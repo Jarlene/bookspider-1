@@ -54,7 +54,7 @@ int WebSession::OnJoke(struct joke_node* list, int count, const char* redirect)
 	else
 	{
 		char uri[128] = {0};
-		sprintf(uri, "s=%s&page=%d", redirect, tseq, page);
+		sprintf(uri, "%s?s=%s&page=%d", redirect, tseq.c_str(), page);
 		return ReplyRedirectTo(uri);
 	}
 }

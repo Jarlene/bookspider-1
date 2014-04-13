@@ -59,6 +59,6 @@ STATIC_LIBS += ../libhttp/zlib/libz.a
 #
 # DEFINES := $(addprefix -D,$(DEFINES)) # add -L prefix
 #--------------------------------------------------------------------
-DEFINES =
+DEFINES = __gcc__builtin_
 
 include $(ROOT)/gcc.mk
