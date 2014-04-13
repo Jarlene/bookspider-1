@@ -3,13 +3,13 @@
     <xsl:for-each select="//div[class='main']/div/div/div">
       <joke>
       	<id>
-      	  <xsl:attr-of select="div[class='bar']" attr='id' />
+      	  <xsl:attr-of select="." attr='id' />
       	</id>
       	<icon>
-      	  <xsl:attr-of select="div[class='author']/img" attr='src' />
+      	  <xsl:attr-of select="div[class='author']/a/img" attr='src' />
       	</icon>
   	    <author>
-          <xsl:value-of select="div[class='author']/a" />
+          <xsl:value-of select="div[class='author']/a[2]" />
         </author>
         <datetime>
           <xsl:attr-of select="div[class='content']" attr='title' />
@@ -25,13 +25,13 @@
         	<xsl:attr-of select="div[class='thumb']/a/img" attr='src' />
         </image>
         <approve>
-        	<xsl:value-of select="div[class='bar']/ul/li/a" />
+        	<xsl:value-of select="div[class='bar clearfix']/ul/li/a" />
         </approve>
         <disapprove>
-        	<xsl:value-of select="div[class='bar']/ul/li[2]/a" />
+        	<xsl:value-of select="div[class='bar clearfix']/ul/li[2]/a" />
         </disapprove>
         <comment>
-        	<xsl:value-of select="div[class='bar']/ul/li[3]/a" />
+        	<xsl:value-of select="div[class='bar clearfix']/ul/li[3]/a" />
         </comment>
       </joke>
     </xsl:for-each>

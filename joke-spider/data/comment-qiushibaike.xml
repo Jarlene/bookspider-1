@@ -3,7 +3,7 @@
     <xsl:for-each select="//div[@class='comments']/div/div">
       <comment>
       	<icon>
-      	  <xsl:attr-of select="div/img" attr='src' />
+      	  <xsl:attr-of select="div/a/img" attr='src' />
       	</icon>
         <user>
           <xsl:value-of select="div[2]/a" />
@@ -11,6 +11,9 @@
         <content>
           <xsl:value-of select="div[2]/span" />
         </content>
+		<floor>
+          <xsl:value-of select="div[3]" />
+        </floor>
       </comment>
     </xsl:for-each>
 </xml>
