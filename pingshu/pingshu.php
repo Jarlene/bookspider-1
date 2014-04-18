@@ -17,8 +17,12 @@
 	$keyword = php_reqvar("keyword", '');
 	$redirect = php_reqvar("redirect", 0);
 
+	$headers = array();
+	$headers["User-Agent"] = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:28.0) Gecko/20100101 Firefox/28.0";
+
 	$reply["code"] = 0;
 	$reply["msg"] = "ok";
+	$reply["headers"] = $headers;
 
 	$data = array();
 	if(0 != $redirect){

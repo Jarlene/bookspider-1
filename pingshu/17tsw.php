@@ -18,15 +18,18 @@
 
 		function GetAudio($bookid, $chapter, $html)
 		{
-			//file_put_contents ("/app/joke/a.html", $response);
+			//file_put_contents ("/app/joke/a.html", $html);
 //			$response = http_get($uri);
-			//$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
-			$html = str_replace("text/html; charset=gb2312", "text/html; charset=utf-8", $html);
-			
+			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+
 			$xpath = new XPath($html);
+			if(!strpos($xpath->get_value("/html/head/title"), "一起听书网")){
+				$html = str_replace("text/html; charset=gb18030", "text/html; charset=utf-8", $html);
+				$xpath = new XPath($html);
+			}
+
 			$uri = $xpath->get_attribute("//param[@name='url']", "value");
-//			$uri = iconv("gb2312", "UTF-8", $uri);
-			return $uri ? $uri : "";
+			return $uri;
 		}
 
 		function GetChapters($bookid)
