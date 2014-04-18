@@ -9,7 +9,7 @@
     </xsl:for-each>
   </images>
   
-  <text><xsl:value-of select="//div[id='content']/div[2]/span" /></text>
+  <text><xsl:value-of select="//div[id='content']/div" /></text>
   <texts>
     <xsl:for-each select="//div[id='content']/div[2]/span/span">
       <text><xsl:value-of select="." /></text>

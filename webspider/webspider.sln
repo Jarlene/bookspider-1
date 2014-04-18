@@ -68,8 +68,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsys", "..\..\sdk\libsys\
 		{27BAE77C-389B-407C-9CE2-D03326ED9379} = {27BAE77C-389B-407C-9CE2-D03326ED9379}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wallpaper", "..\wallpaper\wallpaper.vcproj", "{D37C70A7-8C48-41B6-9753-9EE3BD440573}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -120,10 +118,6 @@ Global
 		{B77E972C-F268-48ED-B866-F25B65A8485C}.Debug|Win32.Build.0 = Debug|Win32
 		{B77E972C-F268-48ED-B866-F25B65A8485C}.Release|Win32.ActiveCfg = Release|Win32
 		{B77E972C-F268-48ED-B866-F25B65A8485C}.Release|Win32.Build.0 = Release|Win32
-		{D37C70A7-8C48-41B6-9753-9EE3BD440573}.Debug|Win32.ActiveCfg = Debug|Win32
-		{D37C70A7-8C48-41B6-9753-9EE3BD440573}.Debug|Win32.Build.0 = Debug|Win32
-		{D37C70A7-8C48-41B6-9753-9EE3BD440573}.Release|Win32.ActiveCfg = Release|Win32
-		{D37C70A7-8C48-41B6-9753-9EE3BD440573}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
