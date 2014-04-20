@@ -21,13 +21,13 @@
 			return "imanhua";
 		}
 
-		function GetPic($uri)
+		function GetPictures($uri)
 		{
 			$html = http_proxy_get($uri, "footer-main", 10);
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 
 			$xpath = new XPath($html);
-			$scripts = $xpath->query("/html/head/script", null);
+			$scripts = $xpath->query("/html/head/script");
 			if($scripts->length > 0){
 				$script = $scripts->item(0)->nodeValue;
 
@@ -35,18 +35,23 @@
 				$js->executeString($script, "imanhua", V8Js::FLAG_FORCE_ARRAY);
 				$cInfo = $js->executeString("cInfo;", "imanhua", V8Js::FLAG_FORCE_ARRAY);
 
+				//$servers = array('c5.mangafiles.com', 'c4.mangafiles.com', 't5.mangafiles.com', 't4.mangafiles.com');
+
 				if($cInfo["cid"] > 7910){
 					// http://www.imanhua.com/comic/76/list_61224.html
 					// http://c4.mangafiles.com/Files/Images/76/61224/imanhua_001.png
 					// "/Files/Images/"+cInfo.bid+"/"+cInfo.cid+"/"+$cInfo["files"][$i]
 					$pictures = array();
 					foreach($cInfo["files"] as $file){
-						$pictures[] = "/Files/Images/" . $cInfo["bid"] . "/" . $cInfo["cid"] . "/" . $file;
+						$pictures[] = "http://c4.mangafiles.com" . "/Files/Images/" . $cInfo["bid"] . "/" . $cInfo["cid"] . "/" . $file;
 					}
 					return $pictures;
 				} else {
 					// http://www.imanhua.com/comic/135/list_7198.html
 					// "/pictures/135/7198/trdh01.jpg"
+					foreach($cInfo["files"] as $file){
+						$pictures[] = "http://t4.mangafiles.com" . $file;
+					}
 					return $cInfo["files"];
 				}
 			} else {
@@ -62,7 +67,7 @@
 			$xpath = new XPath($html);
 
 			$iconuri = $xpath->get_attribute("//div[@class='fl bookCover']/img", "src");
-			
+
 			$i = 0;
 			$elements = $xpath->query("//div[@class='intro']/p");
 
@@ -92,15 +97,15 @@
 
 			$data = array();
 			$data["icon"] = $iconuri;
-			$data["info"] = $summary;
+			$data["summary"] = $summary;
 			$data["chapter"] = $chapters;
 			return $data;
 		}
 
 		function GetBooks($uri)
 		{
-			$uri = 'http://www.imanhua.com' + $uri;
-			$html = http_proxy_get($uri, "footer", 10);
+			$uri = 'http://www.imanhua.com' . $uri;
+			$html = http_proxy_get($uri, "/template/default/foot.js", 10);
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			$xpath = new XPath($html);
 
@@ -138,7 +143,7 @@
 				for($i = 1; $i <= $page; $i++) {
 					if(1 != $i){
 						$u = $uri . 'index_p' . $i . '.html';
-						$html = http_proxy_get($u, "footer", 10);
+						$html = http_proxy_get($u, "/template/default/foot.js", 10);
 						$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 						$xpath = new XPath($html);
 					}
@@ -153,7 +158,7 @@
 
 						if(strlen($href) > 0 && strlen($book) > 0){
 							$bookid = basename($href);
-							$time = substr($time, strpos($time, ":")+1);
+							$time = substr($time, strpos($time, "20")); // year 2014/2013
 							$books[$bookid] = array("bookid" => $bookid, "book" => $book, "icon" => $icon, "time" => $time, "status" => $status);
 						}
 					}
@@ -172,9 +177,9 @@
 			$html = http_proxy_get($uri, "footer", 10);
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 
-			$subcatalogs = array();
-			$subcatalogs["最近更新"] = '/recent.html';
-			$subcatalogs["排行榜"] = '/top.html';
+			$catalog = array();
+			$catalog["最近更新"] = '/recent.html';
+			$catalog["排行榜"] = '/top.html';
 
 			$xpath = new XPath($html);
 			$elements = $xpath->query("//ul[@class='navList']/li/a");
@@ -184,12 +189,10 @@
 				$text = $element->nodeValue;
 
 				if(strlen($href) > 1 && strlen($text) > 0){
-					$subcatalogs[$text] = $href;
+					$catalog[$text] = $href;
 				}
 			}
 
-			$catalog = array();
-			$catalog["all"] = $subcatalogs;
 			return $catalog;
 		}
 
@@ -200,7 +203,7 @@
 			$html = http_proxy_get($uri, "footer", 10);
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			$xpath = new XPath($html);
-			
+
 			$page = $xpath->get_value("//div[@class='pagerHead']/strong[3]", null, 1);
 
 			$books = array();
@@ -208,7 +211,6 @@
 			for($i = 1; $i <= $page; $i++) {
 				if(1 != $i){
 					$u = "http://www.imanhua.com/v2/user/search.aspx?key=$keyword&p=$i";
-					print_r($u . "\r\n");
 					$html = http_proxy_get($u, "footer", 10);
 					$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 					$xpath = new XPath($html);
@@ -238,7 +240,10 @@
 // $html = http_get($uri, 20, "", array("Referer: http://www.imanhua.com/comic/76/list_61224.html"));
 // file_put_contents ("a.png", $html);
 
-//	$imanhua = new CIManHua();
-//	print_r($imanhua->getpic("http://www.imanhua.com/comic/76/list_61224.html"));
-//	print_r($imanhua->Search("火"));
+// $imanhua = new cimanhua();
+// print_r($imanhua->GetCatalog());
+// print_r($imanhua->GetBooks("/comic/tuili/"));
+// print_r($imanhua->GetChapters("5018")); // http://www.imanhua.com/comic/5018/
+// print_r($imanhua->GetPictures("http://www.imanhua.com/comic/5018/list_90310.html"));
+// print_r($imanhua->search("火"));
 ?>
