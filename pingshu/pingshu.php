@@ -19,6 +19,9 @@
 
 	$headers = array();
 	$headers["User-Agent"] = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:28.0) Gecko/20100101 Firefox/28.0";
+	if(0 == strcmp("0", $server)){
+		$headers["Referer"] = "http://www.pingshu8.com/MusicList/mmc_7_3283_1.Htm";
+	}
 
 	$reply["code"] = 0;
 	$reply["msg"] = "ok";
