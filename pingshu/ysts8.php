@@ -18,24 +18,23 @@
 
 		function GetAudio($bookid, $chapter, $uri)
 		{
-			$response = http_get($uri);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+			$html = http_get($uri);
+			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+			
+			$xpath = new XPath($html);
+			$uri = $xpath->get_attribute("//iframe[@id='play']", "src");
 
-			if(preg_match('/\"\/play\/flv\.html\?(.+?)\"/', $response, $matches)){
-				return 2 == count($matches) ? iconv("gb18030", "UTF-8", $matches[1]) : "";
-			} else {
-				$doc = dom_parse($response);
-				$params = xpath_query($doc, "//param[@name='URL']");
-				$host = parse_url($uri);
-				foreach ($params as $param) {
-					$href = $param->getattribute('value');
-					if(strlen($href) > 0){
-						$uri = iconv("gb18030", "UTF-8", $href);
-						return $uri;
-					}
+			$html = http_get('http://www.ysts8.com/' . $uri);
+			if(preg_match('/\'\?(.*?)\'/', $html, $matches)){
+				if(2 == count($matches)){
+					$arr = explode("$$$", $uri);
+					$pos = strpos($arr[0], "?");
+					$uri = substr($arr[0], $pos+1);
+					$uri = $uri . '?' . $matches[1];
+					return $uri;
+					//return iconv("gb18030", "UTF-8", $uri);
 				}
 			}
-			
 			return "";
 		}
 
