@@ -21,18 +21,23 @@
 			$html = http_get($uri);
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			
+			$headers = array("Referer: " . $uri);
+
 			$xpath = new XPath($html);
 			$uri = $xpath->get_attribute("//iframe[@id='play']", "src");
 
-			$html = http_get('http://www.ysts8.com/' . $uri);
-			if(preg_match('/\'\?(.*?)\'/', $html, $matches)){
+			$html = http_get('http://www.ysts8.com/' . $uri, 20, "", $headers);
+
+			//file_put_contents ("1.html", $html);
+			if(preg_match('/mp3\:\'(.*?)\'/', $html, $matches)){
 				if(2 == count($matches)){
-					$arr = explode("$$$", $uri);
-					$pos = strpos($arr[0], "?");
-					$uri = substr($arr[0], $pos+1);
-					$uri = $uri . '?' . $matches[1];
-					return $uri;
-					//return iconv("gb18030", "UTF-8", $uri);
+					//$arr = explode("$$$", $uri);
+					//$pos = strpos($arr[0], "?");
+					//$uri = substr($arr[0], $pos+1);
+					//$uri = $uri . '?' . $matches[1];
+					$uri = $matches[1];
+					//return $uri;
+					return iconv("gb18030", "UTF-8", $uri);
 				}
 			}
 			return "";
