@@ -72,7 +72,9 @@
 			$books = GetBooks($s, $catalog);
 			$reply["icon"] = $books["icon"];
 			foreach($books["book"] as $k => $v){
-				$data[] = array("book" => $v, "bookid" => "$k");
+				if(strpos($v, "哈利") === false){
+					$data[] = array("book" => $v, "bookid" => "$k");
+				}
 			}
 		} else {
 			$catalogs = GetCatalog($s);
@@ -97,9 +99,9 @@
 		$c17tsw = new C17TSW();
 
 		$servers = array();
-		$servers["4"] = array("name" => "服务器5", "object" => $ysts8);
 		$servers["0"] = array("name" => "服务器1", "object" => $pingshu8);
 //		$servers["1"] = array("name" => "服务器2", "object" => $c77nt);
+		$servers["4"] = array("name" => "服务器5", "object" => $ysts8);
 		$servers["2"] = array("name" => "服务器3", "object" => $c77nt);
 		$servers["3"] = array("name" => "服务器4", "object" => $c17tsw);
 		return $servers;
@@ -119,7 +121,7 @@
 	{
 		global $mdb;
 		$mdbkey = "ts-server-" . $s->GetName();
-		$catalog = $mdb->get($mdbkey);
+		//$catalog = $mdb->get($mdbkey);
 
 		if(!$catalog){
 			$catalog = $s->GetCatalog();
