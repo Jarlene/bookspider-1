@@ -18,24 +18,32 @@
 
 		function GetAudio($bookid, $chapter, $uri)
 		{
-			$html = http_get($uri);
+			$html = http_proxy_get($uri, "Ysjs/bot.js", 10);
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			
 			$headers = array("Referer: " . $uri);
 
 			$xpath = new XPath($html);
-			$uri = $xpath->get_attribute("//iframe[@id='play']", "src");
+			$uri = $xpath->get_attribute("//iframe[3]", "src");
 
-			$html = http_get('http://www.ysts8.com/' . $uri, 20, "", $headers);
+			$html = http_proxy_get('http://www.ysts8.com/' . $uri, "www.ysts8.com", 20, "proxy.cfg", $headers);
 
+			// http://psf.ysx8.net:8000/ÆäËûÆÀÊé/ÐÂ¶ùÅ®Ó¢ÐÛ´«/001.mp3?
 			//file_put_contents ("1.html", $html);
-			if(preg_match('/mp3\:\'(.*?)\'/', $html, $matches)){
+			if(preg_match('/url2.*=.*\'(.*?)\';/', $html, $matches1)){
+				if(2 == count($matches1)){
+					$uri = $matches1[1];
+				}
+			}
+			
+			if(preg_match('/url2\+\'\?(.*?)\'/', $html, $matches)){
+			//if(preg_match('/mp3\:\'(.*?)\'/', $html, $matches)){
 				if(2 == count($matches)){
 					//$arr = explode("$$$", $uri);
 					//$pos = strpos($arr[0], "?");
 					//$uri = substr($arr[0], $pos+1);
-					//$uri = $uri . '?' . $matches[1];
-					$uri = $matches[1];
+					$uri = $uri . '?' . $matches[1];
+					//$uri = $matches[1];
 					//return $uri;
 					return iconv("gb18030", "UTF-8", $uri);
 				}
@@ -46,7 +54,7 @@
 		function GetChapters($bookid)
 		{
 			$uri = "http://www.ysts8.com/Yshtml/Ys" . $bookid . ".html";
-			$response = http_get($uri);
+			$response = http_proxy_get($uri, "Ysjs/bot.js", 10);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
 			$infos = xpath_query($doc, "//div[@class='ny_txt']/ul/p");
@@ -105,7 +113,8 @@
 
 		function GetBooks($uri)
 		{
-			$response = http_get($uri);
+			$response = http_proxy_get($uri, "Ysjs/bot.js", 10);
+			//file_put_contents ("1.html", $html);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 			$doc = dom_parse($response);
 			
@@ -122,7 +131,7 @@
 					if(strlen($href) > 0){
 						$u = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $href;
 						if(0 != strcmp($u, $uri)){
-							$response = http_get($u);
+							$response = http_proxy_get($u, "Ysjs/bot.js", 10);
 							$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 						}
 
@@ -140,8 +149,9 @@
 		function GetCatalog()
 		{
 			$uri = 'http://www.ysts8.com/index_ys.html';
-			$response = http_get($uri);
+			$response = http_proxy_get($uri, "Ysjs/bot.js", 10);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+			//file_put_contents ("1.html", $response);
 			$doc = dom_parse($response);
 			$elements = xpath_query($doc, "//div[@class='link']/a");
 
@@ -189,7 +199,7 @@
 		function Search($keyword)
 		{
 			$uri = "http://www.ysts8.com/Ys_so.asp?stype=1&keyword=". urlencode(iconv("UTF-8", "gb2312", $keyword));
-			$response = http_get($uri);
+			$response = http_proxy_get($uri, "Ysjs/bot.js", 10);
 			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 
 			$books = array();
@@ -197,7 +207,7 @@
 			for($i=1; $i <= $n; $i++){
 				if($i > 1){
 					$uri = "http://www.ysts8.com/Ys_so.asp?stype=1&keyword=" . urlencode(iconv("UTF-8", "gb2312", $keyword)) . "page=" . $i;
-					$response = http_get($uri);
+					$response = http_proxy_get($uri, "Ysjs/bot.js", 10);
 					$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
 				}
 				
