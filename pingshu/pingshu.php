@@ -41,8 +41,10 @@
 				continue;
 			$result = Search($v["object"], $keyword);
 			foreach($result as $b){
-				$bid = $b["bookid"];
-				$data[] = array("server" => $k, "book" => $b["book"], "bookid" => "$bid");
+				if(strpos($b["book"], "哈利") === false){
+					$bid = $b["bookid"];
+					$data[] = array("server" => $k, "book" => $b["book"], "bookid" => "$bid");
+				}
 			}
 		}
 	} else if(0 == strlen($server)){
