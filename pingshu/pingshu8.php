@@ -48,7 +48,7 @@ class CPingShu8
 			$ip = str_replace(".", "0", $ip);
 			
 			$t = time();
-			$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+5778742+$ip);
+			$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+5778748624264+$ip);
 
 			$uri = $rawuri . $postfix;
 			$uri = str_replace("pl0.", "p0a1.", $uri);
