@@ -20,25 +20,49 @@
 		{
 			$html = http_proxy_get($uri, "Ysjs/bot.js", 10);
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
-			
+
 			$headers = array("Referer: " . $uri);
 
 			$xpath = new XPath($html);
-			$uri = $xpath->get_attribute("//iframe[3]", "src");
-
+			$uri = $xpath->get_attribute("//iframe[2]", "src");
 			$html = http_proxy_get('http://www.ysts8.com/' . $uri, "www.ysts8.com", 20, "proxy.cfg", $headers);
-
-			// http://psf.ysx8.net:8000/ÆäËûÆÀÊé/ÐÂ¶ùÅ®Ó¢ÐÛ´«/001.mp3?
-			//file_put_contents ("1.html", $html);
-			if(preg_match('/url2.*=.*\'(.*?)\';/', $html, $matches1)){
-				if(2 == count($matches1)){
-					$uri = $matches1[1];
-				}
-			}
 			
-			if(preg_match('/url2\+\'\?(.*?)\'/', $html, $matches)){
-			//if(preg_match('/mp3\:\'(.*?)\'/', $html, $matches)){
-				if(2 == count($matches)){
+			//file_put_contents ("a.html", $html);
+			// 6102986163870x1406030845x6103448776624-5be9cd2016294cd6a07a0a063876fdbc
+			if(!preg_match('/([0-9]+x[0-9]{10}x[0-9]+\-[0-9a-z]{32})/', $html, $matches1)){
+				return "";
+			}
+
+			if(2 == count($matches1)){
+				$postfix = $matches1[1];
+			}
+			// if(strpos($html, "jp-jplayer") == false){
+				// $uri = $xpath->get_attribute("//iframe[2]", "src");
+				// $html = http_proxy_get('http://www.ysts8.com/' . $uri, "www.ysts8.com", 20, "proxy.cfg", $headers);
+			// }
+
+			//file_put_contents ("a.html", $html);
+			// if(preg_match('/url2.*=.*\'(.*?)\';/', $html, $matches1)){
+				// if(2 == count($matches1)){
+					// $uri = $matches1[1];
+				// }
+			// }
+			$arr = explode("&", $uri);
+			$arr = explode("?", $arr[0]);
+			$arr = explode("=", $arr[1]);
+			$uri = urldecode($arr[1]);
+			$uri = iconv("gb18030", "UTF-8", $uri);
+
+			//$t = time();
+			//$postfix = sprintf("?%ux%ux%u-f6441157ba03c991857d77880d9f9f9e", $t+218070220011, $t, $t+462612754+218070220011);
+			return $uri . '?' . $postfix;
+
+			//if(preg_match_all('/url2\+\'\?(.*?)\'/', $html, $matches)){
+			if(preg_match('/mp3\:\'\'\+(.*?)\+\'(.*?)\'/', $html, $matches)){
+			//if(preg_match('/\+\'\?(.*?)\'/', $html, $matches)){
+				if(3 == count($matches)){
+					print_r($matches[1]);
+					print_r($matches[2]);
 					//$arr = explode("$$$", $uri);
 					//$pos = strpos($arr[0], "?");
 					//$uri = substr($arr[0], $pos+1);

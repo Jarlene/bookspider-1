@@ -23,7 +23,7 @@ class CPingShu8
 		$mdbkey = "ts-server-" . $this->GetName() . "-audio-$bookid-$chapter";
 		$rawuri = $mdb->get($mdbkey);
 		if(!$rawuri){
-			$uri = $this->__GetAudio($uri);
+			$uri = $this->__GetAudio($bookid, $uri);
 			if($uri){
 				$rawuri = substr($uri, 0, strpos($uri, '?'));
 				$mdb->set($mdbkey, $rawuri);
@@ -48,7 +48,7 @@ class CPingShu8
 			$ip = str_replace(".", "0", $ip);
 			
 			$t = time();
-			$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+5778742+$ip);
+			$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+4624270747270+$ip);
 
 			$uri = $rawuri . $postfix;
 			$uri = str_replace("pl0.", "p0a1.", $uri);
@@ -58,14 +58,31 @@ class CPingShu8
 		return $uri;
 	}
 	
-	function __GetAudio($uri)
+	function __GetEncStr($bookid, $uri)
 	{
+		$referer = "Referer: http://www.pingshu8.com/MusicList/mmc_" . $bookid . ".htm";
+		$html = http_proxy_get($uri, "luckyzz@163.com", 10, "proxy.cfg", array($referer));
+		if(!preg_match('/var encrystr =\"(.+)\"/', $html, $matches)){
+			return "";
+		}
+		
+		if(2 == count($matches)){
+			return $matches[1];
+		}
+		return "";
+	}
+
+	function __GetAudio($bookid, $uri)
+	{
+		$encrystr = $this->__GetEncStr($bookid, $uri);
+
 		$bookid = basename($uri);
 		$n = strpos($bookid, '_');
 		$id = substr($bookid, $n+1);
 		$uri = "http://www.pingshu8.com/path_" . $id;
+		$postdata = "encrystr=$encrystr&urlpath=" . basename($id, ".html");
 		//$html = http_proxy_post($uri, "", "luckyzz@163.com", 10, "proxy.cfg", array("Referer: http://www.pingshu8.com/play_161404.html"));
-		$html = http_proxy_post($uri, "", ":8000", 10, "proxy.cfg", array("Referer: http://www.pingshu8.com/play_161404.html"));
+		$html = http_proxy_post($uri, $postdata, ":8000", 10, "proxy.cfg", array("Referer: " . $uri));
 		//$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 		$obj = json_decode($html);
 		//var_dump($obj);
@@ -93,7 +110,7 @@ class CPingShu8
 		$ip = str_replace(".", "0", $ip);
 
 		$t = time();
-		$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+5778742+$ip);
+		$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+4624270747270+$ip);
 		
 		$uri = $uri . $postfix;
 		//return iconv("gb18030", "UTF-8", $uri);

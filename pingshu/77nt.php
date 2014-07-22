@@ -33,31 +33,65 @@
 		{
 			list($path, $id) = split("-", $bookid);
 			$uri = "http://www.77nt.com/" . $path . "/List_ID_" . $id . ".html";
-			$html = http_get($uri);
+			$html = http_proxy_get($uri, "xiaoya_6384@qq.com");
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			
 			$xpath = new XPath($html);
 			$iconuri = $xpath->get_attribute("//div[@class='conlist']/ul/li/img", "src");
 			$summary = $xpath->get_value("//ul[@class='introbox']/p/span");
-			$elements = $xpath->query("//ul[@class='compress']/ul/div/li/span/a");
-
+			$options = $xpath->query("//ul[@class='pagea']/label/select/option");
+			
+			$pages = array();
+			$i = 0;
+			foreach ($options as $option) {
+				$value = $option->getattribute('value');
+				if($i > 1)
+				{
+					$pages[] = dirname($uri) . '/' . basename($uri, ".html") . '-' . $value . ".html";
+				}
+				$i = $i + 1;
+			}
+			
+			$chapters = array();
+			$chapters[0] = $this->__ParseChapters($html);
+			
+			
+			// other pages
+			if(count($pages) > 0){
+				$http = new HttpMultipleProxy("proxy.cfg");
+				$r = $http->get($pages, array($this, '_OnReadChapter'), &$chapters, 60);
+				if(0 != $r){
+					// log error
+				}
+			}
+			
 			$host = parse_url($uri);
 			$iconuri = 'http://' . $host["host"] . $iconuri;
 
-			$chapters = array();
-			foreach ($elements as $element) {
-				$href = $element->getattribute('href');
-				$chapter = $element->nodeValue;
-
-				if(strlen($href) > 0 && strlen($chapter) > 0){
-					$chapters[] = array("name" => $chapter, "uri" => 'http://' . $host["host"] . $href);
+			$Result = array();
+			$index = 0;
+			if((count($pages)+1) == count($chapters))
+			{
+				for($i = 0; $i < count($chapters); $i++)
+				{
+					foreach($chapters[$i] as $chapter)
+					{
+						
+						$href = $chapter["uri"];
+						
+						$href2 = 'http://' . $host["host"] . $href;
+						
+						$Result[$index] = array("name" => $chapter["name"], "uri" => $href2);
+						
+						$index = $index + 1;
+					}
 				}
 			}
 
 			$data = array();
 			$data["icon"] = $iconuri;
 			$data["info"] = $summary;
-			$data["chapter"] = $chapters;
+			$data["chapter"] = $Result;
 			return $data;
 		}
 
@@ -66,7 +100,8 @@
 			$books = array();
 
 			if(0 == strcmp($uri, 'http://www.77nt.com/1')){ // update
-				$html = http_get('http://www.77nt.com/');
+				$uri = 'http://www.77nt.com/';
+				$html = http_proxy_get($uri, "xiaoya_6384@qq.com");
 				$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 
 				$xpath = new XPath($html);
@@ -81,7 +116,8 @@
 					}
 				}
 			} else if(0 == strcmp($uri, 'http://www.77nt.com/2')){ // top
-				$html = http_get('http://www.77nt.com/');
+				$uri = 'http://www.77nt.com/';
+				$html = http_proxy_get($uri, "xiaoya_6384@qq.com");
 				$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 
 				$xpath = new XPath($html);
@@ -96,7 +132,7 @@
 					}
 				}
 			} else { // books
-				$html = http_get($uri);
+				$html = http_proxy_get($uri, "xiaoya_6384@qq.com");
 				$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 
 				$xpath = new XPath($html);
@@ -141,7 +177,8 @@
 		{
 			$uri = 'http://www.77nt.com/';
 			$html = http_proxy_get($uri, "xiaoya_6384@qq.com");
-			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+//			$html = http_get($uri);
+ 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			$xpath = new XPath($html);
 			$elements = $xpath->query("//div[@id='nav']/li[@class='menu_test']/a");
 
@@ -167,7 +204,7 @@
 		{
 			$uri = 'http://www.77nt.com/SoClass.aspx';
 			$data = 'class=' . urlencode(iconv("UTF-8", "gb2312", $keyword)) . '&submit=&ctl00%24Sodaohang=';
-			$html = http_post($uri, $data);
+			$html = http_proxy_post($uri, $data, "xiaoya_6384@qq.com");
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 
 			$xpath = new XPath($html);
@@ -178,7 +215,7 @@
 			$pages = array();
 			foreach ($options as $option) {
 				$value = $option->getattribute('value');
-				if($value != '0')
+ 				if($value != '0')
 					$pages[] = 'http://www.77nt.com/Soclass.aspx?class=' . urlencode(iconv("UTF-8", "gb2312", $keyword)) . "&page=" . $i;
 				++$i;
 			}
@@ -226,6 +263,22 @@
 			return 0;
 		}
 
+		function _OnReadChapter($param, $i, $r, $header, $body)
+		{
+			if(0 != $r){
+				//print_r("_OnReadBook $i error: $r\n");
+				return -1;
+			} else if(!stripos($body, "xiaoya_6384@qq.com")){
+				// check html content integrity
+				//print_r("_OnReadBook $i Integrity check error.\n");
+				return -1;
+			}
+		
+			$param[$i+1] = $this->__ParseChapters($body);
+			//print_r("_OnReadBook $i: " . count($param[$i]) . "\n");
+			return 0;
+		}
+		
 		private function __ParseBooks($html)
 		{
 			$books = array();
@@ -245,19 +298,41 @@
 
 			return $books;
 		}
+		
+		private function __ParseChapters($html)
+		{
+			$chapters = array();
+			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+				
+			$xpath = new XPath($html);
+			//$elements = $xpath->query("//div[@class='border']/div/ul/li/a");
+			$elements = $xpath->query("//ul[@class='compress']/ul/div/li/span/a");
+
+			foreach ($elements as $element) {
+				$href = $element->getattribute('href');
+				$chapter = $element->nodeValue;
+			
+				if(strlen($href) > 0 && strlen($chapter) > 0){
+					$chapters[] = array("name" => $chapter, "uri" => $href);
+				}
+			}
+			
+			
+			return $chapters;
+		}
 	}
 
-// require("php/dom.inc");
-// require("php/util.inc");
-// require("php/http.inc");
-// require("php/http-multiple.inc");
-// require("http-proxy.php");
-// require("http-multiple-proxy.php");
+//  require("php/dom.inc");
+//  require("php/util.inc");
+//  require("php/http.inc");
+//  require("php/http-multiple.inc");
+//  require("http-proxy.php");
+//  require("http-multiple-proxy.php");
 
-// $obj = new C77NT();
+//  $obj = new C77NT();
 // print_r($obj->GetCatalog()); sleep(2);
 // print_r(count($obj->GetBooks("http://www.77nt.com/DouFuXiaoShui/DouFuXiaoShui.html"))); sleep(2);
-// print_r($obj->GetChapters('DouFuXiaoShui-8436')); sleep(2); // http://www.77nt.com/DouFuXiaoShui/List_ID_8436.html
-// print_r($obj->GetAudio('DouFuXiaoShui-8436', '1', "http://www.77nt.com/Play.aspx?id=8436&page=0")); sleep(2);
-// print_r($obj->Search("单田芳")); sleep(2);
+//  print_r($obj->GetChapters('DouFuXiaoShui-8436')); sleep(2); // http://www.77nt.com/DouFuXiaoShui/List_ID_8436.html
+//  print_r($obj->GetAudio('DouFuXiaoShui-8436', '1', "http://www.77nt.com/Play.aspx?id=8436&page=0")); sleep(2);
+//  print_r($obj->Search("单田芳")); sleep(2);
 ?>

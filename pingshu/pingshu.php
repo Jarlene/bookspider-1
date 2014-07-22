@@ -6,6 +6,7 @@
 	require("ysts8.php");
 	require("77nt.php");
 	require("17tsw.php");
+	require("aitingwang.php");
 
 	$mdb = new Redis();
 	$mdb->connect('127.0.0.1', 6379);
@@ -17,21 +18,23 @@
 	$keyword = php_reqvar("keyword", '');
 	$redirect = php_reqvar("redirect", 0);
 
-	$headers = array();
-	$headers["User-Agent"] = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:28.0) Gecko/20100101 Firefox/28.0";
-	if(0 == strcmp("0", $server)){
-		$headers["Referer"] = "http://www.pingshu8.com/MusicList/mmc_7_3283_1.Htm";
-	}
-
 	$reply["code"] = 0;
 	$reply["msg"] = "ok";
-	$reply["headers"] = $headers;
+
+	$headers = array();
+	$headers["User-Agent"] = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:28.0) Gecko/20100101 Firefox/28.0";
 
 	$data = array();
 	if(0 != $redirect){
 		$s = GetServerObj($server);
 		$req = file_get_contents("php://input");
-		$data = $s->GetAudio($bookid, $chapter, $req);
+		if(0 == strcmp("5", $server)){
+			$data1 = $s->GetAudio($bookid, $chapter, $req); // user-defined HTTP Header
+			$data = $data1["url"];
+			$headers = $data1["headers"];
+		} else {
+			$data = $s->GetAudio($bookid, $chapter, $req);
+		}
 		$reply["bookid"] = $bookid;
 		$reply["chapterid"] = $chapter;
 	} else if(strlen($keyword) > 0){
@@ -90,6 +93,11 @@
 		}
 	}
 
+	if(0 == strcmp("0", $server)){
+		$headers["Referer"] = "http://www.pingshu8.com/Play_Flash/js/Jplayer.swf";
+	}
+
+	$reply["headers"] = $headers;	
 	$reply["data"] = $data;
 	echo json_encode($reply);
 
@@ -99,6 +107,7 @@
 		$ysts8 = new CYSTS8();
 		$c77nt = new C77NT();
 		$c17tsw = new C17TSW();
+		$aitingwang = new AITINGWANG();
 
 		$servers = array();
 		$servers["0"] = array("name" => "服务器1", "object" => $pingshu8);
@@ -106,6 +115,7 @@
 		$servers["4"] = array("name" => "服务器5", "object" => $ysts8);
 		$servers["2"] = array("name" => "服务器3", "object" => $c77nt);
 		$servers["3"] = array("name" => "服务器4", "object" => $c17tsw);
+		$servers["5"] = array("name" => "服务器6", "object" => $aitingwang);
 		return $servers;
 	}
 
