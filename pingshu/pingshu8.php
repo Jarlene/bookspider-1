@@ -23,38 +23,49 @@ class CPingShu8
 		$mdbkey = "ts-server-" . $this->GetName() . "-audio-$bookid-$chapter";
 		$rawuri = $mdb->get($mdbkey);
 		if(!$rawuri){
-			$uri = $this->__GetAudio($bookid, $uri);
-			if($uri){
-				$rawuri = substr($uri, 0, strpos($uri, '?'));
-				$mdb->set($mdbkey, $rawuri);
+			$rawuri = $this->__GetAudio($bookid, $uri);
+			if(strlen($rawuri) > 0){
+				//$rawuri = substr($uri, 0, strpos($uri, '?'));
+				$mdb->set($mdbkey, $rawuri, 60 * 60); // update per 1-hour
+			} else {
+				return "";
 			}
-		} else {
-			// $mp3 = basename($rawuri);
-			// $ps = strrpos($mp3, '_');
-			// $pe = strrpos($mp3, '.');
-			// $cid = substr($mp3, $ps+1, $pe-$ps-1);
-			// $n = strlen($cid);
-			 // if(2 == $n) {
-				// $cidNew = sprintf("%02d", $chapter);
-			// } else if(3 == $n) {
-				// $cidNew = sprintf("%03d", $chapter);
-			// } else if(4 == $n) {
-				// $cidNew = sprintf("%04d", $chapter);
-			// } else {
-				// $cidNew = sprintf("%d", $chapter);
-			// }
-			
-			$ip = $this->__ip();
-			$ip = str_replace(".", "0", $ip);
-			
-			$t = time();
-			$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+4624270747270+$ip);
-
-			$uri = $rawuri . $postfix;
-			$uri = str_replace("pl0.", "p0a1.", $uri);
-			$uri = str_replace("pl1.", "p1a1.", $uri);
 		}
 		
+		return $this->__EncodeAudioURI($rawuri);
+	}
+
+	function __EncodeAudioURI($uri)
+	{
+		$n = strrpos($uri, '?');
+		$suffix = substr($uri, $n+1);
+		$uri = substr($uri, 0, $n);
+
+		list($v1, $v0, $v2) = sscanf($suffix, "%ux%ux%u-");
+
+		// $uri = str_replace("@123abcd", "9", $uri);
+		// $uri = str_replace(".flv", ".mp3", $uri);
+		// $uri = str_replace("play0.", "p0a1.", $uri);
+		// $uri = str_replace("play1.", "p1a1.", $uri);
+
+		$ip = $this->__ip();
+		$ip = str_replace(".", "0", $ip);
+
+		$t = time();
+		$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+$v2-$v1+$ip);
+
+		$uri = $uri . $postfix;
+		// //return iconv("gb18030", "UTF-8", $uri);
+		
+		// $ip = $this->__ip();
+		// $ip = str_replace(".", "0", $ip);
+		
+		// $t = time();
+		// $postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+526642372+$ip);
+
+		// $uri = $rawuri . $postfix;
+		// $uri = str_replace("pl0.", "p0a1.", $uri);
+		// $uri = str_replace("pl1.", "p1a1.", $uri);
 		return $uri;
 	}
 	
@@ -98,22 +109,23 @@ class CPingShu8
 
 		//$uri = $matches[1];
 		$uri = $obj->{"urlpath"};
-		$n = strrpos($uri, '?');
-		$uri = substr($uri, 0, $n);
+		// $n = strrpos($uri, '?');
+		// $uri = substr($uri, 0, $n);
+		// $suffix = substr($uri, $n+1);
 
-		//$uri = str_replace("@123abcd", "9", $uri);
-		$uri = str_replace(".flv", ".mp3", $uri);
-		$uri = str_replace("play0.", "p0a1.", $uri);
-		$uri = str_replace("play1.", "p1a1.", $uri);
+		// //$uri = str_replace("@123abcd", "9", $uri);
+		// $uri = str_replace(".flv", ".mp3", $uri);
+		// $uri = str_replace("play0.", "p0a1.", $uri);
+		// $uri = str_replace("play1.", "p1a1.", $uri);
 
-		$ip = $this->__ip();
-		$ip = str_replace(".", "0", $ip);
+		// $ip = $this->__ip();
+		// $ip = str_replace(".", "0", $ip);
 
-		$t = time();
-		$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+4624270747270+$ip);
+		// $t = time();
+		// $postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+526642372+$ip);
 		
-		$uri = $uri . $postfix;
-		//return iconv("gb18030", "UTF-8", $uri);
+		// $uri = $uri . $postfix;
+		// //return iconv("gb18030", "UTF-8", $uri);
 		return $uri;
 	}
 
