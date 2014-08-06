@@ -1,9 +1,6 @@
 <?php
-	function dbopen($database)
+	function dbopen($database, $host="localhost", $usr="root", $pwd="")
 	{
-		$host = "localhost";
-		$usr = "root";
-		$pwd = "";
 		$db = new mysqli($host, $usr, $pwd, $database);
 		return $db;
 	}
