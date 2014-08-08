@@ -6,16 +6,6 @@
 
 	class CIManHua 
 	{
-		public $cache = array(
-						"catalog" => 86400, // 24*60*60
-						"book" => 86400,
-						"chapter" => 86400,
-						"audio" => 600,
-						"search" => 86400
-					);
-
-		public $redirect = 0;
-
 		function GetName()
 		{
 			return "imanhua";

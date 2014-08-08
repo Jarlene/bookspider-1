@@ -1,4 +1,11 @@
 <?php	
+// require("php/db.inc");
+
+// $db = dbopen("pingshu8");
+// if($db->connect_errno){
+	// echo "mysql error " . $db->connect->error;
+// }
+	
 class CPingShu8
 {
 	public $cache = array(
@@ -10,10 +17,330 @@ class CPingShu8
 				);
 
 	public $redirect = 0;
-
+	public $useDelegate = 1;
 	function GetName()
 	{
 		return "pingshu8";
+	}
+	
+	function GetRedirect()
+	{
+		return 0;
+		$mdb = new Redis();
+		$mdb->connect('127.0.0.1', 6379);
+		$mdbkey = "ts-server-" . $this->GetName() . "-audio-mode";
+		$mode = $mdb->get($mdbkey);
+		
+		if(!$mode)
+		{
+			$mode = $this->getModePingshu8();
+			$mdb->set($mdbkey, $mode, 2 * 60); // update per 0.5-hour*24
+		}
+		
+//  		print_r("mode". $mode);
+		
+		return $mode;
+	}
+	
+	
+	function getModePingshu8()
+	{
+		$index = rand(1,5);
+		
+		if ($index == 1)
+			$uri = "http://www.pingshu8.com/play_182620.html";
+		else if ($index == 2)
+			$uri = "http://www.pingshu8.com/play_161406.html";
+		else if ($index == 3)
+			$uri = "http://www.pingshu8.com/play_143995.html";
+		else if ($index == 4)
+			$uri = "http://www.pingshu8.com/play_20148.html";
+		else if ($index == 5)
+			$uri = "http://www.pingshu8.com/play_20152.html";
+		else 
+			$uri = "http://www.pingshu8.com/play_182620.html";
+		
+		
+		if ($this->useDelegate == 1)
+			$html = http_proxy_get($uri,"pingshu8.com", 10, "proxy.cfg");
+		else
+			$html = http_get($uri, 10, "");
+		
+		if(!preg_match('/encodeURI\(\"(.+)\"\)/', $html, $matches))
+		{
+			return 2;
+		}
+		
+		if(2 != count($matches))
+		{
+			return 2;
+		}
+		
+		$uri = $matches[1];
+		if (strlen($uri) > 15)
+			return 1;
+		else 
+			return 2;
+	}
+
+	
+	function getMiddlePath($bookid, $chapter, $uri)
+	{
+		
+		
+		$headers = array();
+		$data = array();
+		
+		$headers["Referer"] = $uri;
+
+		$headers["User-Agent"] = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)";
+		$headers["User-Agent"] = getRandomUserAgent();
+		
+		$path = $this->getLaestPath($uri);
+		
+		$uri = str_replace("play_", $path, $uri);
+		
+		$data["url"] = $uri;
+		$data["headers"] = $headers;
+		
+		return $data;
+	}
+	
+	function getLaestPath($uri)
+	{
+		$mdb = new Redis();
+		$mdb->connect('127.0.0.1', 6379);
+		$mdbkey = "ts-server-" . $this->GetName() . "-audio-path";
+		$rawuri = $mdb->get($mdbkey);
+		
+		$path = "";
+		if($rawuri)
+		{
+			$path = $rawuri;
+		}
+		else 
+		{
+			$path = $this->getPathFromPingshu8($uri);
+			
+			if (strlen($path) > 0)
+				$mdb->set($mdbkey, $path, 5 * 60); // update per 0.5-hour*24
+		}
+		
+		
+		
+		return $path;
+	}
+	
+	function getPathFromPingshu8($uri)
+	{
+		
+		
+// 		$headers = array();
+// 		$headers[] = "User-Agent: Mozilla/4.0 (compatible; MSIE 8.5; Windows NT 6.2; Win64; x64; Trident/4.0)";
+// 		$headers[] = "Referer: " . $uri;
+		
+		if ($this->useDelegate == 1)
+			$html = http_proxy_get("http://www.pingshu8.com/Play_Flash/js/play.js?0.00.90","pingshu8.com", 10, "proxy.cfg", array("Referer: " . $uri));
+		else
+			$html = http_get("http://www.pingshu8.com/Play_Flash/js/play.js?0.00.90", 10, "", array("Referer: " . $uri));
+
+		
+// 		print_r($html . "kkjdfjkf");
+// 		return "";
+		
+		$js = getGapString($html, "js/", ".js");
+		
+		
+		
+ 		$js = "http://www.pingshu8.com/Play_Flash/js/" . $js . ".js?0.00.90";
+		
+ 		
+
+// 		$js = "http://www.pingshu8.com/Play_Flash/js/b.js?1.00.18";
+		
+		if ($this->useDelegate == 1)
+			$html = http_proxy_get($js,"urlpath", 10, "proxy.cfg", array("Referer: " . $uri));
+		else
+			$html = http_get($js, 10, "", array("Referer: " . $uri));
+		$forder = getGapString($html, "url: \"", "\" + urlpath");
+		
+		
+		
+		if (strlen($forder)<=0)
+			$forder = getGapString($html, "url|", "|type");
+		
+		
+		return $forder;
+		
+		// 验证获得path的有效性
+		$referer = $uri;
+		$retPath = str_replace("play_", $forder, $uri);
+		
+		
+		
+		
+		if ($this->useDelegate == 1)
+			$html = http_proxy_post($retPath, "", ":8000", 10, "proxy.cfg", array("Referer: " . $referer));
+		else
+			$html = http_get($retPath, 10, "", array("Referer: " . $referer));
+		
+// 		file_put_contents ("a.html", "getPathFromPingshu8:". $js . "*" . $forder . "*" . $retPath . "*" . $html);
+		
+		$obj = json_decode($html);
+		$uri2 = $obj->{"urlpath"};
+		
+// 		file_put_contents ("a.html", "getPathFromPingshu8:". $js . "*" . $forder . "*" . $retPath . "*" . $uri2);
+		
+		
+		if (strlen($uri2) > 0)
+			return $forder;
+		else 
+			return "";
+	}
+	
+	
+	function getLaestReplaceValue($uri)
+	{
+// 		return "9";
+		$mdb = new Redis();
+		$mdb->connect('127.0.0.1', 6379);
+		$mdbkey = "ts-server-" . $this->GetName() . "-audio-replacevalue";
+		
+		
+		$rawuri = $mdb->get($mdbkey);
+	
+// 		file_put_contents ("a.html", "value:". $rawuri);
+		
+		$path = array();
+		if($rawuri)
+		{
+			$path = json_decode($rawuri, True);
+		}
+		else
+		{
+			$path = $this->getReplaceValueFromPingshu8($uri);
+				
+			if (count($path) > 0)
+				$mdb->set($mdbkey,  json_encode($path), 2 * 60); // update per 0.5-hour*24
+		}
+		
+//  		file_put_contents ("a.html", "value:". $path[0] . $path[1]);
+	
+		return $path;
+	}
+	function getReplaceValueFromPingshu8($uri)
+	{
+	
+// 		if ($this->useDelegate == 1)
+// 			$html = http_proxy_get("http://www.pingshu8.com/Play_Flash/js/play.js?0.00.90","pingshu8.com", 10, "proxy.cfg", array("Referer: " . $uri));
+// 		else
+// 			$html = http_get("http://www.pingshu8.com/Play_Flash/js/play.js?0.00.90", 10, "", array("Referer: " . $uri));
+	
+		
+// 		$js = getGapString($html, "js/", ".js");
+// 		$js = "http://www.pingshu8.com/Play_Flash/js/" . $js . ".js?0.00.90";
+	
+		
+		$forder = array();
+		$js = "http://www.pingshu8.com/Play_Flash/js/b.js?0.00.90";
+	
+		if ($this->useDelegate == 1)
+			$html = http_proxy_get($js,"urlpath", 10, "proxy.cfg", array("Referer: " . $uri));
+		else
+			$html = http_get($js, 10, "", array("Referer: " . $uri));
+		$forder[] = getGapString($html, "RegExp(\"\\\\", "\",");
+		$forder[] = getGapString($html, "(regS,\"", "\");");
+		
+	
+		return $forder;
+	
+// 		// 验证获得path的有效性
+// 		$referer = $uri;
+// 		$retPath = str_replace("play_", $forder, $uri);
+// 		if ($this->useDelegate == 1)
+// 			$html = http_proxy_post($retPath, "", ":8000", 10, "proxy.cfg", array("Referer: " . $referer));
+// 		else
+// 			$html = http_get($retPath, 10, "", array("Referer: " . $referer));
+	
+// 		$obj = json_decode($html);
+// 		$uri2 = $obj->{"urlpath"};
+// 		if (strlen($uri2) > 0)
+// 			return $forder;
+// 		else
+// 			return "";
+	}
+	
+	
+	function GetAudio3($bookid, $chapter, $uri)
+	{
+		// 方式2，path96
+		if ($this->GetRedirect() == 2)
+		{
+			return $this->GetAudio_2($bookid, $chapter, $uri);
+		}
+		
+		// 方式1， encodeURI(\"http://play0.pingshu8.com:8000/0/ys/外婆来讲鬼故事(34集)/外婆来讲鬼故事_01.flv?1320@123abcd8@123abcd4863x1407287561x13736537235-
+		if (0 != $this->redirect)
+		{
+			$html = $uri;
+		}
+		else
+		{
+	
+			if ($this->useDelegate == 1)
+			$html = http_proxy_get($uri,"pingshu8.com", 10, "proxy.cfg");
+			else
+			$html = http_get($uri, 10, "");
+		}
+
+//		$html = "var urlpath = encodeURI(\"http://play0.pingshu8.com:8000/0/ys/外婆来讲鬼故事(34集)/外婆来讲鬼故事_01.flv?1320@123abcd8@123abcd4863x1407287561x13736537235-6fc@123abcd5720dbc7fcd0b441@123abcd0@123abcdad4e6cf2@123abcd\");</script>";
+
+		if(!preg_match('/encodeURI\(\"(.+)\"\)/', $html, $matches))
+		{
+			return "no preg_match";
+		}
+		
+		if(2 != count($matches))
+		{
+			return "no count";
+		}
+		
+		$uri = $matches[1];
+		
+		$value = array();
+		$value = $this->getLaestReplaceValue("http://www.pingshu8.com/play_182620.html");
+		
+// 		return "value:" . $value;
+		
+// 		print_r($value);
+		
+// 		file_put_contents ("a.html", $value);
+		if (count($value) > 1)
+			$uri = str_replace($value[0], $value[1], $uri);
+		
+		$uri = str_replace(".flv", ".mp3", $uri);
+	
+		return  encodeUrlStr($uri);
+	}
+	
+	function GetAudio_2($bookid, $chapter, $uri)
+	{
+		if (0 != $this->redirect)
+		{
+			$obj = json_decode($uri);
+			$uri = $obj->{"urlpath"};
+			$uri = str_replace(".flv", ".mp3", $uri);
+			$uri = str_replace("7j2io9", "8", $uri);
+			
+			return  $uri;
+		}
+		
+		return  $uri;
+// 		$this->__GetAudio($bookid, $uri);
+
+		
+		
+// 		return $this->__EncodeAudioURI($rawuri);
 	}
 
 	function GetAudio($bookid, $chapter, $uri)
@@ -32,14 +359,19 @@ class CPingShu8
 			}
 		}
 		
-		return $this->__EncodeAudioURI($rawuri);
+		$chapterid = basename($uri, ".html");
+		$n = strpos($chapterid, '_');
+		$chapterid = substr($chapterid, $n+1);
+		return $this->__EncodeAudioURI($bookid, $chapterid, $rawuri);
 	}
 
-	function __EncodeAudioURI($uri)
+	function __EncodeAudioURI($bookid, $chapter, $uri)
 	{
 		$n = strrpos($uri, '?');
 		$suffix = substr($uri, $n+1);
 		$uri = substr($uri, 0, $n);
+
+		//DBSetAudioFile($bookid, $chapter, $uri);
 
 		list($v1, $v0, $v2) = sscanf($suffix, "%ux%ux%u-");
 
@@ -56,10 +388,10 @@ class CPingShu8
 
 		$uri = $uri . $postfix;
 		// //return iconv("gb18030", "UTF-8", $uri);
-		
+
 		// $ip = $this->__ip();
 		// $ip = str_replace(".", "0", $ip);
-		
+
 		// $t = time();
 		// $postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+526642372+$ip);
 
@@ -68,7 +400,7 @@ class CPingShu8
 		// $uri = str_replace("pl1.", "p1a1.", $uri);
 		return $uri;
 	}
-	
+
 	function __GetEncStr($bookid, $uri)
 	{
 		$referer = "Referer: http://www.pingshu8.com/MusicList/mmc_" . $bookid . ".htm";
@@ -91,9 +423,10 @@ class CPingShu8
 		$n = strpos($bookid, '_');
 		$id = substr($bookid, $n+1);
 		$uri = "http://www.pingshu8.com/path_" . $id;
+		$referer = "Referer: http://www.pingshu8.com/play_" . $id;
 		$postdata = "encrystr=$encrystr&urlpath=" . basename($id, ".html");
 		//$html = http_proxy_post($uri, "", "luckyzz@163.com", 10, "proxy.cfg", array("Referer: http://www.pingshu8.com/play_161404.html"));
-		$html = http_proxy_post($uri, $postdata, ":8000", 10, "proxy.cfg", array("Referer: " . $uri));
+		$html = http_proxy_post($uri, $postdata, ":8000", 10, "proxy.cfg", array($referer));
 		//$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 		$obj = json_decode($html);
 		//var_dump($obj);
@@ -126,6 +459,35 @@ class CPingShu8
 		
 		// $uri = $uri . $postfix;
 		// //return iconv("gb18030", "UTF-8", $uri);
+		return $uri;
+	}
+
+	function DBSetAudioFile($bookid, $chapterid, $uri)
+	{
+		global $db;
+		//$sql = sprintf('update audio set uri="%s" where chapterid=%d', $uri, $chapterid);
+		$sql = sprintf('insert into audio (bookid, chapterid, uri) values ("%s", %d, "%s")', $bookid, $chapterid, $uri);
+		if(!$db->query($sql)){
+			print_r("DB set uri failed: " . $db->error);
+		}
+		return $db->error;
+	}
+
+	function DBGetAudioFile($bookid, $chapterid)
+	{
+		global $db;
+		$sql = sprintf('select uri where chapterid=%d', $uri, $chapterid);
+		$res = $db->query($sql);
+		if(FALSE === $res){
+			return "";
+		}
+
+		$uri = "";
+		while($row = $res->fetch_assoc())
+		{
+			$uri = $row["uri"];
+		}
+		$res->free();
 		return $uri;
 	}
 
@@ -304,7 +666,7 @@ class CPingShu8
 		return 0;
 	}
 
-	private function __ParseChapters($html)
+	function __ParseChapters($html)
 	{
 		$chapters = array();
 
@@ -325,7 +687,7 @@ class CPingShu8
 		return $chapters;
 	}
 
-	private function __GetSubcatalog($uri)
+	function __GetSubcatalog($uri)
 	{
 		$artists = array();
 		$artists["最近更新"] = 'http://www.pingshu8.com/music/newzj.htm';
@@ -353,7 +715,7 @@ class CPingShu8
 		return $artists;
 	}
 	
-	private function __SearchAuthor($keyword)
+	function __SearchAuthor($keyword)
 	{
 		$artists = array();
 
@@ -374,7 +736,7 @@ class CPingShu8
 		return $artists;
 	}
 
-	private function __SearchBook($keyword)
+	function __SearchBook($keyword)
 	{
 		$books = array();
 
@@ -397,7 +759,7 @@ class CPingShu8
 		return $books;
 	}
 	
-	private function __ip()
+	function __ip()
 	{
 		if (getenv("HTTP_CLIENT_IP"))
 			$ip = getenv("HTTP_CLIENT_IP");
@@ -409,20 +771,24 @@ class CPingShu8
 			$ip = "0.0.0.0";
 		return $ip;
 	}
+	
 }
 
 // require("php/dom.inc");
 // require("php/util.inc");
 // require("php/http.inc");
-require("php/http-multiple.inc");
-require("http-proxy.php");
-require("http-multiple-proxy.php");	
+// require("php/http-multiple.inc");
+// require("http-proxy.php");
+// require("http-multiple-proxy.php");
 // $obj = new CPingShu8();
+
+// print_r($obj->getReplaceValueFromPingshu8("http://www.pingshu8.com/play_182620.html")); sleep(2);
+// print_r($obj->getPathFromPingshu8("http://www.pingshu8.com/play_182620.html")); sleep(2);
 // print_r($obj->GetCatalog()); sleep(2);
 // print_r($obj->GetBooks("http://www.pingshu8.com/Special/Msp_7.Htm")); sleep(2);
 // print_r($obj->GetChapters('7_208_1')); sleep(2);
 // print_r($obj->GetAudio('7_208_1', '1', "http://www.pingshu8.com/play_19632.html")); sleep(2);
 // print_r($obj->Search("单田芳")); sleep(2);
 // print_r($obj->__GetAudio("http://www.pingshu8.com/play_27123.html"));
-// print_r($obj->GetAudio("138_252_1", "8", "http://www.pingshu8.com/play_23860.html"));
+// print_r($obj->GetAudio("201_3751_1", "1", "http://www.pingshu8.com/play_161404.html"));
 ?>

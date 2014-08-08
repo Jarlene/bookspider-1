@@ -51,47 +51,49 @@ class Http
 		$this->m_curl = curl_init();
 		$this->_init($options);
 	}
-	
+
 	function __destruct()
 	{
 		curl_close($this->m_curl);
 	}
-	
+
 	// headers: referer/cookie/user-agent
 	// e.g. get("http://www.baidu.com/", array("Referer" => "http://www.baidu.com"));
 	function get($uri, $headers=array())
 	{
 		return $this->_request("GET", $uri, null, $headers);
 	}
-	
+
 	// headers: referer/cookie/user-agent
 	// e.g. post("http://www.baidu.com/", "query=abc", array("Referer" => "http://www.baidu.com"));
 	function post($uri, $data, $headers=array())
 	{
 		return $this->_request("POST", $uri, $data, $headers);
 	}
-	
+
 	// string error information
 	function error()
 	{  
         return curl_error($this->m_curl);  
     }
-	
+
 	function errno()
 	{
 		return curl_errno($this->m_curl);
 	}
-	
+
 	private function _init($options)
 	{
 		$options0 = array(
 			'port' => 80,
-			'timeout' => 20,
+			'timeout' => 5,
 			'cookie' => false,
 			'ssl' => false,
 			'gzip' => true,
 			'proxy' => false,
-			'proxyAuth' => false);
+			'proxyAuth' => false,
+			'UA' = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:28.0) Gecko/20100101 Firefox/28.0'
+		);
 
 		$options = array_merge($options0, $options);
 
@@ -99,21 +101,22 @@ class Http
 
 		curl_setopt($this->m_curl, CURLOPT_PORT, $options['port']); // HTTP default port
 		curl_setopt($this->m_curl, CURLOPT_FOLLOWLOCATION, true); // enable HTTP Location header
-		//curl_setopt($this->m_curl, CURLOPT_USERAGENT, $this->m_headers['User-Agent']);  // default user-agent
+		curl_setopt($this->m_curl, CURLOPT_AUTOREFERER, true);
+		curl_setopt($this->m_curl, CURLOPT_USERAGENT, $options['UA']);  // default user-agent
 		curl_setopt($this->m_curl, CURLOPT_CONNECTTIMEOUT, $options['timeout']); // connection timeout
-		curl_setopt($this->m_curl, CURLOPT_TIMEOUT, $options['timeout']); // execute timeout
+		//curl_setopt($this->m_curl, CURLOPT_TIMEOUT, $options['timeout']); // execute timeout
 		curl_setopt($this->m_curl, CURLOPT_HEADER, true); // get HTTP header
 		curl_setopt($this->m_curl, CURLOPT_RETURNTRANSFER, true); // get HTTP body
 		curl_setopt($this->m_curl, CURLOPT_BINARYTRANSFER, true); // binary content
-		curl_setopt($this->m_curl,CURLOPT_ENCODING, ''); // decode gzip
-		
+		curl_setopt($this->m_curl, CURLOPT_ENCODING, ''); // decode gzip
+
 		// proxy
 		if($options['proxy']){
 			$proxyType = $options['proxyType']=='HTTP' ? CURLPROXY_HTTP : CURLPROXY_SOCKS5;
 			curl_setopt($this->m_curl, CURLOPT_PROXYTYPE, $proxyType);
 			curl_setopt($this->m_curl, CURLOPT_PROXY, $options['proxyHost']);
 			curl_setopt($this->m_curl, CURLOPT_PROXYPORT, $options['proxyPort']);
-			
+
 			if($options['proxyAuth']){
 				$proxyAuthType = $options['proxyAuthType']=='BASIC' ? CURLAUTH_BASIC : CURLAUTH_NTLM;  
                 $proxyUser = "[{$options['proxyAuthUser']}]:[{$options['proxyAuthPwd']}]";  
@@ -121,13 +124,13 @@ class Http
                 curl_setopt($this->m_curl, CURLOPT_PROXYUSERPWD, $proxyUser);  
 			}
 		}
-		
+
 		// ssl
 		if($options['ssl']){
 			curl_setopt($this->m_curl, CURLOPT_SSL_VERIFYPEER, false);
 			curl_setopt($this->m_curl, CURLOPT_SSL_VERIFYHOST, true);
 		}
-		
+
 		// cookie
 		if($options['cookie']){
 			$cookfile = tempnam(sys_get_temp_dir(), 'curl-cookie-');
@@ -135,12 +138,11 @@ class Http
             curl_setopt($this->m_curl, CURLOPT_COOKIEFILE, $cookfile);
 		}
 	}
-	
+
 	private function _request($method, $uri, $data, $headers)
 	{
 		$t = gettimeofday(true);
 		$headers0 = array( // http headers
-			"User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:28.0) Gecko/20100101 Firefox/28.0",
 			'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
 			'Accept-Encoding: gzip, deflate',
 			'Accept-Language: en-US,en;q=0.5'
@@ -160,7 +162,6 @@ class Http
 		// if(array_key_exists("Referer", $headers){  
             // curl_setopt($this->m_curl, CURLOPT_REFERER, $headers['Referer']);  
         // }else{  
-            // curl_setopt($this->m_curl, CURLOPT_AUTOREFERER, true);  
         // }
 
 		// grab URL and pass it to the browser

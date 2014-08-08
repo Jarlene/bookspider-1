@@ -6,16 +6,6 @@
 
 	class CXXBH
 	{
-		public $cache = array(
-						"catalog" => 86400, // 24*60*60
-						"book" => 86400,
-						"chapter" => 86400,
-						"audio" => 600,
-						"search" => 86400
-					);
-
-		public $redirect = 0;
-
 		function GetName()
 		{
 			return "xxbh";
@@ -93,7 +83,7 @@
 
 			$books = array();
 			if(0 == strcmp($uri, 'http://www.xxbh.net/comicone/page_a.html')){
-				$elements = $xpath->query("//ul[@class='ul222']/li");
+				$elements = $xpath->query("//ul[@class='ul22']/li");
 				foreach ($elements as $element) {
 					$href = $xpath->get_attribute("a[2]", "href", $element, "");
 					$book = $xpath->get_attribute("a/img", "alt", $element, "");
@@ -109,7 +99,7 @@
 			} else if(0 == strcmp($uri, 'http://www.xxbh.net/comicone/page_b.html')){
 				$elements = $xpath->query("//ul[@class='ul_list']/li");
 				foreach ($elements as $element) {
-					$book = $xpath->get_attribute("a", "title", $element, "");
+					$book = $xpath->get_value("a", $element, "");
 					$href = $xpath->get_attribute("a", "href", $element, "");
 
 					if(strlen($href) > 0 && strlen($book) > 0){
@@ -159,7 +149,7 @@
 
 			$catalog = array();
 			$catalog["最近更新"] = '/comicone/page_a.html';
-			$catalog["排行榜"] = 'comicone/page_b.html';
+			$catalog["排行榜"] = '/comicone/page_b.html';
 
 			$xpath = new XPath($html);
 			$elements = $xpath->query("//ul[@class='ul4']/li/a");

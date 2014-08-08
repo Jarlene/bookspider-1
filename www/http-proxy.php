@@ -21,16 +21,15 @@ class HttpProxy
 
 		$this->m_options = array(
 			'port' => 80,
-			'timeout' => 20,
+			'timeout' => 5,
 			'cookie' => false,
 			'ssl' => false,
 			'gzip' => true,
-			'proxy' => false
+			'proxy' => false,
+			'UA' => 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:28.0) Gecko/20100101 Firefox/28.0'
 		);
 
-		$t = gettimeofday(true);
 		$this->m_headers = array( // http headers
-			"User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:28.0) Gecko/20100101 Firefox/28.0",
 			'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
 			'Accept-Encoding: gzip, deflate',
 			'Accept-Language: en-US,en;q=0.5'
@@ -100,7 +99,7 @@ class HttpProxy
 				// log timeout
 				return False;
 			}
-			
+
 			do{
 				$status = curl_multi_exec($multi, $active);
 			} while($status === CURLM_CALL_MULTI_PERFORM);
@@ -147,28 +146,14 @@ class HttpProxy
 		$options = $this->m_options;
 		curl_setopt($curl, CURLOPT_PORT, $options['port']); // HTTP default port
 		curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true); // enable HTTP Location header
-		//curl_setopt($curl, CURLOPT_USERAGENT, $this->m_headers['User-Agent']);  // default user-agent
-		//curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, $options['timeout']); // connection timeout
+		curl_setopt($curl, CURLOPT_AUTOREFERER, true);
+		curl_setopt($curl, CURLOPT_USERAGENT, $options['UA']);  // default user-agent
+		curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, $options['timeout']); // connection timeout
 		//curl_setopt($curl, CURLOPT_TIMEOUT, $options['timeout']); // execute timeout
 		curl_setopt($curl, CURLOPT_HEADER, true); // get HTTP header
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true); // get HTTP body
 		curl_setopt($curl, CURLOPT_BINARYTRANSFER, true); // binary content
 		curl_setopt($curl,CURLOPT_ENCODING, ''); // decode gzip
-
-		// proxy
-		// if($options['proxy']){
-			// $proxyType = $options['proxyType']=='HTTP' ? CURLPROXY_HTTP : CURLPROXY_SOCKS5;
-			// curl_setopt($curl, CURLOPT_PROXYTYPE, $proxyType);
-			// curl_setopt($curl, CURLOPT_PROXY, $options['proxyHost']);
-			// curl_setopt($curl, CURLOPT_PROXYPORT, $options['proxyPort']);
-
-			// if($options['proxyAuth']){
-				// $proxyAuthType = $options['proxyAuthType']=='BASIC' ? CURLAUTH_BASIC : CURLAUTH_NTLM;  
-                // $proxyUser = "[{$options['proxyAuthUser']}]:[{$options['proxyAuthPwd']}]";  
-				// curl_setopt($curl, CURLOPT_PROXYAUTH, $proxyAuthType);  
-                // curl_setopt($curl, CURLOPT_PROXYUSERPWD, $proxyUser);  
-			// }
-		// }
 
 		// ssl
 		if($options['ssl']){
