@@ -21,6 +21,48 @@ class CPingShu8
 
 	function GetAudio($bookid, $chapter, $uri)
 	{
+		global $reply;
+		global $headers;
+		global $g_redirect;
+
+		$mdb = new Redis();
+		$mdb->connect('127.0.0.1', 6379);
+		$mdbkey = "ts-server-" . $this->GetName() . "-audio-$bookid-$chapter";
+		$mdbvalue = $mdb->get($mdbkey);
+		if(0 == $g_redirect){
+			// first request
+
+			if(!$mdbvalue){
+				$reply["code"] = 300;
+				$reply["bookid"] = $bookid;
+				$reply["chapterid"] = $chapter;
+				$headers["Referer"] = "http://www.pingshu8.com/play_$chapter.html";
+				$uri = "http://www.pingshu8.com/path_$chapter.html";				
+				return $uri;
+			} else {
+				$uri = $this->__EncodeAudioURI($mdbvalue);
+			}
+		} else {
+			$html = $uri;
+			$obj = json_decode($html);
+			$uri = $obj->{"urlpath"};
+			
+			if(strlen($uri) > 0)
+			{
+				$uri = str_replace("@123abcd", "9", $uri);
+				$uri = str_replace(".flv", ".mp3", $uri);
+				$mdb->set($mdbkey, $uri);
+			}
+
+			$headers["Referer"] = "http://www.pingshu8.com/play_$chapter.html";
+			$uri = $this->__EncodeAudioURI($uri);
+		}
+		
+		return $uri;
+	}
+	
+	function GetAudio2($bookid, $chapter, $uri)
+	{
 		global $headers;
 		
 		list($play, $chapterid) = explode("_", basename($uri, ".html"));
@@ -296,7 +338,8 @@ class CPingShu8
 			$chapter = $element->nodeValue;
 
 			if(strlen($href) > 0 && strlen($chapter) > 0){
-				$chapters[] = array("name" => $chapter, "uri" => $href);
+				list($play, $chapterid) = explode("_", basename($href, ".html"));
+				$chapters[] = array("name" => $chapter, "uri" => $chapterid);
 			}
 		}
 
