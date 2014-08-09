@@ -2,11 +2,11 @@
 	class CYSTS8
 	{
 		public $cache = array(
-					"catalog" => 86400,
-					"book" => 86400,
-					"chapter" => 86400,
-					"audio" => 0,
-					"search" => 86400
+					"catalog" => 864000,    // 10*24*60*60
+					"book" => 432000,		// 5*24*60*60
+					"chapter" => 259200,	// 3*24*60*60
+					"audio" => 0,			 
+					"search" => 86400   // 24*60*60
 				);
 
 		public $redirect = 0;
@@ -18,27 +18,169 @@
 
 		function GetAudio($bookid, $chapter, $uri)
 		{
+			global $reply;
+			global $headers;
+			global $g_redirect;
+
+			$mdb = new Redis();
+			$mdb->connect('127.0.0.1', 6379);
+			$mdbkey = "ts-server-" . $this->GetName() . "-audio-$bookid-$chapter";
+			$mdbvalue = $mdb->get($mdbkey);
+			
+			if(0 == $g_redirect){
+				// first request
+				$reply["code"] = 300;
+				$reply["bookid"] = $bookid;
+				$reply["chapterid"] = $chapter;
+
+				if(!$mdbvalue){
+					$audio["uri"] = $uri;
+					$audio["flv"] = "";
+					$mdb->set($mdbkey, json_encode($audio));
+
+					$headers["Referer"] = "http://www.ysts8.com/Yshtml/Ys$bookid.html";
+					return $uri;
+				} else {
+					$audio = json_decode($mdbvalue, True);
+					if(strlen($audio["flv"]) < 1){
+						$headers["Referer"] = "http://www.ysts8.com/Yshtml/Ys$bookid.html";
+						return $uri;
+					} else {
+						$headers["Referer"] = $audio["uri"];
+						return $audio["flv"];
+					}
+				}
+			} else {
+				// client submit data
+				$html = $uri;
+				$audio = json_decode($mdbvalue, True);
+				//file_put_contents("a.html", $html);
+				if(strlen($audio["flv"]) < 1){
+					$xpath = new XPath($html);
+					for($i = 1; $i < 5; $i++){
+						$flv = $xpath->get_attribute("//iframe[$i]", "src");
+						if(stripos($flv, 'flv.asp?url=http'))
+							break;
+					}
+					//$flv = $xpath->get_attribute("//iframe[1]", "src");
+					if(strlen($flv) > 0){
+						$flv = "http://www.ysts8.com" . $flv;
+						//file_put_contents ("b.html", $flv);
+						$audio["flv"] = $flv;
+						$mdb->set($mdbkey, json_encode($audio));
+					} else {
+						$flv = $audio["uri"];
+					}
+
+					$reply["code"] = 300;
+					$reply["bookid"] = $bookid;
+					$reply["chapterid"] = $chapter;
+					$headers["Referer"] = $audio["uri"];
+					return $flv;
+				} else {
+					//file_put_contents ("a.html", $html);
+					// 6102986163870x1406030845x6103448776624-5be9cd2016294cd6a07a0a063876fdbc
+					if(!preg_match('/([0-9]+x140[0-9]{7}x[0-9]+)/', $html, $matches1)){
+						print_r("don't match time");
+						return "";
+					}
+
+					if(!preg_match('/([0-9a-fA-F]{16,})/', $html, $matches2)){
+						print_r("don't match hash");
+						return "";
+					}
+
+					if(2 == count($matches1)){
+						$postfix = $matches1[1];
+					}
+
+					$uri = $audio["flv"];
+					$arr = explode("&", $uri);
+					$arr = explode("?", $arr[0]);
+					$arr = explode("=", $arr[1]);
+					$uri = urldecode($arr[1]);
+					$uri = iconv("gb18030", "UTF-8", $uri);
+
+					//$t = time();
+					//$postfix = sprintf("?%ux%ux%u-f6441157ba03c991857d77880d9f9f9e", $t+218070220011, $t, $t+462612754+218070220011);
+					$uri = $uri . '?' . $postfix . '-' . $matches2[1];
+					return $uri;
+
+					//if(preg_match_all('/url2\+\'\?(.*?)\'/', $html, $matches)){
+					if(preg_match('/mp3\:\'\'\+(.*?)\+\'(.*?)\'/', $html, $matches)){
+					//if(preg_match('/\+\'\?(.*?)\'/', $html, $matches)){
+						if(3 == count($matches)){
+							print_r($matches[1]);
+							print_r($matches[2]);
+							//$arr = explode("$$$", $uri);
+							//$pos = strpos($arr[0], "?");
+							//$uri = substr($arr[0], $pos+1);
+							$uri = $uri . '?' . $matches[1];
+							//$uri = $matches[1];
+							//return $uri;
+							return iconv("gb18030", "UTF-8", $uri);
+						}
+					}
+					return "";
+				}
+			}
+			print_r("what's wrong?\n");
+			return "";
+		}
+		
+		function GetAudio2($bookid, $chapter, $uri)
+		{
 			$html = http_proxy_get($uri, "Ysjs/bot.js", 10);
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
-			
+
 			$headers = array("Referer: " . $uri);
 
 			$xpath = new XPath($html);
-			$uri = $xpath->get_attribute("//iframe[3]", "src");
-
+			$uri = $xpath->get_attribute("//iframe[1]", "src");
 			$html = http_proxy_get('http://www.ysts8.com/' . $uri, "www.ysts8.com", 20, "proxy.cfg", $headers);
-
-			// http://psf.ysx8.net:8000/ÆäËûÆÀÊé/ÐÂ¶ùÅ®Ó¢ÐÛ´«/001.mp3?
-			//file_put_contents ("1.html", $html);
-			if(preg_match('/url2.*=.*\'(.*?)\';/', $html, $matches1)){
-				if(2 == count($matches1)){
-					$uri = $matches1[1];
-				}
+			
+			//file_put_contents ("a.html", $html);
+			// 6102986163870x1406030845x6103448776624-5be9cd2016294cd6a07a0a063876fdbc
+			if(!preg_match('/([0-9]+x140[0-9]{7}x[0-9]+)/', $html, $matches1)){
+                print_r("don't match time");
+				return "";
 			}
 			
-			if(preg_match('/url2\+\'\?(.*?)\'/', $html, $matches)){
-			//if(preg_match('/mp3\:\'(.*?)\'/', $html, $matches)){
-				if(2 == count($matches)){
+			if(!preg_match('/([0-9a-fA-F]{16,})/', $html, $matches2)){
+                print_r("don't match hash");
+                return "";
+			}
+
+			if(2 == count($matches1)){
+				$postfix = $matches1[1];
+			}
+			// if(strpos($html, "jp-jplayer") == false){
+				// $uri = $xpath->get_attribute("//iframe[2]", "src");
+				// $html = http_proxy_get('http://www.ysts8.com/' . $uri, "www.ysts8.com", 20, "proxy.cfg", $headers);
+			// }
+
+			//file_put_contents ("a.html", $html);
+			// if(preg_match('/url2.*=.*\'(.*?)\';/', $html, $matches1)){
+				// if(2 == count($matches1)){
+					// $uri = $matches1[1];
+				// }
+			// }
+			$arr = explode("&", $uri);
+			$arr = explode("?", $arr[0]);
+			$arr = explode("=", $arr[1]);
+			$uri = urldecode($arr[1]);
+			$uri = iconv("gb18030", "UTF-8", $uri);
+
+			//$t = time();
+			//$postfix = sprintf("?%ux%ux%u-f6441157ba03c991857d77880d9f9f9e", $t+218070220011, $t, $t+462612754+218070220011);
+			return $uri . '?' . $postfix . '-' . $matches2[1];
+
+			//if(preg_match_all('/url2\+\'\?(.*?)\'/', $html, $matches)){
+			if(preg_match('/mp3\:\'\'\+(.*?)\+\'(.*?)\'/', $html, $matches)){
+			//if(preg_match('/\+\'\?(.*?)\'/', $html, $matches)){
+				if(3 == count($matches)){
+					print_r($matches[1]);
+					print_r($matches[2]);
 					//$arr = explode("$$$", $uri);
 					//$pos = strpos($arr[0], "?");
 					//$uri = substr($arr[0], $pos+1);
