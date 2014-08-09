@@ -2,11 +2,16 @@
 	require("php/dom.inc");
 	require("php/util.inc");
 	require("php/http.inc");
+	require("php/http-multiple.inc");
+	require("http-proxy.php");
+	require("http-multiple-proxy.php");
 	require("pingshu8.php");
 	require("ysts8.php");
+	require("aitingwang.php");
 	require("77nt.php");
-	require("17tsw.php");
-
+	require("17tsw.php");	
+	require("tingvv.php");	
+	
 	$mdb = new Redis();
 	$mdb->connect('127.0.0.1', 6379);
 
@@ -15,44 +20,64 @@
 	$bookid = php_reqvar("bookid", '');
 	$chapter = php_reqvar("chapterid", '');
 	$keyword = php_reqvar("keyword", '');
-	$redirect = php_reqvar("redirect", 0);
-
-	$headers = array();
-	$headers["User-Agent"] = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:28.0) Gecko/20100101 Firefox/28.0";
-	if(0 == strcmp("0", $server)){
-		$headers["Referer"] = "http://www.pingshu8.com/MusicList/mmc_7_3283_1.Htm";
-	}
+	$g_redirect = php_reqvar("redirect", 0);
 
 	$reply["code"] = 0;
 	$reply["msg"] = "ok";
-	$reply["headers"] = $headers;
+
+	$headers = array();
+	$headers["User-Agent"] = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:28.0) Gecko/20100101 Firefox/28.0";
 
 	$data = array();
-	if(0 != $redirect){
+	if(0 != $g_redirect)
+	{
 		$s = GetServerObj($server);
 		$req = file_get_contents("php://input");
-		$data = $s->GetAudio($bookid, $chapter, $req);
+		if(0 == strcmp("5", $server))
+		{
+			$data1 = $s->GetAudio($bookid, $chapter, $req); // user-defined HTTP Header
+			$data = $data1["url"];
+			$headers = $data1["headers"];
+		} 
+		else if(0 == strcmp("0", $server))
+		{
+			$data = $s->GetAudio($bookid, $chapter, $req);
+			$headers["Referer"] = "http://www.pingshu8.com/Play_Flash/js/Jplayer.swf";
+			$headers["User-Agent"] = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)";
+ 			$headers["User-Agent"] = getRandomUserAgent();
+		}
+		else 
+		{
+			$data = $s->GetAudio($bookid, $chapter, $req);
+		}
+		
 		$reply["bookid"] = $bookid;
 		$reply["chapterid"] = $chapter;
-	} else if(strlen($keyword) > 0){
+	}
+	else if(strlen($keyword) > 0)
+	{
 		$servers = GetServers();
 		foreach($servers as $k => $v){
-			if( (strlen($server) > 0 && 0 != strcmp($k, $server)) || 2==$k || 3==$k)
+			if( (strlen($server) > 0 && 0 != strcmp($k, $server)) || 2==$k || 3==$k || 6==$k || 4==$k)
 				continue;
 			$result = Search($v["object"], $keyword);
 			foreach($result as $b){
-				$bid = $b["bookid"];
-				$data[] = array("server" => $k, "book" => $b["book"], "bookid" => "$bid");
+				if(strpos($b["book"], "ÂìàÂà©") === false){
+					$bid = $b["bookid"];
+					$data[] = array("server" => $k, "book" => $b["book"], "bookid" => "$bid");
+				}
 			}
 		}
-	} else if(0 == strlen($server)){
+	} 
+	else if(0 == strlen($server)){
 		$servers = GetServers();
 		foreach($servers as $k => $v){
 			$data[] = array("id" => "$k", "name" => $v["name"]);
 		}
 	} else {
 		$s = GetServerObj($server);
-		if(strlen($chapter) > 0){
+		if(strlen($chapter) > 0)
+		{
 			$reply["catalog"] = $catalog;
 			$reply["bookid"] = $bookid;
 			$reply["chapterid"] = $chapter;
@@ -72,7 +97,7 @@
 			$books = GetBooks($s, $catalog);
 			$reply["icon"] = $books["icon"];
 			foreach($books["book"] as $k => $v){
-				if(strpos($v, "哈利") === false){
+				if(strpos($v, "ÂìàÂà©") === false){
 					$data[] = array("book" => $v, "bookid" => "$k");
 				}
 			}
@@ -88,6 +113,7 @@
 		}
 	}
 
+	$reply["headers"] = $headers;	
 	$reply["data"] = $data;
 	echo json_encode($reply);
 
@@ -95,15 +121,20 @@
 	{
 		$pingshu8 = new CPingShu8();
 		$ysts8 = new CYSTS8();
+		$aitingwang = new AITINGWANG();
 		$c77nt = new C77NT();
 		$c17tsw = new C17TSW();
+		$tingvv = new TINGVV();
 
 		$servers = array();
 		$servers["0"] = array("name" => "服务器1", "object" => $pingshu8);
-//		$servers["1"] = array("name" => "服务器2", "object" => $c77nt);
-		$servers["4"] = array("name" => "服务器5", "object" => $ysts8);
-		$servers["2"] = array("name" => "服务器3", "object" => $c77nt);
-		$servers["3"] = array("name" => "服务器4", "object" => $c17tsw);
+ 		$servers["4"] = array("name" => "服务器5", "object" => $ysts8);
+ 		$servers["5"] = array("name" => "服务器6", "object" => $aitingwang);
+// 		$servers["2"] = array("name" => "服务器3", "object" => $c77nt);
+// 		$servers["3"] = array("name" => "服务器4", "object" => $c17tsw);
+// 		$servers["6"] = array("name" => "服务器7", "object" => $tingvv);
+		
+		
 		return $servers;
 	}
 
@@ -121,7 +152,7 @@
 	{
 		global $mdb;
 		$mdbkey = "ts-server-" . $s->GetName();
-		//$catalog = $mdb->get($mdbkey);
+		$catalog = $mdb->get($mdbkey);
 
 		if(!$catalog){
 			$catalog = $s->GetCatalog();
@@ -241,6 +272,7 @@
 	
 	function Search($s, $keyword)
 	{
+ 		return "";
 		$data = array();
 		$result = $s->Search($keyword);
 		if(count($result) > 1){
