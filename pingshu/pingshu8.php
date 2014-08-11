@@ -1,5 +1,6 @@
 <?php	
-require("php/db.inc");
+
+require_once("db-pingshu.inc");
 
 class CPingShu8
 {
@@ -13,6 +14,7 @@ class CPingShu8
 
 	public $redirect = 0;
 	public $useDelegate = 1;
+	public $dbhost = "115.28.54.237";
 
 	function GetName()
 	{
@@ -27,37 +29,95 @@ class CPingShu8
 
 		$mdb = new Redis();
 		$mdb->connect('127.0.0.1', 6379);
-		$mdbkey = "ts-server-" . $this->GetName() . "-audio-$bookid-$chapter";
-		$mdbvalue = $mdb->get($mdbkey);
-		if(0 == $g_redirect){
-			// first request
+		$mdbpath = "ts-server-" . $this->GetName() . "-audio-post-path";
 
+		if(0 == $g_redirect){
+			$chapter = $uri; // get chapter from uri
+			$mdbkey = "ts-server-" . $this->GetName() . "-audio-$bookid-$chapter";
+
+			// first request
+			$mdbvalue = $mdb->get($mdbkey);
 			if(!$mdbvalue){
 				$reply["code"] = 300;
 				$reply["bookid"] = $bookid;
 				$reply["chapterid"] = $chapter;
-				$headers["Referer"] = "http://www.pingshu8.com/play_$chapter.html";
-				$uri = "http://www.pingshu8.com/path_$chapter.html";				
-				return $uri;
+
+				$seed = mt_rand();
+				//if(0 == seed % 9){
+				if(True){
+					// some user to help us update post path value
+					$headers["Referer"] = "http://www.pingshu8.com/MusicList/mmc_$bookid.html";
+					$uri = "http://www.pingshu8.com/play_$chapter.html";		
+					return $uri;
+				} else {
+					$path = "path_";
+					$mdbvalue = $mdb->get($mdbpath);
+					if($mdbvalue)
+						$path = $mdbvalue;
+
+					$headers["Referer"] = "http://www.pingshu8.com/play_$chapter.html";
+					$uri = "http://www.pingshu8.com/$path$chapter.html";		
+					return $uri;
+				}
 			} else {
+				$headers["Referer"] = "http://www.pingshu8.com/play_$chapter.html";
+				$headers["Accept"] = "audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5";
 				$uri = $this->__EncodeAudioURI($mdbvalue);
 			}
 		} else {
-			$html = $uri;
-			$obj = json_decode($html);
-			$uri = $obj->{"urlpath"};
-			
-			if(strlen($uri) > 0)
-			{
-				$uri = str_replace("@123abcd", "9", $uri);
-				$uri = str_replace(".flv", ".mp3", $uri);
-				$mdb->set($mdbkey, $uri);
-			}
+			// client submit data
+			$mdbkey = "ts-server-" . $this->GetName() . "-audio-$bookid-$chapter";
 
-			$headers["Referer"] = "http://www.pingshu8.com/play_$chapter.html";
-			$uri = $this->__EncodeAudioURI($uri);
+			$html = $uri;
+			if(stripos($html, 'luckyzz@163.com')) {
+				// play_xxx.html
+				if(preg_match_all('/src=\"\/Play_Flash\/js\/(.+)\"/', $html, $matches)){
+					if(2 == count($matches)){
+						$uri = $matches[1][2];
+
+						$reply["code"] = 300;
+						$reply["bookid"] = $bookid;
+						$reply["chapterid"] = $chapter;
+						$headers["Referer"] = "http://www.pingshu8.com/play_$chapter.html";
+						return "http://www.pingshu8.com/Play_Flash/js/$uri";
+					}
+				}
+				print_r("don't find xxx.js\n");
+			} else if(False !== stripos($html, 'document.domain = "pingshu8.com"')){
+				// xxx.js
+				// url: "SYKTIO7K" + urlpath + ".html",
+				if(preg_match('/url: \"(.+?)\"/', $html, $matches)){
+					if(2 == count($matches)){
+						$path = $matches[1];
+						if(strlen($path) > 0)
+							$mdb->set($mdbpath, $path);
+
+						$reply["code"] = 300;
+						$reply["bookid"] = $bookid;
+						$reply["chapterid"] = $chapter;
+						$headers["Referer"] = "http://www.pingshu8.com/play_$chapter.html";
+						$uri = "http://www.pingshu8.com/$path$chapter.html";
+						return $uri;
+					}
+				}
+				print_r("don't find path pattern\n");
+			} else {
+				$obj = json_decode($html);
+				$uri = $obj->{"urlpath"};
+
+				if(strlen($uri) > 0)
+				{
+					$uri = str_replace("@123abcd", "9", $uri);
+					$uri = str_replace(".flv", ".mp3", $uri);
+					$mdb->set($mdbkey, $uri, 24*60*60);
+				}
+
+				$headers["Referer"] = "http://www.pingshu8.com/play_$chapter.html";
+				$headers["Accept"] = "audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5";
+				$uri = $this->__EncodeAudioURI($uri);
+			}
 		}
-		
+
 		return $uri;
 	}
 	
@@ -72,7 +132,7 @@ class CPingShu8
 		$mdbkey = "ts-server-" . $this->GetName() . "-audio-$bookid-$chapterid";
 		$rawuri = $mdb->get($mdbkey);
 		if(!$rawuri){
-			$rawuri = $this->DBGetAudioFile($bookid, $chapterid);
+			$rawuri = $this->DBGetAudio($bookid, $chapterid);
 			if(strlen($rawuri) < 1)
 				$rawuri = $this->WebGetAudio($bookid, $chapterid);
 
@@ -144,32 +204,49 @@ class CPingShu8
 		return $uri;
 	}
 
-	function DBGetAudioFile($bookid, $chapterid)
+	function DBGetAudio($bookid, $chapterid)
 	{
-		$db = dbopen("pingshu", "115.28.54.237");
-		if($db->connect_errno){
-			echo "mysql error " . $db->connect->error;
+		$db = new DBPingShu($this->dbhost);
+		$chapter = $db->get_chapter($bookid, $chapterid);
+		if(False === $chapter)
 			return "";
-		}
-
-		$sql = sprintf('select uri from chapters where chapterid=%d', $chapterid);
-		$res = $db->query($sql);
-		if(FALSE === $res){
-			return "";
-		}
-
-		$uri = "";
-		while($row = $res->fetch_assoc())
-		{
-			$uri = $row["uri"];
-			list($ip, $file) = explode(":", $uri);
-			$uri = sprintf("http://%s%s", $ip, $file);
-		}
-		$res->free();
-		return $uri;
+		return $chapter["uri"];
 	}
 
+	//----------------------------------------------------------------------------
+	// GetChapters
+	//----------------------------------------------------------------------------
 	function GetChapters($bookid)
+	{
+		$data = $this->DBGetChapters($bookid);
+		if(False === $data)
+			return $this->WebGetChapters($bookid);
+		return $data;
+	}
+
+	function DBGetChapters($bookid)
+	{
+		$db = new DBPingShu($this->dbhost);
+		$book = $db->get_book($bookid);
+		$chapters = $db->get_chapters($bookid);
+		if(False == $book || 0 == count($chapters))
+			return False;
+		
+		$data = array();
+		$data["icon"] = $book["icon"];
+		$data["info"] = $book["summary"];
+		$data["count"] = count($chapters);
+		$data["chapter"] = array();
+		$data["catalog"] = $book["catalog"];
+		$data["subcatalog"] = $book["subcatalog"];
+		foreach($chapters as $id => $value){
+			$data["chapter"][] = array("name" => $value["name"], "uri" => $id);
+		}
+	
+		return $data;
+	}
+
+	function WebGetChapters($bookid)
 	{
 		$book = $this->GetBookInfo($bookid);
 
@@ -183,7 +260,10 @@ class CPingShu8
 
 		if(count($urls) > 0){
 			$result = array();
-			$http = new HttpMultipleProxy("proxy.cfg");
+			if($this->useDelegate)
+				$http = new HttpMultipleProxy("proxy.cfg");
+			else
+				$http = new HttpMultiple();
 			$r = $http->get($urls, array($this, '_OnReadChapter'), &$result, 20);
 
 			if(count($result) != count($urls)){
@@ -203,16 +283,22 @@ class CPingShu8
 
 	function GetBookInfo($bookid)
 	{
-		$uri = "http://www.pingshu8.com/MusicList/mmc_" . $bookid . ".htm";
-		$html = http_proxy_get($uri, "luckyzz@163.com", 10);
+		$uri = "http://www.pingshu8.com/MusicList/mmc_$bookid.htm";
+		$referer = "Referer: http://www.pingshu8.com/top/xiangsheng.htm";
+		if($this->useDelegate)
+			$html = http_proxy_get($uri, "luckyzz@163.com", 20, "proxy.cfg", array($referer));
+		else
+			$html = http_get($uri, 20, "", array($referer));
 		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
-		//file_put_contents ("a.html", $html);
 		if(strlen($html) < 1){
 			$data = array();
 			$data["icon"] = "";
 			$data["info"] = "";
 			$data["page"] = 0;
+			$data["count"] = 0;
 			$data["chapter"] = array();
+			$data["catalog"] = "";
+			$data["subcatalog"] = "";
 			return $data;
 		}
 
@@ -233,9 +319,14 @@ class CPingShu8
 		$data["page"] = $selects->length;
 		$data["count"] = $count;
 		$data["chapter"] = $this->ParseChapter($html);
+		$data["catalog"] = $xpath->get_value("//div[@class='t1']/div/a[2]");
+		$data["subcatalog"] = $xpath->get_value("//div[@class='t1']/div/a[3]");
 		return $data;
 	}
-
+	
+	//----------------------------------------------------------------------------
+	// GetBooks
+	//----------------------------------------------------------------------------
 	function GetBooks($uri)
 	{
 		$books = array();
@@ -459,7 +550,7 @@ class CPingShu8
 // $obj = new CPingShu8();
 // print_r($obj->GetCatalog()); sleep(2);
 // print_r($obj->GetBooks("http://www.pingshu8.com/Special/Msp_7.Htm")); sleep(2);
-// print_r($obj->GetChapters('220_347_1')); sleep(2);
+// print_r($obj->GetChapters('33_239_1')); sleep(2);
 // print_r($obj->GetAudio('7_208_1', '1', "http://www.pingshu8.com/play_19632.html")); sleep(2);
 // print_r($obj->Search("单田芳")); sleep(2);
 // print_r($obj->__GetAudio("http://www.pingshu8.com/play_27123.html"));
