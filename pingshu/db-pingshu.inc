@@ -24,7 +24,7 @@ class DBPingShu
 	}
 
 	//----------------------------------------------------------------------------
-	// functions
+	// book
 	//----------------------------------------------------------------------------
 	function add_book($bookid, $author, $name, $icon, $summary, $catalog, $subcatalog)
 	{
@@ -38,13 +38,6 @@ class DBPingShu
 	{
 		$timestamp = date("Y-m-d H:i:s", time());
 		$sql = sprintf('update books set author="%s", name="%s", icon="%s", summary="%s", catalog="%s", subcatalog="%s", updatetime="%s" where bookid="%s"', $author, $name, $icon, $summary, $catalog, $subcatalog, $timestamp, $bookid);
-		$res = $this->db->query($sql);
-		return False===$res ? -1 : 0;
-	}
-
-	function add_chapter($bookid, $chapterid, $name, $uri)
-	{
-		$sql = sprintf('insert into chapters (bookid, chapterid, name, uri) values ("%s", %d, "%s", "%s")', $bookid, $chapterid, $name, $uri);
 		$res = $this->db->query($sql);
 		return False===$res ? -1 : 0;
 	}
@@ -95,6 +88,16 @@ class DBPingShu
 		$res->free();
 		return $books;
 	}
+	
+	//----------------------------------------------------------------------------
+	// chapter
+	//----------------------------------------------------------------------------
+	function add_chapter($bookid, $chapterid, $name, $uri)
+	{
+		$sql = sprintf('insert into chapters (bookid, chapterid, name, uri) values ("%s", %d, "%s", "%s")', $bookid, $chapterid, $name, $uri);
+		$res = $this->db->query($sql);
+		return False===$res ? -1 : 0;
+	}
 
 	function get_chapter($bookid, $chapterid)
 	{
@@ -134,6 +137,36 @@ class DBPingShu
 
 		$res->free();
 		return $chapters;
+	}
+
+	//----------------------------------------------------------------------------
+	// search
+	//----------------------------------------------------------------------------
+	function search($keyword)
+	{
+		$books = array();
+
+		$sql = sprintf('select bookid, author, name, icon, summary, catalog, subcatalog from books where name like "*%s*"', $keyword);
+		$res = $this->db->query($sql);
+		if(False === $res)
+			return $books;
+
+		while($row = $res->fetch_assoc())
+		{
+			$book = array();
+			$book["name"] = $row["name"];
+			$book["icon"] = $row["icon"];
+			$book["author"] = $row["author"];
+			$book["summary"] = $row["summary"];
+			$book["catalog"] = $row["catalog"];
+			$book["subcatalog"] = $row["subcatalog"];
+
+			$bookid = $row["bookid"];
+			$books[$bookid] = $book;
+		}
+
+		$res->free();
+		return $books;
 	}
 
 	//----------------------------------------------------------------------------
