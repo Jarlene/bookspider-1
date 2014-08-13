@@ -146,7 +146,7 @@ class DBPingShu
 	{
 		$books = array();
 
-		$sql = sprintf('select bookid, author, name, icon, summary, catalog, subcatalog from books where name like "*%s*"', $keyword);
+		$sql = sprintf('select bookid, author, name, icon, summary, catalog, subcatalog from books where name like "%%%s%%"', $keyword);
 		$res = $this->db->query($sql);
 		if(False === $res)
 			return $books;
