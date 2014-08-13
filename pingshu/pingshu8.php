@@ -14,14 +14,46 @@ class CPingShu8
 
 	public $redirect = 0;
 	public $useDelegate = 1;
-	public $dbhost = "115.28.54.237";
+	public $dbhost = "127.0.0.1";
 
 	function GetName()
 	{
 		return "pingshu8";
 	}
 
+	
 	function GetAudio($bookid, $chapter, $uri)
+	{
+		global $headers;
+		
+		//list($play, $chapterid) = explode("_", basename($uri, ".html"));
+		$chapterid = $uri;
+
+		$rawuri = $this->DBGetAudio($bookid, $chapterid);
+//		if(strlen($rawuri) < 1)
+//			$rawuri = $this->WebGetAudio($bookid, $chapterid, $uri);
+		return $rawuri;
+	}
+
+	function __EncodeAudioURI($uri)
+	{
+		$n = strrpos($uri, '?');
+		$suffix = substr($uri, $n+1);
+		$uri = substr($uri, 0, $n);
+
+		list($v1, $v0, $v2) = sscanf($suffix, "%ux%ux%u-");
+
+		$t = time();
+		$ip = $this->__ip();
+		$ip = str_replace(".", "0", $ip);
+		$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+$v2-$v1+$ip);
+
+		$uri = $uri . $postfix;
+		// $uri = iconv("gb18030", "UTF-8", $uri);
+		return $uri;
+	}
+	
+	function WebGetAudio($bookid, $chapter, $uri)
 	{
 		global $reply;
 		global $headers;
@@ -78,7 +110,8 @@ class CPingShu8
 						$reply["code"] = 300;
 						$reply["bookid"] = $bookid;
 						$reply["chapterid"] = $chapter;
-						$headers["Referer"] = "http://www.pingshu8.com/play_$chapter.html";
+						//$headers["Referer"] = "http://www.pingshu8.com/play_$chapter.html";
+						//$headers["Referer"] = sprintf("http://www.pingshu8.com/play_%s.html", $chapter);
 						return "http://www.pingshu8.com/Play_Flash/js/$uri";
 					}
 				}
@@ -95,13 +128,14 @@ class CPingShu8
 						$reply["code"] = 300;
 						$reply["bookid"] = $bookid;
 						$reply["chapterid"] = $chapter;
-						$headers["Referer"] = "http://www.pingshu8.com/play_$chapter.html";
+						//$headers["Referer"] = "http://www.pingshu8.com/play_$chapter.html";
 						$uri = "http://www.pingshu8.com/$path$chapter.html";
 						return $uri;
 					}
 				}
 				print_r("don't find path pattern\n");
 			} else {
+				//file_put_contents("a.html", $html);
 				$obj = json_decode($html);
 				$uri = $obj->{"urlpath"};
 
@@ -121,55 +155,7 @@ class CPingShu8
 		return $uri;
 	}
 	
-	function GetAudio2($bookid, $chapter, $uri)
-	{
-		global $headers;
-		
-		list($play, $chapterid) = explode("_", basename($uri, ".html"));
-
-		$mdb = new Redis();
-		$mdb->connect('127.0.0.1', 6379);
-		$mdbkey = "ts-server-" . $this->GetName() . "-audio-$bookid-$chapterid";
-		$rawuri = $mdb->get($mdbkey);
-		if(!$rawuri){
-			$rawuri = $this->DBGetAudio($bookid, $chapterid);
-			if(strlen($rawuri) < 1)
-				$rawuri = $this->WebGetAudio($bookid, $chapterid);
-
-			if(strlen($rawuri) > 0){
-				//$rawuri = substr($uri, 0, strpos($uri, '?'));
-				$mdb->set($mdbkey, $rawuri);
-			} else {
-				return "";
-			}
-		}
-
-		if(FALSE === stripos($rawuri, "175.195.249.184")){
-			return $this->__EncodeAudioURI($rawuri);
-		} else {
-			return $rawuri;
-		}
-	}
-
-	function __EncodeAudioURI($uri)
-	{
-		$n = strrpos($uri, '?');
-		$suffix = substr($uri, $n+1);
-		$uri = substr($uri, 0, $n);
-
-		list($v1, $v0, $v2) = sscanf($suffix, "%ux%ux%u-");
-
-		$t = time();
-		$ip = $this->__ip();
-		$ip = str_replace(".", "0", $ip);
-		$postfix = sprintf("?%ux%ux%u-6618f00ff155173c7dddb190142ace21", $t+$ip, $t, $t+$v2-$v1+$ip);
-
-		$uri = $uri . $postfix;
-		// $uri = iconv("gb18030", "UTF-8", $uri);
-		return $uri;
-	}
-
-	function WebGetAudio($bookid, $chapterid)
+	function WebGetAudio2($bookid, $chapterid)
 	{
 		$uri = "http://www.pingshu8.com/play_$chapterid.html";
 		$referer = "Referer: http://www.pingshu8.com/MusicList/mmc_$bookid.htm";
@@ -210,7 +196,30 @@ class CPingShu8
 		$chapter = $db->get_chapter($bookid, $chapterid);
 		if(False === $chapter)
 			return "";
-		return $chapter["uri"];
+		$uri = $chapter["uri"];
+
+		$server = "";
+		$path = "/";
+		$urls = explode(":", $uri);
+		if(count($urls) == 1){
+			$server = "115.28.51.131";
+			$path = $uri;
+		} else {
+			$server = $urls[0];
+			$path = $urls[1];
+		}
+
+		if(strlen($path) < 1)
+			return "";
+
+		$uri = $path;
+		$uri = str_replace("//home/pingshu8", "/1", $uri);
+		$uri = str_replace("/home/pingshu8", "/1", $uri);
+		$uri = str_replace("//ts/pingshu8", "/2", $uri);
+		$uri = str_replace("/ts/pingshu8", "/2", $uri);
+		$uri = str_replace("//ts2/pingshu8", "/3", $uri);
+		$uri = str_replace("/ts2/pingshu8", "/3", $uri);
+		return "http://$server$uri";
 	}
 
 	//----------------------------------------------------------------------------
@@ -356,7 +365,10 @@ class CPingShu8
 					$books[substr($bookid, 4, $n-4)] = $book;
 				}
 			}
-		} else if(0 == strcmp($uri, 'http://www.pingshu8.com/top/pingshu.htm')){
+		} else if(0 == strcmp($uri, 'http://www.pingshu8.com/top/pingshu.htm')
+			|| 0 == strcmp($uri, 'http://www.pingshu8.com/top/yousheng.htm')
+			|| 0 == strcmp($uri, 'http://www.pingshu8.com/top/xiangsheng.htm')
+			|| 0 == strcmp($uri, 'http://www.pingshu8.com/top/zongyi.htm')){
 			$elements = $xpath->query("//div[@class='tab3']/a");
 			foreach ($elements as $element) {
 				$href = $element->getattribute('href');
@@ -400,11 +412,11 @@ class CPingShu8
 	function GetCatalog()
 	{
 		$catalog = array();
-		$catalog["评书"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_1.Htm');
-		$catalog["相声小品"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_2.Htm');
-		$catalog["小说"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_3.Htm');
-		$catalog["金庸全集"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_4.Htm');
-		$catalog["综艺娱乐"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_5.Htm');
+		$catalog["评书"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_1.Htm', 'http://www.pingshu8.com/top/pingshu.htm', '评书排行榜');
+		$catalog["相声小品"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_2.Htm', 'http://www.pingshu8.com/top/xiangsheng.htm', '相声小品排行榜');
+		$catalog["小说"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_3.Htm', 'http://www.pingshu8.com/top/yousheng.htm', '小说排行榜');
+		$catalog["金庸全集"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_4.Htm', 'http://www.pingshu8.com/Special/Msp_218.Htm', '金庸作品排行榜');
+		$catalog["综艺娱乐"] = $this->__GetSubcatalog('http://www.pingshu8.com/Music/bzmtv_5.Htm', 'http://www.pingshu8.com/top/zongyi.htm', '综艺娱乐排行榜');
 		return $catalog;
 	}
 
@@ -455,11 +467,11 @@ class CPingShu8
 		return 0;
 	}
 
-	function __GetSubcatalog($uri)
+	function __GetSubcatalog($uri, $uritop, $topname)
 	{
 		$artists = array();
 		$artists["最近更新"] = 'http://www.pingshu8.com/music/newzj.htm';
-		$artists["排行榜"] = 'http://www.pingshu8.com/top/pingshu.htm';
+		$artists[$topname] = $uritop;
 
 		$html = http_proxy_get($uri, "luckyzz@163.com", 10);
 		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);

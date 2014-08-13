@@ -13,6 +13,8 @@
 
 //	Action();
 	Action2();
+//	Action3();
+//	Action4();
 
 	//----------------------------------------------------------------------------
 	// functions
@@ -22,7 +24,7 @@
 		$books = array();
 
 //		$uri = "http://www.pingshu8.com/top/pingshu.htm";
-//		$uri = "http://www.pingshu8.com/top/yousheng.htm";
+		$uri = "http://www.pingshu8.com/top/yousheng.htm";
 //		$uri = "http://www.pingshu8.com/top/xiangsheng.htm";
 //		$uri = "http://www.pingshu8.com/top/zongyi.htm";
 //		$uri = "http://www.pingshu8.com/Special/Msp_218.Htm";
@@ -166,6 +168,49 @@
 				$workload = sprintf("%s,%d", $bookid, $chapterid);
 				$client->doBackground('DownloadPingshu8', $workload);
 			}
+		}
+	}
+	
+	function Action3()
+	{
+		global $db;
+		global $client;
+
+		$i = 0;
+		$dbbooks = $db->get_books();
+		foreach($dbbooks as $bookid => $dbbook)
+		{
+			$dbchapters = $db->get_chapters($bookid);
+			foreach($dbchapters as $chapterid => $dbchapter)
+			{
+				if(strlen($dbchapter["uri"]) > 1)
+					continue;
+
+				print_r("Add task($bookid, $chapterid)\n");
+				$workload = sprintf("%s,%d", $bookid, $chapterid);
+				$client->doBackground('DownloadPingshu8', $workload);
+			}
+		}
+	}
+
+	function Action4()
+	{
+		global $db;
+
+ 		$books = GetTopPingshu();
+		$n = count($books);
+		print_r("Get Books: " . count($books) . "\n");
+
+		$i = 0;
+		$dbbooks = $db->get_books();
+		foreach($books as $id => $name)
+		{
+			$i++;
+			if(!array_key_exists($id, $dbbooks))
+			{
+				print_r("[$i/$n]DB add book($id, $name)\n");
+				$db->add_book($id, "", $name, "", "", "", "");
+			} 
 		}
 	}
 ?>
