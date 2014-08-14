@@ -19,7 +19,7 @@
 	function Action($ip)
 	{
 		global $db;
-		$sql = sprintf("select bookid, chapterid, uri from chapters");
+		$sql = sprintf("select bookid, chapterid, uri from pingshu8");
 		$res = $db->query($sql);
 		if(!$res)
 		{
@@ -45,7 +45,7 @@
 	function db_set_chapter_uri($bookid, $chapterid, $uri)
 	{
 		global $db;
-		$sql = sprintf('update chapters set uri="%s" where bookid="%s" and chapterid=%d', $uri, $bookid, $chapterid);
+		$sql = sprintf('update pingshu8 set uri="%s" where bookid="%s" and chapterid=%d', $uri, $bookid, $chapterid);
 		if(!$db->query($sql))
 			print_r("DB set uri failed: " . $db->error);
 		return $db->error;

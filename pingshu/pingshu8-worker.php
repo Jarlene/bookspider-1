@@ -1,13 +1,7 @@
 <?php
 	require("php/db.inc");
-	require("php/util.inc");
-	require("php/api.inc");
-	require("php/dom.inc");
+	require("php/sys.inc");
 	require("php/http.inc");
-	require("http-proxy.php");
-	require("php/http-multiple.inc");
-	require("http-multiple-proxy.php");
-	//require("pingshu8.php");
 
 	$db = dbopen("pingshu", "115.28.54.237");
 	if($db->connect_errno)
@@ -15,6 +9,32 @@
 		echo "mysql error " . $db->connect->error;
 		return;
 	}
+
+	$task_count = 0;
+	$ip = "";
+	$servers = array("115.28.51.131", "115.28.54.237", "115.29.145.111", "112.126.69.201", "121.40.136.6", "175.195.249.184");
+	$ips = get_network_interface();
+	foreach($ips as $net){
+		if(in_array($net["ip"], $servers)){
+			$ip = $net["ip"];
+			break;
+		}
+	}
+	if(strlen($ip) < 1)
+	{
+		print_r("server ip error.");
+		return -1;
+	}
+
+	$paths = array("115.28.51.131" => "/ts2/pingshu8/", "175.195.249.184" => "/home/pingshu8/");
+	if(!array_key_exists($ip, $paths)){
+		$basedir = "/ts/pingshu8/";
+	} else {
+		$basedir = $paths[$ip];
+	}
+	
+	print_r("IP: $ip\n");
+	print_r("DIR: $basedir\n");
 
 	$worker = new GearmanWorker();
 	$worker->addServer('115.28.54.237', 4730);
@@ -33,7 +53,7 @@
 	function db_set_chapter_uri($bookid, $chapterid, $uri)
 	{
 		global $db;
-		$sql = sprintf('update chapters set uri="%s" where bookid="%s" and chapterid=%d', $uri, $bookid, $chapterid);
+		$sql = sprintf('update pingshu8 set uri="%s" where bookid="%s" and chapterid=%d', $uri, $bookid, $chapterid);
 		if(!$db->query($sql))
 			print_r("DB set uri failed: " . $db->error);
 		return $db->error;
@@ -51,7 +71,11 @@
 
 	function Action($bookid, $chapterid)
 	{
-		print_r("Action: $bookid, $chapterid\n");
+		global $ip;
+		global $basedir;
+		global $task_count;
+		$task_count++;
+		print_r("Action[$task_count]: $bookid, $chapterid\n");
 		$audio = Download($bookid, $chapterid);
 		if(0 == strlen($audio))
 		{
@@ -60,7 +84,7 @@
 		}
 
 		// write file
-		$dir = "/ts/pingshu8/$bookid";
+		$dir = "$basedir$bookid";
 		if(!is_dir($dir)){
 			mkdir($dir, 0777, true);
 		}
@@ -75,7 +99,7 @@
 		file_put_contents($filename, $audio);
 
 		// write db
-		db_set_chapter_uri($bookid, $chapterid, "115.29.145.111:$filename");
+		db_set_chapter_uri($bookid, $chapterid, "$ip:$filename");
 		return 0;
 	}
 

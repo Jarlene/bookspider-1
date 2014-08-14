@@ -1,5 +1,6 @@
 <?php
 	require("php/db.inc");
+	require("php/sys.inc");
 
 	$db = dbopen("pingshu", "115.28.54.237");
 	if($db->connect_errno)
@@ -8,39 +9,47 @@
 		return;
 	}
 
+	$ip = "";
 	$servers = array("115.28.51.131", "115.28.54.237", "115.29.145.111", "112.126.69.201", "121.40.136.6", "175.195.249.184");
-	if(count($argv) < 2 || !in_array($argv[1], $servers))
+	$ips = get_network_interface();
+	foreach($ips as $net){
+		if(in_array($net["ip"], $servers)){
+			$ip = $net["ip"];
+			break;
+		}
+	}
+	if(strlen($ip) < 1)
 	{
-		print_r("please input server ip.");
+		print_r("server ip error.");
 		return -1;
 	}
-	
-	if(count($argv) < 3)
+
+	if(count($argv) < 2)
 	{
 		print_r("please input action: RM/Tidy/Check\n");
 		return -1;
 	}
-	
+
+	$action = $argv[1];
 	$chapters = db_query();
-	if(0 == strcmp("Check", $argv[2])){
-		ActionCheck($argv[1], $chapters);
-	} else if(0 == strcmp("RM", $argv[2]) || 0 == strcmp("Tidy", $argv[2])){
-		Action($argv[1]);
+	if(0 == strcmp("Check", $action)){
+		ActionCheck($ip, $chapters);
+	} else if(0 == strcmp("RM", $action) || 0 == strcmp("Tidy", $action)){
+		Action($ip, $action);
 	} else {
 		print_r("unknown command\n");
 		return -1;
 	}
 
-	function Action($ip)
+	function Action($ip, $action)
 	{
-		global $argv;
 		$dirs = array("/ts", "/ts2", "/home");
 		foreach($dirs as $dir){
 			if(!is_dir($dir)){
 				continue;
 			}
 
-			ListDir($dir, "Action$argv[2]", $ip);
+			ListDir($dir, "Action$action", $ip);
 		}
 		
 		return 0;
@@ -159,7 +168,7 @@
 	{
 		global $db;
 		
-		$sql = sprintf("select bookid, chapterid, uri from chapters");
+		$sql = sprintf("select bookid, chapterid, uri from pingshu8");
 		$res = $db->query($sql);
 		if(!$res)
 		{
@@ -180,11 +189,11 @@
 		$res->free();
 		return $chapters;
 	}
-	
+
 	function db_set_chapter_uri($bookid, $chapterid, $uri)
 	{
 		global $db;
-		$sql = sprintf('update chapters set uri="%s" where bookid="%s" and chapterid=%d', $uri, $bookid, $chapterid);
+		$sql = sprintf('update pingshu8 set uri="%s" where bookid="%s" and chapterid=%d', $uri, $bookid, $chapterid);
 		if(!$db->query($sql))
 			print_r("DB set uri failed: " . $db->error);
 		return $db->error;

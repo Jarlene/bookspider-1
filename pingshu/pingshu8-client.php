@@ -52,21 +52,21 @@
 		global $db;
 		global $client;
 
-		// $book = $obj->GetBookInfo($bookid);
-		$dbchapters = $db->get_chapters($bookid);
+		// $book = $site->GetBookInfo($bookid);
+		$dbchapters = $db->get_chapters(CPingShu8::$siteid, $bookid);
 		if($book["count"] == count($dbchapters) && count($dbchapters) > 0){
 			print_r("book has download.\n");
 			return 0;
 		}
 
-		$obj = new CPingShu8();
-		//$obj->useDelegate = 0;
-		$chapters = $obj->WebGetChapters($bookid);
+		$site = new CPingShu8();
+		//$site->useDelegate = 0;
+		$chapters = $site->WebGetChapters($bookid);
 
 		if(strlen($book["icon"]) < 1 && strlen($chapters["icon"]) > 1){
 			$book = $chapters;
 			print_r("DB book update2($bookid, $bookname)\n");
-			if(0 != $db->update_book($bookid, "", $bookname, $book["icon"], $book["info"], $book["catalog"], $book["subcatalog"]))
+			if(0 != $db->update_book(CPingShu8::$siteid, $bookid, "", $bookname, $book["icon"], $book["info"], $book["catalog"], $book["subcatalog"]))
 				print_r("update book2($bookid) error: " . $db->get_error . "\n");
 		}
 
@@ -77,7 +77,7 @@
 			if(!array_key_exists($chapterid, $dbchapters)){
 				$name = $chapter["name"];
 				print_r("DB add chapter($bookid, $chapterid, $name)\n");
-				$db->add_chapter($bookid, $chapterid, $name, "");
+				$db->add_chapter(CPingShu8::$siteid, $bookid, $chapterid, $name, "");
 			} else {
 				$dbchapter = $dbchapters[$chapterid];
 				if(strlen($dbchapter["uri"]) > 0)
@@ -93,14 +93,14 @@
 	function Action()
 	{
 		global $db;
-		//$obj = new CPingShu8();
-		//$books = $obj->GetTopPingshu();
+		//$site = new CPingShu8();
+		//$books = $site->GetTopPingshu();
  		$books = GetTopPingshu();
 		$n = count($books);
 		print_r("Get Books: " . count($books) . "\n");
 
 		$i = 0;
-		$dbbooks = $db->get_books();
+		$dbbooks = $db->get_books(CPingShu8::$siteid);
 		foreach($books as $id => $name)
 		{
 			$i++;
@@ -113,22 +113,22 @@
 			// if ($id == "203_1517_1")
 				// continue;
 
-			$obj = new CPingShu8();
-			//$obj->useDelegate = 0;
+			$site = new CPingShu8();
+			//$site->useDelegate = 0;
 			//sleep(10);
-			$book = $obj->GetBookInfo($id);
+			$book = $site->GetBookInfo($id);
 
 			if(!array_key_exists($id, $dbbooks))
 			{
 				print_r("DB add book($id, $name)\n");
 				//$db->add_book($id, "", $name, "", "", "", "");
-				if(0 != $db->add_book($id, "", $name, $book["icon"], $book["info"], $book["catalog"], $book["subcatalog"]))
+				if(0 != $db->add_book(CPingShu8::$siteid, $id, "", $name, $book["icon"], $book["info"], $book["catalog"], $book["subcatalog"]))
 					print_r("add book($id) error: " . $db->get_error . "\n");
 			} else {
 				$dbbook = $dbbooks[$id];
 				if(strlen($book["icon"]) > 1 && (strlen($dbbook["icon"]) < 1 || strlen($dbbook["summary"]) < 1)){
 					print_r("DB book update($id, $name)\n");
-					if(0 != $db->update_book($id, "", $name, $book["icon"], $book["info"], $book["catalog"], $book["subcatalog"]))
+					if(0 != $db->update_book(CPingShu8::$siteid, $id, "", $name, $book["icon"], $book["info"], $book["catalog"], $book["subcatalog"]))
 						print_r("update book($id) error: " . $db->get_error . "\n");
 				}
 			}
@@ -144,24 +144,24 @@
 		global $client;
 
 		$i = 0;
-		$dbbooks = $db->get_books();
+		$dbbooks = $db->get_books(CPingShu8::$siteid);
 		foreach($dbbooks as $bookid => $dbbook)
 		{
-			$dbchapters = $db->get_chapters($bookid);
+			$dbchapters = $db->get_chapters(CPingShu8::$siteid, $bookid);
 			if(count($dbchapters) > 0)
 				continue;
 
 			$i++;	
 			print_r("Download([$i]$bookid)\n");
-			$obj = new CPingShu8();
-			$chapters = $obj->WebGetChapters($bookid);
+			$site = new CPingShu8();
+			$chapters = $site->WebGetChapters($bookid);
 			$chapters = $chapters["chapter"];
 	
 			foreach($chapters as $chapter){
 				$chapterid = $chapter["uri"];
 				$name = $chapter["name"];
 
-				if(0 != $db->add_chapter($bookid, $chapterid, $name, ""))
+				if(0 != $db->add_chapter(CPingShu8::$siteid, $bookid, $chapterid, $name, ""))
 					print_r("DB add chapter($bookid, $chapterid, $name) failed\n");
 
 				print_r("Add task($bookid, $chapterid)\n");
@@ -177,10 +177,10 @@
 		global $client;
 
 		$i = 0;
-		$dbbooks = $db->get_books();
+		$dbbooks = $db->get_books(CPingShu8::$siteid);
 		foreach($dbbooks as $bookid => $dbbook)
 		{
-			$dbchapters = $db->get_chapters($bookid);
+			$dbchapters = $db->get_chapters(CPingShu8::$siteid, $bookid);
 			foreach($dbchapters as $chapterid => $dbchapter)
 			{
 				if(strlen($dbchapter["uri"]) > 1)
@@ -202,14 +202,14 @@
 		print_r("Get Books: " . count($books) . "\n");
 
 		$i = 0;
-		$dbbooks = $db->get_books();
+		$dbbooks = $db->get_books(CPingShu8::$siteid);
 		foreach($books as $id => $name)
 		{
 			$i++;
 			if(!array_key_exists($id, $dbbooks))
 			{
 				print_r("[$i/$n]DB add book($id, $name)\n");
-				$db->add_book($id, "", $name, "", "", "", "");
+				$db->add_book(CPingShu8::$siteid, $id, "", $name, "", "", "", "");
 			} 
 		}
 	}

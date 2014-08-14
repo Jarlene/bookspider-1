@@ -26,25 +26,25 @@ class DBPingShu
 	//----------------------------------------------------------------------------
 	// book
 	//----------------------------------------------------------------------------
-	function add_book($bookid, $author, $name, $icon, $summary, $catalog, $subcatalog)
+	function add_book($siteid, $bookid, $author, $name, $icon, $summary, $catalog, $subcatalog)
 	{
 		$timestamp = date("Y-m-d H:i:s", time());
-		$sql = sprintf('insert into books (bookid, author, name, icon, summary, catalog, subcatalog, updatetime) values ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")', $bookid, $author, $name, $icon, $summary, $catalog, $subcatalog, $timestamp);
+		$sql = sprintf('insert into books (siteid, bookid, author, name, icon, summary, catalog, subcatalog, updatetime) values (%d, "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")', $siteid, $bookid, $author, $name, $icon, $summary, $catalog, $subcatalog, $timestamp);
 		$res = $this->db->query($sql);
 		return False===$res ? -1 : 0;
 	}
 
-	function update_book($bookid, $author, $name, $icon, $summary, $catalog, $subcatalog)
+	function update_book($siteid, $bookid, $author, $name, $icon, $summary, $catalog, $subcatalog)
 	{
 		$timestamp = date("Y-m-d H:i:s", time());
-		$sql = sprintf('update books set author="%s", name="%s", icon="%s", summary="%s", catalog="%s", subcatalog="%s", updatetime="%s" where bookid="%s"', $author, $name, $icon, $summary, $catalog, $subcatalog, $timestamp, $bookid);
+		$sql = sprintf('update books set author="%s", name="%s", icon="%s", summary="%s", catalog="%s", subcatalog="%s", updatetime="%s" where siteid=%d and bookid="%s"', $author, $name, $icon, $summary, $catalog, $subcatalog, $timestamp, $siteid, $bookid);
 		$res = $this->db->query($sql);
 		return False===$res ? -1 : 0;
 	}
 
-	function get_book($bookid)
+	function get_book($siteid, $bookid)
 	{
-		$sql = sprintf('select author, name, icon, summary, catalog, subcatalog from books where bookid="%s"', $bookid);
+		$sql = sprintf('select author, name, icon, summary, catalog, subcatalog from books where siteid=%d and bookid="%s"', $siteid, $bookid);
 		$res = $this->db->query($sql);
 		if($res && $row = $res->fetch_assoc())
 		{
@@ -61,12 +61,12 @@ class DBPingShu
 		}
 		return False;
 	}
-	
-	function get_books()
+
+	function get_books($siteid)
 	{
 		$books = array();
 
-		$sql = "select bookid, author, name, icon, summary, catalog, subcatalog from books";
+		$sql = sprintf('select bookid, author, name, icon, summary, catalog, subcatalog from books where siteid=%d', $siteid);
 		$res = $this->db->query($sql);
 		if(False === $res)
 			return $books;
@@ -92,16 +92,18 @@ class DBPingShu
 	//----------------------------------------------------------------------------
 	// chapter
 	//----------------------------------------------------------------------------
-	function add_chapter($bookid, $chapterid, $name, $uri)
+	function add_chapter($siteid, $bookid, $chapterid, $name, $uri)
 	{
-		$sql = sprintf('insert into chapters (bookid, chapterid, name, uri) values ("%s", %d, "%s", "%s")', $bookid, $chapterid, $name, $uri);
+		$table = (1 == $siteid) ? "pingshu8" : "ysts8";
+		$sql = sprintf('insert into %s (bookid, chapterid, name, uri) values ("%s", %d, "%s", "%s")', $table, $bookid, $chapterid, $name, $uri);
 		$res = $this->db->query($sql);
 		return False===$res ? -1 : 0;
 	}
 
-	function get_chapter($bookid, $chapterid)
+	function get_chapter($siteid, $bookid, $chapterid)
 	{
-		$sql = sprintf('select name, uri from chapters where chapterid=%d', $chapterid);
+		$table = (1 == $siteid) ? "pingshu8" : "ysts8";
+		$sql = sprintf('select name, uri from %s where chapterid=%d', $table, $chapterid);
 		$res = $this->db->query($sql);
 		if($res && $row = $res->fetch_assoc())
 		{
@@ -116,11 +118,12 @@ class DBPingShu
 		return False;
 	}
 
-	function get_chapters($bookid)
+	function get_chapters($siteid, $bookid)
 	{
 		$chapters = array();
 
-		$sql = sprintf('select chapterid, name, uri from chapters where bookid="%s"', $bookid);
+		$table = (1 == $siteid) ? "pingshu8" : "ysts8";
+		$sql = sprintf('select chapterid, name, uri from %s where bookid="%s"', $table, $bookid);
 		$res = $this->db->query($sql);
 		if(False === $res)
 			return $chapters;
@@ -146,7 +149,7 @@ class DBPingShu
 	{
 		$books = array();
 
-		$sql = sprintf('select bookid, author, name, icon, summary, catalog, subcatalog from books where name like "%%%s%%"', $keyword);
+		$sql = sprintf('select siteid, bookid, author, name, icon, summary, catalog, subcatalog from books where name like "%%%s%%"', $keyword);
 		$res = $this->db->query($sql);
 		if(False === $res)
 			return $books;
@@ -154,6 +157,7 @@ class DBPingShu
 		while($row = $res->fetch_assoc())
 		{
 			$book = array();
+			$book["siteid"] = $row["siteid"];
 			$book["name"] = $row["name"];
 			$book["icon"] = $row["icon"];
 			$book["author"] = $row["author"];

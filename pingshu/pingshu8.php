@@ -14,14 +14,14 @@ class CPingShu8
 
 	public $redirect = 0;
 	public $useDelegate = 1;
-	public $dbhost = "127.0.0.1";
+	private $dbhost = "127.0.0.1";
+	public static $siteid = 1;
 
 	function GetName()
 	{
 		return "pingshu8";
 	}
 
-	
 	function GetAudio($bookid, $chapter, $uri)
 	{
 		global $headers;
@@ -193,7 +193,7 @@ class CPingShu8
 	function DBGetAudio($bookid, $chapterid)
 	{
 		$db = new DBPingShu($this->dbhost);
-		$chapter = $db->get_chapter($bookid, $chapterid);
+		$chapter = $db->get_chapter(self::$siteid, $bookid, $chapterid);
 		if(False === $chapter)
 			return "";
 		$uri = $chapter["uri"];
@@ -228,16 +228,16 @@ class CPingShu8
 	function GetChapters($bookid)
 	{
 		$data = $this->DBGetChapters($bookid);
-		if(False === $data)
-			return $this->WebGetChapters($bookid);
+		//if(False === $data)
+		//	return $this->WebGetChapters($bookid);
 		return $data;
 	}
 
 	function DBGetChapters($bookid)
 	{
 		$db = new DBPingShu($this->dbhost);
-		$book = $db->get_book($bookid);
-		$chapters = $db->get_chapters($bookid);
+		$book = $db->get_book(self::$siteid, $bookid);
+		$chapters = $db->get_chapters(self::$siteid, $bookid);
 		if(False == $book || 0 == count($chapters))
 			return False;
 		
