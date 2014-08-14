@@ -422,9 +422,19 @@ class CPingShu8
 
 	function Search($keyword)
 	{
-		$authors = $this->__SearchAuthor($keyword);
-		$books = $this->__SearchBook($keyword);
-		return array("catalog" => $authors, "book" => $books);
+		$db = new DBPingShu($this->dbhost);
+		$dbbooks = $db->search($keyword);
+		if(False === $dbbooks)
+			return array("catalog" => array(), "book" => array());
+
+		$books = array();
+		foreach ($dbbooks as $bookid => $value) {
+			$books[$bookid] = $value["name"];
+		}
+
+		//$authors = $this->__SearchAuthor($keyword);
+		//$books = $this->__SearchBook($keyword);
+		return array("catalog" => array(), "book" => $books);
 	}
 
 	function ParseChapter($html)
