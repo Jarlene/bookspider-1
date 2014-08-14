@@ -3,7 +3,9 @@
 	require("php/util.inc");
 	require("php/http.inc");
 	require("php/http-multiple.inc");
+
 	require("http-proxy.php");
+
 	require("http-multiple-proxy.php");
 	require("pingshu8.php");
 	require("ysts8.php");
@@ -41,10 +43,10 @@
 		} 
 		else if(0 == strcmp("0", $server))
 		{
-			$data = $s->GetAudio($bookid, $chapter, $req);
-			$headers["Referer"] = "http://www.pingshu8.com/Play_Flash/js/Jplayer.swf";
+			//$headers["Referer"] = "http://www.pingshu8.com/Play_Flash/js/Jplayer.swf";
 			$headers["User-Agent"] = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)";
  			$headers["User-Agent"] = getRandomUserAgent();
+			$data = $s->GetAudio($bookid, $chapter, $req);
 		}
 		else 
 		{
@@ -58,7 +60,7 @@
 	{
 		$servers = GetServers();
 		foreach($servers as $k => $v){
-			if( (strlen($server) > 0 && 0 != strcmp($k, $server)) || 2==$k || 3==$k || 6==$k || 4==$k)
+			if(0 != strcmp("0", $k) )
 				continue;
 			$result = Search($v["object"], $keyword);
 			foreach($result as $b){
@@ -128,7 +130,7 @@
 
 		$servers = array();
 		$servers["0"] = array("name" => "服务器1", "object" => $pingshu8);
- 		$servers["4"] = array("name" => "服务器5", "object" => $ysts8);
+// 		$servers["4"] = array("name" => "服务器5", "object" => $ysts8);
  		$servers["5"] = array("name" => "服务器6", "object" => $aitingwang);
 // 		$servers["2"] = array("name" => "服务器3", "object" => $c77nt);
 // 		$servers["3"] = array("name" => "服务器4", "object" => $c17tsw);
@@ -272,7 +274,7 @@
 	
 	function Search($s, $keyword)
 	{
- 		return "";
+		//return "";
 		$data = array();
 		$result = $s->Search($keyword);
 		if(count($result) > 1){
