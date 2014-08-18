@@ -1,4 +1,11 @@
 <?php
+require_once("php/dom.inc");
+require_once("php/http.inc");
+require_once("http-proxy.php");
+require_once("php/http-multiple.inc");
+require_once("http-multiple-proxy.php");
+require_once("db-pingshu.inc");
+
 	class CYSTS8
 	{
 		public $cache = array(
@@ -10,6 +17,7 @@
 				);
 
 		public $redirect = 0;
+		public static $siteid = 2;
 
 		function GetName()
 		{
@@ -196,11 +204,11 @@
 		function GetChapters($bookid)
 		{
 			$uri = "http://www.ysts8.com/Yshtml/Ys" . $bookid . ".html";
-			$response = http_proxy_get($uri, "Ysjs/bot.js", 10);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			$doc = dom_parse($response);
-			$infos = xpath_query($doc, "//div[@class='ny_txt']/ul/p");
-			$elements = xpath_query($doc, "//div[@class='ny_l']/ul/li/a[1]");
+			$html = http_proxy_get($uri, "Ysjs/bot.js", 10);
+			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+			$xpath = new XPath($html);
+			$infos = $xpath->query("//div[@class='ny_txt']/ul/p");
+			$elements = $xpath->query("//div[@class='ny_l']/ul/li/a[1]");
 
 			$summary = "";
 			foreach($infos as $info){
@@ -213,15 +221,20 @@
 			}
 
 			$chapters = array();
-
 			if (!is_null($elements)) {
-				$host = parse_url($uri);
 				foreach ($elements as $element) {
 					$href = $element->getattribute('href');
-					$chapter = $element->nodeValue;
+					$name = $element->nodeValue;
 
-					if(strlen($href) > 0 && strlen($chapter) > 0){
-						$chapters[] = array("name" => $chapter, "uri" => 'http://' . $host["host"] . $href);
+					if(strlen($href) > 0 && strlen($name) > 0){
+						$chapterid = basename($href, ".html");
+						list($play, $bookid, $dir1, $dir2, $chapter) = explode("_", $chapterid);
+						if($dir1 > 99999 || 1 != $dir2 || $chapter > 9999){
+							print_r("invalid chapter: $chapterid\n");
+							die();
+						}
+						$chapterid = sprintf("%05d%d%04d", $dir1, $dir2, $chapter);
+						$chapters[] = array("name" => $name, "uri" => $chapterid);
 					}
 				}
 			}
@@ -230,6 +243,8 @@
 			$data["icon"] = "";
 			$data["info"] = $summary;
 			$data["chapter"] = $chapters;
+			$data["catalog"] = $xpath->get_value("//div[@id='i']/h3");;
+			$data["subcatalog"] = $xpath->get_value("//div[@id='i']/h2");;
 			return $data;
 		}
 
