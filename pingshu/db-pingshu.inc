@@ -103,7 +103,7 @@ class DBPingShu
 	function get_chapter($siteid, $bookid, $chapterid)
 	{
 		$table = (1 == $siteid) ? "pingshu8" : "ysts8";
-		$sql = sprintf('select name, uri, uri2 from %s where chapterid=%d', $table, $chapterid);
+		$sql = sprintf('select name, uri, uri2 from %s where bookid="%s" and chapterid=%d', $table, $bookid, $chapterid);
 		$res = $this->db->query($sql);
 		if($res && $row = $res->fetch_assoc())
 		{
