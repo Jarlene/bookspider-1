@@ -196,7 +196,11 @@ class CPingShu8
 		$chapter = $db->get_chapter(self::$siteid, $bookid, $chapterid);
 		if(False === $chapter)
 			return "";
+
 		$uri = $chapter["uri"];
+		$uri2 = $chapter["uri2"];
+		if(0==strlen($uri) || (strlen($uri2) > 0 && 0==$chapterid%2))
+			$uri = $uri2;
 
 		$server = "";
 		$path = "/";

@@ -4,44 +4,23 @@
 	require("php/dom.inc");
 	require("php/http.inc");
 
-	$db = dbopen("pingshu", "115.28.54.237");
-	if($db->connect_errno)
-	{
-		echo "mysql error " . $db->connect->error;
-		return;
-	}
-
 	// proxies
 	$http = new Http();
 	$http->setcookie("/var/ysts8.cookie");
 	$http->settimeout(120);
-	$proxies = split(",", file_get_contents("proxy.cfg"));
+	//$proxies = split(",", file_get_contents("proxy.cfg"));
 
 	$task_count = 0;
-	$ip = "";
-	$servers = array("115.28.51.131", "115.28.54.237", "115.29.145.111", "112.126.69.201", "121.40.136.6", "175.195.249.184", "210.183.56.107");
+	$basedir = "/ts/ysts8/";
+	$paths = array("115.28.51.131" => "/ts2/ysts8/", "175.195.249.184" => "/home/ysts8/", "210.183.56.107" => "/home/ysts8/");
 	$ips = get_network_interface();
 	foreach($ips as $net){
-		if(in_array($net["ip"], $servers)){
-			$ip = $net["ip"];
+		if(array_key_exists($net["ip"], $paths)){
+			$basedir = $paths[$net["ip"]];
 			break;
 		}
 	}
 
-	if(strlen($ip) < 1)
-	{
-		print_r("server ip error.");
-		return -1;
-	}
-
-	$paths = array("115.28.51.131" => "/ts2/ysts8/", "175.195.249.184" => "/home/ysts8/", "210.183.56.107" => "/home/ysts8");
-	if(!array_key_exists($ip, $paths)){
-		$basedir = "/ts/ysts8/";
-	} else {
-		$basedir = $paths[$ip];
-	}
-
-	print_r("IP: $ip\n");
 	print_r("DIR: $basedir\n");
 
 	$worker = new GearmanWorker();
@@ -59,13 +38,38 @@
 		return Action($bookid, intval($chapterid));
 	}
 
-	function db_set_chapter_uri($bookid, $chapterid, $uri)
+	function HttpGet($uri, $pattern, $headers)
 	{
-		global $db;
-		$sql = sprintf('update ysts8 set uri="%s" where chapterid=%d', $uri, $chapterid);
-		if(!$db->query($sql))
-			print_r("DB set uri failed: " . $db->error);
-		return $db->error;
+		global $http;
+		global $proxies;
+		static $idx = -1;
+
+		if(count($proxies) > 0){
+			$html = $http->get($uri, $headers);
+		} else {
+			if(-1 == $idx)
+			{
+				$idx = rand() % count($proxies);
+				$http->setproxy($proxies[$idx]);
+			}
+
+			for($i = 0; $i < 5 && $i < count($proxies); $i++){
+				$html = $http->get($uri, $headers);
+				if(stripos($html, $pattern)){
+					return $html;
+				} else {
+					unset($proxies[$idx]);
+				}
+
+				if(count($proxies) > 0){
+					$idx = ($idx + 1) % count($proxies);
+					print_r("[$idx] $proxy\n");
+					$http->setproxy($proxies[$idx]);
+				}
+			}
+		}
+
+		return "";
 	}
 
 	function GetFrameSrc($bookid, $chapterid)
@@ -121,44 +125,9 @@
 		return array("uri" => $result, "referer" => $src);
 	}
 
-	function HttpGet($uri, $pattern, $headers)
-	{
-		global $http;
-		global $proxies;
-		static $idx = -1;
-
-		if(count($proxies) > 0){
-			$html = $http->get($uri, $headers);
-		} else {
-			if(-1 == $idx)
-			{
-				$idx = rand() % count($proxies);
-				$http->setproxy($proxies[$idx]);
-			}
-
-			for($i = 0; $i < 5 && $i < count($proxies); $i++){
-				$html = $http->get($uri, $headers);
-				if(stripos($html, $pattern)){
-					return $html;
-				} else {
-					unset($proxies[$idx]);
-				}
-
-				if(count($proxies) > 0){
-					$idx = ($idx + 1) % count($proxies);
-					print_r("[$idx] $proxy\n");
-					$http->setproxy($proxies[$idx]);
-				}
-			}
-		}
-
-		return "";
-	}
-
 	function Download($bookid, $chapterid)
 	{
 		global $http;
-		global $mdb;
 
 		$src = GetFrameSrc($bookid, $chapterid);
 		if(strlen($src) < 1) return False;
@@ -177,7 +146,6 @@
 
 	function Action($bookid, $chapterid)
 	{
-		global $ip;
 		global $basedir;
 		global $task_count;
 		$task_count++;
@@ -204,11 +172,7 @@
 		$filename = sprintf("$dir/%d.mp3", $chapterid);
 		file_put_contents($filename, $audio);
 
-		// write db
-		db_set_chapter_uri($bookid, $chapterid, "$ip:$filename");
-
-		// 
-		sleep(60);
+		sleep(40);
 		return 0;
 	}
 
