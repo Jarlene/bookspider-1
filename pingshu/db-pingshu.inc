@@ -103,12 +103,13 @@ class DBPingShu
 	function get_chapter($siteid, $bookid, $chapterid)
 	{
 		$table = (1 == $siteid) ? "pingshu8" : "ysts8";
-		$sql = sprintf('select name, uri from %s where chapterid=%d', $table, $chapterid);
+		$sql = sprintf('select name, uri, uri2 from %s where chapterid=%d', $table, $chapterid);
 		$res = $this->db->query($sql);
 		if($res && $row = $res->fetch_assoc())
 		{
 			$chapter = array();
 			$chapter["uri"] = $row["uri"];
+			$chapter["uri2"] = $row["uri2"];
 			$chapter["name"] = $row["name"];
 
 			$res->free();
@@ -132,6 +133,7 @@ class DBPingShu
 		{
 			$chapter = array();
 			$chapter["uri"] = $row["uri"];
+			$chapter["uri2"] = $row["uri2"];
 			$chapter["name"] = $row["name"];
 
 			$chapterid = $row["chapterid"];
@@ -149,7 +151,7 @@ class DBPingShu
 	{
 		$books = array();
 
-		$sql = sprintf('select siteid, bookid, author, name, icon, summary, catalog, subcatalog from books where name like "%%%s%%"', $keyword);
+		$sql = sprintf('select siteid, bookid, author, name, icon, summary, catalog, subcatalog from books where siteid=1 and name like "%%%s%%"', $keyword);
 		$res = $this->db->query($sql);
 		if(False === $res)
 			return $books;
