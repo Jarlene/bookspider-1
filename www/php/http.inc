@@ -96,7 +96,7 @@ class Http
 		if(strlen($proxy) > 0){
 			list($ip, $port) = explode(':', $proxy);
 
-			$proxyType = 0==stricmp($proxyType, 'HTTP') ? CURLPROXY_HTTP : CURLPROXY_SOCKS5;
+			$proxyType = 0==strcasecmp($proxyType, 'HTTP') ? CURLPROXY_HTTP : CURLPROXY_SOCKS5;
 			curl_setopt($this->m_curl, CURLOPT_PROXYTYPE, $proxyType);
 			curl_setopt($this->m_curl, CURLOPT_PROXY, $ip);
 			curl_setopt($this->m_curl, CURLOPT_PROXYPORT, $port);

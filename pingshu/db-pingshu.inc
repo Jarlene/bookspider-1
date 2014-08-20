@@ -124,7 +124,7 @@ class DBPingShu
 		$chapters = array();
 
 		$table = (1 == $siteid) ? "pingshu8" : "ysts8";
-		$sql = sprintf('select chapterid, name, uri from %s where bookid="%s"', $table, $bookid);
+		$sql = sprintf('select chapterid, name, uri, uri2 from %s where bookid="%s"', $table, $bookid);
 		$res = $this->db->query($sql);
 		if(False === $res)
 			return $chapters;
