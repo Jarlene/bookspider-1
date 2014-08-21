@@ -5,27 +5,25 @@
 	require_once("db-pingshu.inc");
 	require_once("ysts8.php");
 
-	$client = new GearmanClient();
-	$client->addServer("115.28.54.237", 4730);
 	$db = new DBPingShu("115.28.54.237");
 
-	Action(0);
-//	Action2();
+	Action1();
+	Action2(1);
+	Action3();
 
 	//----------------------------------------------------------------------------
 	// functions
 	//----------------------------------------------------------------------------
-	function GetHot()
+	function _GetBooks($uri)
 	{
 		$books = array();
 
-		$uri = "http://www.ysts8.com/index_hot.html";
 		$html = http_proxy_get($uri, "Ysjs/bot.js", 10);
 		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 		if(strlen($html) < 1) return $books;
 
 		$xpath = new XPath($html);
-		$elements = $xpath->query("//li[@class='qx']/a");
+		$elements = $xpath->query("//div[@class='pingshu_ysts8_i']/ul/li/a");
 		foreach ($elements as $element) {
 			$href = $element->getattribute('href');
 			$book = $element->nodeValue;
@@ -34,6 +32,29 @@
 			$books[substr($bookid, 2)] = $book;
 		}
 
+		return $books;
+	}
+
+	function GetHot()
+	{
+		return _GetBooks("http://www.ysts8.com/index_hot.html");
+	}
+
+	function GetUpdate()
+	{
+		return _GetBooks("http://www.ysts8.com/index_tim.html");
+	}
+
+	function GetAll()
+	{
+		$books = array();
+		$site = new CYSTS8();
+		$catalogs = $site->GetCatalog();
+		$catalogs = $catalogs["小说"];
+		foreach ($catalogs as $name => $value) {
+			$catalog = $site->GetBooks($value);
+			$books = array_merge($books, $catalog["book"]);
+		}
 		return $books;
 	}
 
@@ -95,48 +116,47 @@
 				if(strlen($dbchapter["uri"]) > 0)
 					continue;
 			}
-
-			print_r("Add task($bookid, $chapterid)\n");
-			$workload = sprintf("%s,%d", $bookid, $chapterid);
-			$client->doBackground('DownloadYsts8', $workload);
 		}
 		
 		return 0;
 	}
 
-	// add
-	function Action($fast_mode)
+	function Action1()
 	{
-		// 1. add book
-		$books = GetHot();
+		//1. add book
+		$books = GetAll();
+		//$books = GetHot();
+		//$books = GetUpdate();
 		print_r("Get Books: " . count($books) . "\n");
 		AddBook($books);
+	}
 
+	// add
+	function Action2($fast_mode)
+	{
 		global $db;
 		$dbbooks = $db->get_books(CYSTS8::$siteid);
 		print_r("db-book count: " . count($dbbooks) . "\n");
-	
+
 		// 2. add chapter
 		$i = 0;	
 		foreach($dbbooks as $bookid => $dbbook)
 		{
-			$dbchapters = $db->get_chapters(CYSTS8::$siteid, $bookid);
-			if(count($dbchapters) > 0)
-				continue;
-
 			$i++;
-			print_r("Download([$i]$bookid)\n");
-			AddChapter($bookid, $dbbook["name"], $fast_mode);
+			$name = $dbbook["name"];
+			print_r("AddChapter([$i]$bookid - $name)\n");
+			AddChapter($bookid, $name, $fast_mode);
 		}
 	}
 
 	// add chapter download task(from database only)
-	function Action2()
+	function Action3()
 	{
-		global $db;
-		global $client;
+		$client = new GearmanClient();
+		$client->addServer("115.28.54.237", 4730);
 
 		$i = 0;
+		global $db;
 		$dbbooks = $db->get_books(CYSTS8::$siteid);
 		foreach($dbbooks as $bookid => $dbbook)
 		{
