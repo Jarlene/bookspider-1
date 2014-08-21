@@ -7,62 +7,21 @@
 
 	$db = new DBPingShu("115.28.54.237");
 
-	Action1();
-	Action2(1);
+	$update_mode = False;
+	Action1($update_mode);
+	Action2($update_mode);
 	Action3();
 
-	//----------------------------------------------------------------------------
-	// functions
-	//----------------------------------------------------------------------------
-	function _GetBooks($uri)
+	function Action1($update_mode)
 	{
-		$books = array();
-
-		$html = http_proxy_get($uri, "Ysjs/bot.js", 10);
-		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
-		if(strlen($html) < 1) return $books;
-
-		$xpath = new XPath($html);
-		$elements = $xpath->query("//div[@class='pingshu_ysts8_i']/ul/li/a");
-		foreach ($elements as $element) {
-			$href = $element->getattribute('href');
-			$book = $element->nodeValue;
-
-			$bookid = basename($href, ".html");
-			$books[substr($bookid, 2)] = $book;
-		}
-
-		return $books;
-	}
-
-	function GetHot()
-	{
-		return _GetBooks("http://www.ysts8.com/index_hot.html");
-	}
-
-	function GetUpdate()
-	{
-		return _GetBooks("http://www.ysts8.com/index_tim.html");
-	}
-
-	function GetAll()
-	{
-		$books = array();
-		$site = new CYSTS8();
-		$catalogs = $site->GetCatalog();
-		$catalogs = $catalogs["小说"];
-		foreach ($catalogs as $name => $value) {
-			$catalog = $site->GetBooks($value);
-			$books = array_merge($books, $catalog["book"]);
-		}
-		return $books;
-	}
-
-	function AddBook($books)
-	{
-		global $db;
+		//1. add book
+		$books = GetBooks($update_mode);
+		//$books = GetHot();
+		//$books = GetUpdate();
+		print_r("Get Books: " . count($books) . "\n");
 
  		$i = 0;
+		global $db;
 		$dbbooks = $db->get_books(CYSTS8::$siteid);
 		foreach($books as $id => $name)
 		{
@@ -70,19 +29,83 @@
 			if(!array_key_exists($id, $dbbooks))
 			{
 				print_r("[$i]DB add book($id, $name)\n");
-				$db->add_book(CYSTS8::$siteid, $id, "", $name, "", "", "", "");
+				if(0 != $db->add_book(CYSTS8::$siteid, $id, "", $name, "", "", "", ""))
+					print_r("add book($id) error: " . $db->get_error . "\n");
 			} 
 		}
 	}
 
-	function AddChapter($bookid, $bookname, $fast_mode)
+	// add
+	function Action2($update_mode)
+	{
+		global $db;
+		$dbbooks = $db->get_books(CYSTS8::$siteid);
+		print_r("db-book count: " . count($dbbooks) . "\n");
+
+		// 2. add chapter
+		$i = 0;	
+		foreach($dbbooks as $bookid => $dbbook)
+		{
+			$i++;
+			$name = $dbbook["name"];
+			print_r("AddChapter([$i]$bookid - $name)\n");
+			AddChapter($bookid, $name, $update_mode);
+		}
+	}
+
+	// add chapter download task(from database only)
+	function Action3()
+	{
+		$client = new GearmanClient();
+		$client->addServer("115.28.54.237", 4730);
+
+		$i = 0;
+		global $db;
+		$dbbooks = $db->get_books(CYSTS8::$siteid);
+		foreach($dbbooks as $bookid => $dbbook)
+		{
+			$dbchapters = $db->get_chapters(CYSTS8::$siteid, $bookid);
+			foreach($dbchapters as $chapterid => $dbchapter)
+			{
+				$uri = $dbchapter["uri"];
+				$uri2 = $dbchapter["uri2"];
+				if(strlen($uri) > 1 || strlen($uri2) > 1)
+					continue;
+
+				print_r("Add task($bookid, $chapterid)\n");
+				$workload = sprintf("%s,%d", $bookid, $chapterid);
+				$client->doBackground('DownloadYsts8', $workload, $workload);
+			}
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	// functions
+	//----------------------------------------------------------------------------
+	function GetBooks($update_mode)
+	{
+		$books = array();
+		if($update_mode){
+			$books = _WebGetBooks("http://www.ysts8.com/index_tim.html");
+		} else {
+			$site = new CYSTS8();
+			$catalogs = $site->GetCatalog();
+			$catalogs = $catalogs["小说"];
+			foreach ($catalogs as $name => $value) {
+				$catalog = $site->GetBooks($value);
+				$books = array_merge($books, $catalog["book"]);
+			}
+		}
+		return $books;
+	}
+
+	function AddChapter($bookid, $bookname, $update_mode)
 	{
 		global $db;
 		global $client;
 
 		$dbchapters = $db->get_chapters(CYSTS8::$siteid, $bookid);
-		if(1 == $fast_mode && count($dbchapters) > 0){
-			// don't in update mode
+		if(!$update_mode && count($dbchapters) > 0){
 			print_r("book has download.\n");
 			return 0;
 		}
@@ -120,56 +143,29 @@
 		
 		return 0;
 	}
-
-	function Action1()
+	
+	//----------------------------------------------------------------------------
+	// Website
+	//----------------------------------------------------------------------------	
+	function _WebGetBooks($uri)
 	{
-		//1. add book
-		$books = GetAll();
-		//$books = GetHot();
-		//$books = GetUpdate();
-		print_r("Get Books: " . count($books) . "\n");
-		AddBook($books);
-	}
+		$books = array();
 
-	// add
-	function Action2($fast_mode)
-	{
-		global $db;
-		$dbbooks = $db->get_books(CYSTS8::$siteid);
-		print_r("db-book count: " . count($dbbooks) . "\n");
+		$html = http_proxy_get($uri, "Ysjs/bot.js", 10);
+		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+		if(strlen($html) < 1) return $books;
 
-		// 2. add chapter
-		$i = 0;	
-		foreach($dbbooks as $bookid => $dbbook)
-		{
-			$i++;
-			$name = $dbbook["name"];
-			print_r("AddChapter([$i]$bookid - $name)\n");
-			AddChapter($bookid, $name, $fast_mode);
+		$xpath = new XPath($html);
+		$elements = $xpath->query("//div[@class='pingshu_ysts8_i']/ul/li/a");
+		foreach ($elements as $element) {
+			$href = $element->getattribute('href');
+			$book = $element->nodeValue;
+
+			$bookid = basename($href, ".html");
+			$books[substr($bookid, 2)] = $book;
 		}
+
+		return $books;
 	}
 
-	// add chapter download task(from database only)
-	function Action3()
-	{
-		$client = new GearmanClient();
-		$client->addServer("115.28.54.237", 4730);
-
-		$i = 0;
-		global $db;
-		$dbbooks = $db->get_books(CYSTS8::$siteid);
-		foreach($dbbooks as $bookid => $dbbook)
-		{
-			$dbchapters = $db->get_chapters(CYSTS8::$siteid, $bookid);
-			foreach($dbchapters as $chapterid => $dbchapter)
-			{
-				if(strlen($dbchapter["uri"]) > 1)
-					continue;
-
-				print_r("Add task($bookid, $chapterid)\n");
-				$workload = sprintf("%s,%d", $bookid, $chapterid);
-				$client->doBackground('DownloadYsts8', $workload);
-			}
-		}
-	}
 ?>

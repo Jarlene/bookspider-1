@@ -259,84 +259,6 @@ class CPingShu8
 		return $data;
 	}
 
-	function WebGetChapters($bookid)
-	{
-		$book = $this->GetBookInfo($bookid);
-
-		list($v1, $v2, $v3) = explode("_", $bookid);
-
-		$urls = array();
-		$page = $book["page"];
-		for($i = 1; $i < $page; $i++){
-			$urls[] = sprintf("http://www.pingshu8.com/MusicList/mmc_%d_%d_%d.htm", $v1, $v2, $i+1);
-		}
-
-		if(count($urls) > 0){
-			$result = array();
-			if($this->useDelegate)
-				$http = new HttpMultipleProxy("proxy.cfg");
-			else
-				$http = new HttpMultiple();
-			$r = $http->get($urls, array($this, '_OnReadChapter'), &$result, 20);
-
-			if(count($result) != count($urls)){
-				assert(0 != $r);
-				$book["chapter"] = array(); // empty data(some uri request failed)
-			} else {
-				for($i = 0; $i < count($result); $i++){
-					foreach($result[$i] as $chapter){
-						$book["chapter"][] = $chapter;
-					}
-				}
-			}
-		}
-
-		return $book;
-	}
-
-	function GetBookInfo($bookid)
-	{
-		$uri = "http://www.pingshu8.com/MusicList/mmc_$bookid.htm";
-		$referer = "Referer: http://www.pingshu8.com/top/xiangsheng.htm";
-		if($this->useDelegate)
-			$html = http_proxy_get($uri, "luckyzz@163.com", 20, "proxy.cfg", array($referer));
-		else
-			$html = http_get($uri, 20, "", array($referer));
-		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
-		if(strlen($html) < 1){
-			$data = array();
-			$data["icon"] = "";
-			$data["info"] = "";
-			$data["page"] = 0;
-			$data["count"] = 0;
-			$data["chapter"] = array();
-			$data["catalog"] = "";
-			$data["subcatalog"] = "";
-			return $data;
-		}
-
-		$host = parse_url($uri);
-		$xpath = new XPath($html);
-		$value = $xpath->get_value("//div[@class='list5']/div");
-		$selects = $xpath->query("//select[@name='turnPage']/option");
-		$iconuri = $xpath->get_attribute("//div[@class='a']/img", "src");
-
-		if(0==strncmp("../", $iconuri, 3)){
-			$data["icon"] = 'http://' . $host["host"] . dirname(dirname($host["path"])) . '/' . substr($iconuri, 3);
-		} else {
-			$data["icon"] = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $iconuri;
-		}
-
-		list($count) = sscanf($value, " 共有%d集");
-		$data["info"] = $xpath->get_value("//div[@class='c']/div");
-		$data["page"] = $selects->length;
-		$data["count"] = $count;
-		$data["chapter"] = $this->ParseChapter($html);
-		$data["catalog"] = $xpath->get_value("//div[@class='t1']/div/a[2]");
-		$data["subcatalog"] = $xpath->get_value("//div[@class='t1']/div/a[3]");
-		return $data;
-	}
-	
 	//----------------------------------------------------------------------------
 	// GetBooks
 	//----------------------------------------------------------------------------
@@ -412,7 +334,7 @@ class CPingShu8
 		$data["book"] = $books;
 		return $data;
 	}
-	
+
 	function GetCatalog()
 	{
 		$catalog = array();
@@ -441,46 +363,9 @@ class CPingShu8
 		return array("catalog" => array(), "book" => $books);
 	}
 
-	function ParseChapter($html)
-	{
-		$chapters = array();
-
-		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
-		if(strlen($html) < 1) return $chapters;
-
-		$xpath = new XPath($html);
-		$elements = $xpath->query("//li[@class='a1']/a");
-		foreach ($elements as $element) {
-			$href = $element->getattribute('href');
-			$chapter = $element->nodeValue;
-
-			if(strlen($href) > 0 && strlen($chapter) > 0){
-				list($play, $chapterid) = explode("_", basename($href, ".html"));
-				$chapters[] = array("name" => $chapter, "uri" => $chapterid);
-			}
-		}
-
-		return $chapters;
-	}
-
 	//---------------------------------------------------------------------------
 	// private function
 	//---------------------------------------------------------------------------
-	function _OnReadChapter($param, $i, $r, $header, $body)
-	{
-		if(0 != $r){
-			//error_log("_OnReadChapter $i: error: $r\n", 3, "pingshu.log");
-			return -1;
-		} else if(!stripos($body, "luckyzz@163.com")){
-			// check html content integrity
-			//error_log("Integrity check error $i\n", 3, "pingshu.log");
-			return -1;
-		}
-
-		$param[$i] = $this->ParseChapter($body);
-		return 0;
-	}
-
 	function __GetSubcatalog($uri, $uritop, $topname)
 	{
 		$artists = array();

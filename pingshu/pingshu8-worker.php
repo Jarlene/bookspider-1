@@ -7,7 +7,7 @@
 	$http->settimeout(120);
 
 	$task_count = 0;
-	$basedir = "/ts/ysts8/";
+	$basedir = "/ts/pingshu8/";
 	$paths = array("115.28.51.131" => "/ts2/pingshu8/", "175.195.249.184" => "/home/pingshu8/");
 	$ips = get_network_interface();
 	foreach($ips as $net){
@@ -52,7 +52,7 @@
 		$audio = Download($bookid, $chapterid);
 		if(0 == strlen($audio))
 		{
-			print_r("Download($uri) failed.\n");
+			print_r("Download($bookid, $chapterid) failed.\n");
 			return -1;
 		}
 

@@ -204,7 +204,7 @@ require_once("db-pingshu.inc");
 		function GetChapters($bookid)
 		{
 			$uri = "http://www.ysts8.com/Yshtml/Ys" . $bookid . ".html";
-			$html = http_proxy_get($uri, "Ysjs/bot.js", 10);
+			$html = $this->_HttpGet($uri, "Ysjs/bot.js");
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			$xpath = new XPath($html);
 			$infos = $xpath->query("//div[@class='ny_txt']/ul/p");
@@ -248,51 +248,64 @@ require_once("db-pingshu.inc");
 			return $data;
 		}
 
-		function __ParseBooks($uri, $response, &$books, $xpath)
+		function __ParseBooks($response, $xpath)
 		{
 			$doc = dom_parse($response);
 			$elements = xpath_query($doc, $xpath);
 
-			if (!is_null($elements)) {
-				$host = parse_url($uri);
-				foreach ($elements as $element) {
-					$href = $element->getattribute('href');
-					$book = $element->firstChild->wholeText;
+			$books = array();
+			foreach ($elements as $element) {
+				$href = $element->getattribute('href');
+				$book = $element->firstChild->wholeText;
 
-					if(strlen($href) > 0 && strlen($book) > 0){
-						$bookid = basename($href);
-						$n = strpos($bookid, '.');
-						$books[substr($bookid, 2, $n-2)] = $book;
-					}
+				if(strlen($href) > 0 && strlen($book) > 0){
+					$bookid = basename($href);
+					$n = strpos($bookid, '.');
+					$books[substr($bookid, 2, $n-2)] = $book;
 				}
 			}
+
+			return $books;
 		}
 
 		function GetBooks($uri)
 		{
-			$response = http_proxy_get($uri, "Ysjs/bot.js", 10);
+			$html = $this->_HttpGet($uri, "Ysjs/bot.js");
 			//file_put_contents ("1.html", $html);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			$doc = dom_parse($response);
-			
-			$books = array();
+			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+			$doc = dom_parse($html);
+
 			if(0 == strcmp($uri, 'http://www.ysts8.com/index_tim.html')){
-				$this->__ParseBooks($u, $response, $books, "//div[@class='pingshu_ysts8_i']/ul/li/a");
+				$books = $this->__ParseBooks($html, "//div[@class='pingshu_ysts8_i']/ul/li/a");
 			} else if(0 == strcmp($uri, 'http://www.ysts8.com/index_hot.html')){
-				$this->__ParseBooks($u, $response, $books, "//div[@class='pingshu_ysts8_i']/ul/li/a");
+				$books = $this->__ParseBooks($html, "//div[@class='pingshu_ysts8_i']/ul/li/a");
 			} else {
 				$options = xpath_query($doc, "//select[@name='select']/option");
+				$books = $this->__ParseBooks($html, "//div[@class='pingshu_ysts8']/ul/li/a");
+
 				$host = parse_url($uri);
+				$urls = array();
 				foreach ($options as $option) {
 					$href = $option->getattribute('value');
 					if(strlen($href) > 0){
 						$u = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $href;
 						if(0 != strcmp($u, $uri)){
-							$response = http_proxy_get($u, "Ysjs/bot.js", 10);
-							$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
+							$urls[] = $u;
 						}
+					}
+				}
 
-						$this->__ParseBooks($u, $response, $books, "//div[@class='pingshu_ysts8']/ul/li/a");
+				$result = array();
+				$http = new HttpMultipleProxy("proxy.cfg");
+				$r = $http->get($urls, array($this, '_OnReadBook'), &$result, 20);
+				if(count($result) != count($urls)){
+					assert(0 != $r);
+					$books = array(); // empty data(some uri request failed)
+				} else {
+					for($i = 0; $i < count($result); $i++){
+						foreach($result[$i] as $id => $name){
+							$books[$id] = $name;
+						}
 					}
 				}
 			}
@@ -306,10 +319,10 @@ require_once("db-pingshu.inc");
 		function GetCatalog()
 		{
 			$uri = 'http://www.ysts8.com/index_ys.html';
-			$response = http_proxy_get($uri, "Ysjs/bot.js", 10);
-			$response = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $response);
-			//file_put_contents ("1.html", $response);
-			$doc = dom_parse($response);
+			$html = $this->_HttpGet($uri, "Ysjs/bot.js");
+			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+			//file_put_contents ("1.html", $html);
+			$doc = dom_parse($html);
 			$elements = xpath_query($doc, "//div[@class='link']/a");
 
 			$subcatalogs = array();
@@ -372,9 +385,63 @@ require_once("db-pingshu.inc");
 			}
 			return array("book" => $books);
 		}
+
+		//---------------------------------------------------------------------------
+		// private function
+		//---------------------------------------------------------------------------
+		private function _OnReadBook($param, $i, $r, $header, $body)
+		{
+			if(0 != $r){
+				//error_log("_OnReadChapter $i: error: $r\n", 3, "pingshu.log");
+				return -1;
+			} else if(!stripos($body, "Ysjs/bot.js")){
+				// check html content integrity
+				//error_log("Integrity check error $i\n", 3, "pingshu.log");
+				return -1;
+			}
+
+			$body = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $body);
+			$param[$i] = $this->__ParseBooks($body, "//div[@class='pingshu_ysts8']/ul/li/a | //div[@class='Yshtml']/ul/li/a");
+			return 0;
+		}
+
+		private function _HttpGet($uri, $pattern, $headers=array())
+		{
+			static $idx = -1;
+			if(-1 == $idx)
+				$idx = rand() % count($this->proxies);
+
+			for($i=0; $i<5 && count($this->proxies)>0; $i++){
+				$this->http->setproxy($this->proxies[$idx]);
+
+				$html = $this->http->get($uri, $headers);
+				if(False === strpos($html, $pattern)){
+					unset($this->proxies[$idx]);
+					continue;
+				} 
+
+				$idx = ($idx + 1) % count($this->proxies);
+				return $html;
+			};
+
+			return "";
+		}
+
+		function __construct()
+		{
+			$this->http = new Http();
+			//$this->http->setcookie("/var/ysts8.cookie");
+			$this->http->settimeout(120);
+			$this->proxies = split(",", file_get_contents("proxy.cfg"));
+		}
+
+		private $http;
+		private $proxies;
 	}
 
-	//print_r(ysts8_works('http://www.ysts8.com/Ysmp3/40_1.html'));
-	//print_r(ysts8_chapters('http://www.ysts8.com/Yshtml/Ys12073.html'));
-	//print_r(ysts8_audio('http://www.ysts8.com/play_12073_46_2_1.html'));
+//$site = new CYSTS8();
+//print_r($site->GetBooks("http://www.ysts8.com/Ysmp3/30_1.html"));
+//print_r(ysts8_works('http://www.ysts8.com/Ysmp3/40_1.html'));
+//print_r(ysts8_chapters('http://www.ysts8.com/Yshtml/Ys12073.html'));
+//print_r(ysts8_audio('http://www.ysts8.com/play_12073_46_2_1.html'));
 ?>
