@@ -99,6 +99,22 @@ class DBPingShu
 		$res = $this->db->query($sql);
 		return False===$res ? -1 : 0;
 	}
+	
+	function set_chapter_uri($siteid, $bookid, $chapterid, $uri)
+	{
+		$table = (1 == $siteid) ? "pingshu8" : "ysts8";
+		$sql = sprintf('update %s set uri="%s" where bookid="%s" and chapterid=%d', $table, $uri, $bookid, $chapterid);
+		$res = $this->db->query($sql);
+		return False===$res ? -1 : 0;
+	}
+	
+	function set_chapter_uri2($siteid, $bookid, $chapterid, $uri)
+	{
+		$table = (1 == $siteid) ? "pingshu8" : "ysts8";
+		$sql = sprintf('update %s set uri2="%s" where bookid="%s" and chapterid=%d', $table, $uri, $bookid, $chapterid);
+		$res = $this->db->query($sql);
+		return False===$res ? -1 : 0;
+	}
 
 	function get_chapter($siteid, $bookid, $chapterid)
 	{
@@ -138,6 +154,31 @@ class DBPingShu
 
 			$chapterid = $row["chapterid"];
 			$chapters[$chapterid] = $chapter;
+		}
+
+		$res->free();
+		return $chapters;
+	}
+	
+	function list_chapters($siteid)
+	{
+		$chapters = array();
+
+		$table = (1 == $siteid) ? "pingshu8" : "ysts8";
+		$sql = sprintf('select bookid, chapterid, name, uri, uri2 from %s', $table);
+		$res = $this->db->query($sql);
+		if(False === $res)
+			return $chapters;
+
+		while($row = $res->fetch_assoc())
+		{
+			$chapter = array();
+			$chapter["uri"] = $row["uri"];
+			$chapter["uri2"] = $row["uri2"];
+			$chapter["name"] = $row["name"];
+			$chapter["bookid"] = $row["bookid"];
+			$chapter["chapterid"] = $row["chapterid"];
+			$chapters[] = $chapter;
 		}
 
 		$res->free();
