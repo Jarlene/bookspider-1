@@ -1,16 +1,12 @@
 <?php
-	require("php/db.inc");
 	require("php/sys.inc");
+	require("db-pingshu.inc");
 
-	$db = dbopen("pingshu", "115.28.54.237");
-	if($db->connect_errno)
-	{
-		echo "mysql error " . $db->connect->error;
-		return;
-	}
+	$db = new DBPingShu("115.28.54.237");
 
 	$ip = "";
-	$servers = array("115.28.51.131", "115.28.54.237", "115.29.145.111", "112.126.69.201", "121.40.136.6", "175.195.249.184");
+	$cols = array("210.183.56.107" => "uri2", "175.195.249.184" => "uri");
+	$servers = array("210.183.56.107", "175.195.249.184");
 	$ips = get_network_interface();
 	foreach($ips as $net){
 		if(in_array($net["ip"], $servers)){
@@ -24,182 +20,147 @@
 		return -1;
 	}
 
-	if(count($argv) < 2)
-	{
-		print_r("please input action: RM/Tidy/Check\n");
-		return -1;
-	}
+	$sites = array(//"pingshu8" => 1, 
+					"ysts8" => 2);
 
-	$action = $argv[1];
-	$chapters = db_query();
-	if(0 == strcmp("Check", $action)){
-		ActionCheck($ip, $chapters);
-	} else if(0 == strcmp("RM", $action) || 0 == strcmp("Tidy", $action)){
-		Action($ip, $action);
-	} else {
-		print_r("unknown command\n");
-		return -1;
-	}
+	print_r("ip: $ip\n");
+	print_r("action: remove files\n");
+	$files2 = 0;
+//	list($files0, $files1) = ActionRemoveFile(); // remove pingshu8/ysts8 files
 
-	function Action($ip, $action)
+	print_r("action: add files\n");
+	Action(); // add file to db
+
+	print_r("------------------------------------------------------\n");
+//	print_r("clean uri: $files0, remove: $files1\n");
+	print_r("add files: $files2\n");
+	print_r("------------------------------------------------------\n");
+
+	function Action()
 	{
-		$dirs = array("/ts", "/ts2", "/home");
-		foreach($dirs as $dir){
-			if(!is_dir($dir)){
-				continue;
+		global $ip;
+		global $db;
+		global $cols;
+		global $sites;
+
+		foreach($sites as $sitename => $siteid){
+			$urls = array();
+			$chapters = $db->list_chapters($siteid);
+			foreach($chapters as $chapter){
+				$uri = $chapter[$cols[$ip]];
+				$bookid = $chapter["bookid"];
+				$chapterid = $chapter["chapterid"];
+				$urls["$bookid:$chapterid"] = $uri;
 			}
 
-			ListDir($dir, "Action$action", $ip);
+			$dirs = array("/ts/$sitename", "/ts2/$sitename", "/home/$sitename");
+			foreach($dirs as $dir){
+				if(!is_dir($dir)){
+					continue;
+				}
+
+				ListDir($dir, "DBAddFile", $siteid, $urls);
+			}
 		}
-		
+
 		return 0;
 	}
 
-	function ActionCheck($ip, $chapters)
+	function DBAddFile($siteid, $urls, $file)
 	{
+		global $ip;
+		global $db;
+		global $files2;
+		$bookid = basename(dirname($file));
+		$chapterid = basename($file, ".mp3");
+
+		if(array_key_exists("$bookid:$chapterid", $urls)){
+			$uri = $urls["$bookid:$chapterid"];
+
+			$server = "";
+			$path = "/";
+			$parts = explode(":", $uri);
+			if(count($parts) == 1){
+				$server = "115.28.51.131";
+				$path = $uri;
+			} else {
+				$server = $parts[0];
+				$path = $parts[1];
+			}
+
+			if(0 == strcmp($ip, $server))
+				return;
+				
+		}
+
+		$uri = "$ip:$file";
+		print_r("Add file[$bookid:$chapterid]: $uri\n");
+		if(0 == strcmp("175.195.249.184", $ip))
+			$r = $db->set_chapter_uri($siteid, $bookid, $chapterid, $uri);
+		else
+			$r = $db->set_chapter_uri2($siteid, $bookid, $chapterid, $uri);
+		if(0 != $r)
+			print_r("db add file ($uri) error:" . $db->get_error() . "\n");
+		++$files2;
+	}
+
+	function ActionRemoveFile()
+	{
+		global $ip;
+		global $db;
+		global $cols;
+		global $sites;
+
 		$files0 = 0;
 		$files1 = 0;
-		foreach($chapters as $key => $uri){
-			list($bookid, $chapterid) = explode(":", $key);
-			//print_r("$bookid/$chapterid: $uri\n");
+		foreach($sites as $sitename => $siteid){
+			$chapters = $db->list_chapters($siteid);
+			foreach($chapters as $chapter){
+				$uri = $chapter[$cols[$ip]];
+				$bookid = $chapter["bookid"];
+				$chapterid = $chapter["chapterid"];
 
-			$server = "";
-			$path = "/";
-			$urls = explode(":", $uri);
-			if(count($urls) == 1){
-				$server = "115.28.51.131";
-				$path = $uri;
-			} else {
-				$server = $urls[0];
-				$path = $urls[1];
-			}
+				$server = "";
+				$path = "/";
+				$urls = explode(":", $uri);
+				if(count($urls) == 1){
+					$server = "115.28.51.131";
+					$path = $uri;
+				} else {
+					$server = $urls[0];
+					$path = $urls[1];
+				}
 
-			if(0 != strcmp($ip, $server))
-				continue;
-
-			if(!is_file($path)){
-				print_r("db[$key - $uri] file don't exist\n");
-			} else {
-				$fsize = filesize($path);
-				if($fsize > 2*1024)
+				if(0 != strcmp($ip, $server))
 					continue;
 
-				print_r("[$path] size: $fsize\n");
-				print_r("remove[$path] => [$uri]\n");
-				unlink($path);
-				++$files1;
-			}
-
-			db_set_chapter_uri($bookid, $chapterid, "");
-			++$files0;
-		}
-
-		print_r("------------------------------------------------------\n");
-		print_r("clean uri: $files0, remove: $files1\n");
-		print_r("------------------------------------------------------\n");
-	}
-	
-	function ActionTidy($ip, $file)
-	{
-		$bookid = basename(dirname($file));
-		$chapterid = basename($file, ".mp3");
-
-		global $chapters;
-		if(array_key_exists("$bookid:$chapterid", $chapters)){
-			$uri = $chapters["$bookid:$chapterid"];
-
-			$server = "";
-			$path = "/";
-			$urls = explode(":", $uri);
-			if(count($urls) == 1){
-				$server = "115.28.51.131";
-				$path = $uri;
-			} else {
-				$server = $urls[0];
-				$path = $urls[1];
-			}
-
-			if(0 == strcmp($ip, $server) || 0 == strcmp("175.195.249.184", $server))
-				return;
-		}
-		
-		print_r("[$file] don't in database\n");
-		$uri = "$ip:$file";
-		print_r("Add file[$file] => $uri\n");
-		db_set_chapter_uri($bookid, $chapterid, $uri);
-	}
-
-	function ActionRM($ip, $file)
-	{
-		$bookid = basename(dirname($file));
-		$chapterid = basename($file, ".mp3");
-
-		global $chapters;
-		if(!array_key_exists("$bookid:$chapterid", $chapters)){
-			print_r("file[$file] don't in database\n");
-		} else {
-			$uri = $chapters["$bookid:$chapterid"];
-			
-			$server = "";
-			$path = "/";
-			$urls = explode(":", $uri);
-			if(count($urls) == 1){
-				$server = "115.28.51.131";
-				$path = $uri;
-			} else {
-				$server = $urls[0];
-				$path = $urls[1];
-			}
-
-			if(0 != strcmp($ip, $server)){
-				// file has moved
-				if(0 != strcmp("175.195.249.184", $server)){
-					// file don't move to korea server
-					print_r("file[$file] map error: $uri\n");
+				if(!is_file($path)){
+					print_r("db[$uri] file don't exist\n");
 				} else {
-					print_r("remove[$file] => [$uri]\n");
-					unlink($file);
+					$fsize = filesize($path);
+					if($fsize > 6*1024)
+						continue;
+
+					print_r("[$path] size: $fsize\n");
+					print_r("remove[$path] => [$uri]\n");
+					unlink($path);
+					++$files1;
 				}
+
+				if(0 == strcmp("175.195.249.184", $ip))
+					$r = $db->set_chapter_uri($siteid, $bookid, $chapterid, "");
+				else
+					$r = $db->set_chapter_uri2($siteid, $bookid, $chapterid, "");
+				if(0 != $r)
+					print_r("db clear ($siteid, $bookid, $chapterid) error:" . $db->get_error());
+				++$files0;
 			}
-		}	
-	}
-
-	function db_query()
-	{
-		global $db;
-		
-		$sql = sprintf("select bookid, chapterid, uri from pingshu8");
-		$res = $db->query($sql);
-		if(!$res)
-		{
-			print_r("Action failed: " . $db->error);
-			return -1;
 		}
 
-		$chapters = array();
-		while($row = $res->fetch_assoc())
-		{
-			$bookid = $row["bookid"];
-			$chapterid = $row["chapterid"];
-			$uri = $row["uri"];
-
-			$chapters["$bookid:$chapterid"] = $uri;
-		}
-
-		$res->free();
-		return $chapters;
+		return array($files0, $files1);
 	}
 
-	function db_set_chapter_uri($bookid, $chapterid, $uri)
-	{
-		global $db;
-		$sql = sprintf('update pingshu8 set uri="%s" where bookid="%s" and chapterid=%d', $uri, $bookid, $chapterid);
-		if(!$db->query($sql))
-			print_r("DB set uri failed: " . $db->error);
-		return $db->error;
-	}
-	
-	function ListDir($dir, $callback, $param)
+	function ListDir($dir, $callback, $param1, $param2)
 	{
 		$dh = opendir($dir);
 		while( ($file = readdir($dh)) !== false){
@@ -209,9 +170,9 @@
 
 			$pathname = "$dir/$file";
 			if(0 == strcmp("dir", filetype($pathname))){
-				ListDir($pathname, $callback, $param);
+				ListDir($pathname, $callback, $param1, $param2);
 			} else {
-				call_user_func($callback, &$param, $pathname);
+				call_user_func($callback, $param1, $param2, $pathname);
 			}
 		}
 
