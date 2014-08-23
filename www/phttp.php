@@ -14,6 +14,7 @@ class PHttp
 			return $this->http->get($uri, $headers);
 		} else {
 			for($i = 0; $i < 5 && $i < count($this->proxies); $i++){
+				$this->offset = ($this->offset + 1) % count($this->proxies);
 				$proxy = $this->proxies[$this->offset];
 				$this->http->setproxy($proxy);
 
@@ -22,10 +23,6 @@ class PHttp
 					return $html;
 				} else {
 					unset($this->proxies[$this->offset]);
-				}
-
-				if(count($this->proxies) > 0){
-					$this->offset = ($this->offset + 1) % count($this->proxies);
 				}
 			}
 		}
