@@ -41,7 +41,7 @@ class PHttp
 		$this->http = new Http();
 		$this->http->settimeout(120);
 
-		if(!is_file($proxy)){
+		if(is_file($proxy)){
 			$this->proxies = split(",", file_get_contents($proxy));
 		} else {
 			$this->proxies = array();
