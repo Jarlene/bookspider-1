@@ -1,6 +1,6 @@
 <?php
 require_once("php/dom.inc");
-require_once("php/http.inc");
+require_once("phttp.php");
 require_once("http-proxy.php");
 require_once("php/http-multiple.inc");
 require_once("http-multiple-proxy.php");
@@ -204,7 +204,7 @@ require_once("db-pingshu.inc");
 		function GetChapters($bookid)
 		{
 			$uri = "http://www.ysts8.com/Yshtml/Ys" . $bookid . ".html";
-			$html = $this->_HttpGet($uri, "Ysjs/bot.js");
+			$html = $this->http->get($uri, "Ysjs/bot.js");
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			$xpath = new XPath($html);
 			$infos = $xpath->query("//div[@class='ny_txt']/ul/p");
@@ -270,7 +270,7 @@ require_once("db-pingshu.inc");
 
 		function GetBooks($uri)
 		{
-			$html = $this->_HttpGet($uri, "Ysjs/bot.js");
+			$html = $this->http->get($uri, "Ysjs/bot.js");
 			//file_put_contents ("1.html", $html);
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			$doc = dom_parse($html);
@@ -319,7 +319,7 @@ require_once("db-pingshu.inc");
 		function GetCatalog()
 		{
 			$uri = 'http://www.ysts8.com/index_ys.html';
-			$html = $this->_HttpGet($uri, "Ysjs/bot.js");
+			$html = $this->http->get($uri, "Ysjs/bot.js");
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			//file_put_contents ("1.html", $html);
 			$doc = dom_parse($html);
@@ -405,38 +405,14 @@ require_once("db-pingshu.inc");
 			return 0;
 		}
 
-		private function _HttpGet($uri, $pattern, $headers=array())
+		function __construct($proxy="proxy.cfg")
 		{
-			static $idx = -1;
-			if(-1 == $idx)
-				$idx = rand() % count($this->proxies);
-
-			for($i=0; $i<5 && count($this->proxies)>0; $i++){
-				$this->http->setproxy($this->proxies[$idx]);
-
-				$html = $this->http->get($uri, $headers);
-				if(False === strpos($html, $pattern)){
-					unset($this->proxies[$idx]);
-					continue;
-				} 
-
-				$idx = ($idx + 1) % count($this->proxies);
-				return $html;
-			};
-
-			return "";
-		}
-
-		function __construct()
-		{
-			$this->http = new Http();
-			//$this->http->setcookie("/var/ysts8.cookie");
-			$this->http->settimeout(120);
-			$this->proxies = split(",", file_get_contents("proxy.cfg"));
+			$this->http = new PHttp($proxy);
+			//$this->http->get_http()->setcookie("/var/ysts8.cookie");
+			$this->http->get_http()->settimeout(120);
 		}
 
 		private $http;
-		private $proxies;
 	}
 
 //$site = new CYSTS8();
