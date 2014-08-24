@@ -10,7 +10,7 @@ class PHttp
 
 	function get($uri, $pattern, $headers=array())
 	{
-		if(count($this->proxies) < 0){
+		if(count($this->proxies) < 1){
 			return $this->http->get($uri, $headers);
 		} else {
 			for($i = 0; $i < 5 && $i < count($this->proxies); $i++){
