@@ -256,17 +256,17 @@ require_once("db-pingshu.inc");
 			$html = http_proxy_get($uri, "Ysjs/bot.js", 10);
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			if(strlen($html) < 1) return $books;
-			return $this->__ParseBooks($html, "//div[@class='pingshu_ysts8_i']/ul/li/a | //div[@class='pingshu_ysts8']/ul/li/a | //div[@class='Yshtml']/ul/li/a");
+			return $this->__ParseBooks($html);
 		}
 
-		function __ParseBooks($html, $path)
+		function __ParseBooks($html)
 		{
 			$books = array();
 			$xpath = new XPath($html);
-			$elements = $xpath->query($path);
+			$elements = $xpath->query("//div[@class='pingshu_ysts8_i']/ul/li/a | //div[@class='pingshu_ysts8']/ul/li/a | //div[@class='Yshtml']/ul/li/a");
 			foreach ($elements as $element) {
 				$href = $element->getattribute('href');
-				$book = $element->nodeValue;
+				$book = $element->childNodes->item(0)->nodeValue;
 
 				$bookid = basename($href, ".html");
 				$books[substr($bookid, 2)] = $book;
@@ -283,12 +283,12 @@ require_once("db-pingshu.inc");
 			$doc = dom_parse($html);
 
 			if(0 == strcmp($uri, 'http://www.ysts8.com/index_tim.html')){
-				$books = $this->__ParseBooks($html, "//div[@class='pingshu_ysts8_i']/ul/li/a");
+				$books = $this->__ParseBooks($html);
 			} else if(0 == strcmp($uri, 'http://www.ysts8.com/index_hot.html')){
-				$books = $this->__ParseBooks($html, "//div[@class='pingshu_ysts8_i']/ul/li/a");
+				$books = $this->__ParseBooks($html);
 			} else {
 				$options = xpath_query($doc, "//select[@name='select']/option");
-				$books = $this->__ParseBooks($html, "//div[@class='pingshu_ysts8']/ul/li/a");
+				$books = $this->__ParseBooks($html);
 
 				$host = parse_url($uri);
 				$urls = array();
