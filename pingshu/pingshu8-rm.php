@@ -26,33 +26,22 @@
 	print_r("ip: $ip\n");
 	print_r("action: remove files\n");
 	$files2 = 0;
-//	list($files0, $files1) = ActionRemoveFile(); // remove pingshu8/ysts8 files
+	list($files0, $files1) = ActionRemoveFile(); // remove pingshu8/ysts8 files
 
 	print_r("action: add files\n");
 	Action(); // add file to db
 
 	print_r("------------------------------------------------------\n");
-//	print_r("clean uri: $files0, remove: $files1\n");
+	print_r("clean uri: $files0, remove: $files1\n");
 	print_r("add files: $files2\n");
 	print_r("------------------------------------------------------\n");
 
 	function Action()
 	{
-		global $ip;
-		global $db;
-		global $cols;
 		global $sites;
 
 		foreach($sites as $sitename => $siteid){
-			$urls = array();
-			$chapters = $db->list_chapters($siteid);
-			foreach($chapters as $chapter){
-				$uri = $chapter[$cols[$ip]];
-				$bookid = $chapter["bookid"];
-				$chapterid = $chapter["chapterid"];
-				$urls["$bookid:$chapterid"] = $uri;
-			}
-
+			$urls = DBListChapter($siteid);
 			$dirs = array("/ts/$sitename", "/ts2/$sitename", "/home/$sitename");
 			foreach($dirs as $dir){
 				if(!is_dir($dir)){
@@ -66,6 +55,32 @@
 		return 0;
 	}
 
+	function DBListChapter($siteid)
+	{
+		global $db;
+		global $ip;
+		global $cols;
+
+		$table = (1 == $siteid) ? "pingshu8" : "ysts8";
+		$sql = sprintf('select bookid, chapterid, %s as file from %s', $cols[$ip], $table);
+		$res = $db->exec($sql);
+		if(False === $res)
+			return False;
+
+		$urls = array();
+		while($row = $res->fetch_assoc())
+		{
+			$uri = $row["file"];
+			$bookid = $row["bookid"];
+			$chapterid = $row["chapterid"];
+			$urls["$bookid:$chapterid"] = $uri;
+		}
+
+		$res->free();
+		$res = null;
+		return $urls;
+	}
+	
 	function DBAddFile($siteid, $urls, $file)
 	{
 		global $ip;

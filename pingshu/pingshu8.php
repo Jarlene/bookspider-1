@@ -29,7 +29,11 @@ class CPingShu8
 		//list($play, $chapterid) = explode("_", basename($uri, ".html"));
 		$chapterid = $uri;
 
-		$rawuri = $this->DBGetAudio($bookid, $chapterid);
+		if(count(explode("_", $bookid)) > 1)
+			$siteid = self::$siteid;
+		else
+			$siteid = 2;
+		$rawuri = $this->DBGetAudio($bookid, $chapterid, $siteid);
 //		if(strlen($rawuri) < 1)
 //			$rawuri = $this->WebGetAudio($bookid, $chapterid, $uri);
 		return $rawuri;
@@ -190,10 +194,10 @@ class CPingShu8
 		return $uri;
 	}
 
-	function DBGetAudio($bookid, $chapterid)
+	function DBGetAudio($bookid, $chapterid, $siteid)
 	{
 		$db = new DBPingShu($this->dbhost);
-		$chapter = $db->get_chapter(self::$siteid, $bookid, $chapterid);
+		$chapter = $db->get_chapter($siteid, $bookid, $chapterid);
 		if(False === $chapter)
 			return "";
 
@@ -223,6 +227,12 @@ class CPingShu8
 		$uri = str_replace("/ts/pingshu8", "/2", $uri);
 		$uri = str_replace("//ts2/pingshu8", "/3", $uri);
 		$uri = str_replace("/ts2/pingshu8", "/3", $uri);
+		$uri = str_replace("//home/ysts8", "/11", $uri);
+		$uri = str_replace("/home/ysts8", "/11", $uri);
+		$uri = str_replace("//ts/ysts8", "/12", $uri);
+		$uri = str_replace("/ts/ysts8", "/12", $uri);
+		$uri = str_replace("//ts2/ysts8", "/13", $uri);
+		$uri = str_replace("/ts2/ysts8", "/13", $uri);
 		return "http://$server$uri";
 	}
 
@@ -231,17 +241,21 @@ class CPingShu8
 	//----------------------------------------------------------------------------
 	function GetChapters($bookid)
 	{
-		$data = $this->DBGetChapters($bookid);
+		if(count(explode("_", $bookid)) > 1)
+			$siteid = self::$siteid;
+		else
+			$siteid = 2;
+		$data = $this->DBGetChapters($bookid, $siteid);
 		//if(False === $data)
 		//	return $this->WebGetChapters($bookid);
 		return $data;
 	}
 
-	function DBGetChapters($bookid)
+	function DBGetChapters($bookid, $siteid)
 	{
 		$db = new DBPingShu($this->dbhost);
-		$book = $db->get_book(self::$siteid, $bookid);
-		$chapters = $db->get_chapters(self::$siteid, $bookid);
+		$book = $db->get_book($siteid, $bookid);
+		$chapters = $db->get_chapters($siteid, $bookid);
 		if(False == $book || 0 == count($chapters))
 			return False;
 		
@@ -348,19 +362,46 @@ class CPingShu8
 
 	function Search($keyword)
 	{
+		$sql = sprintf('select bookid, name from books where siteid=%d and name like "%%%s%%"', self::$siteid, $keyword);
+
 		$db = new DBPingShu($this->dbhost);
-		$dbbooks = $db->search($keyword);
-		if(False === $dbbooks)
+		$res = $db->exec($sql);
+		if(False === $res)
 			return array("catalog" => array(), "book" => array());
 
 		$books = array();
-		foreach ($dbbooks as $bookid => $value) {
-			$books[$bookid] = $value["name"];
+		while($row = $res->fetch_assoc())
+		{
+			$bookid = $row["bookid"];
+			$books[$bookid] = $row["name"];
 		}
 
+		$res->free();
+		$res = null;
+
+		$this->Search2($keyword, &$books);
 		//$authors = $this->__SearchAuthor($keyword);
 		//$books = $this->__SearchBook($keyword);
 		return array("catalog" => array(), "book" => $books);
+	}
+	
+	function Search2($keyword, $books)
+	{
+		$sql = sprintf('select a.bookid, a.name, count(uri2) as num from books as a, ysts8 as b where b.uri2!="" and a.name like "%%%s%%" and a.bookid=b.bookid and siteid=2 group by a.bookid', $keyword);
+		$db = new DBPingShu($this->dbhost);
+		$res = $db->exec($sql);
+		if(False === $res)
+			return array("catalog" => array(), "book" => array());
+
+		while($row = $res->fetch_assoc())
+		{
+			if($row["num"] < 1) continue;
+			$bookid = $row["bookid"];
+			$books[$bookid] = $row["name"];
+		}
+
+		$res->free();
+		$res = null;
 	}
 
 	//---------------------------------------------------------------------------

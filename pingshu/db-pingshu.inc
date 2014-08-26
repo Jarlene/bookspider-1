@@ -188,11 +188,11 @@ class DBPingShu
 	//----------------------------------------------------------------------------
 	// search
 	//----------------------------------------------------------------------------
-	function search($keyword)
+	function search($keyword, $siteid=1)
 	{
 		$books = array();
 
-		$sql = sprintf('select siteid, bookid, author, name, icon, summary, catalog, subcatalog from books where siteid=1 and name like "%%%s%%"', $keyword);
+		$sql = sprintf('select siteid, bookid, author, name, icon, summary, catalog, subcatalog from books where siteid=%d and name like "%%%s%%"', $siteid, $keyword);
 		$res = $this->db->query($sql);
 		if(False === $res)
 			return $books;
@@ -216,6 +216,15 @@ class DBPingShu
 		return $books;
 	}
 
+	//----------------------------------------------------------------------------
+	// exec
+	//----------------------------------------------------------------------------
+	function exec($sql)
+	{
+		$res = $this->db->query($sql);
+		return $res;
+	}
+	
 	//----------------------------------------------------------------------------
 	// member variable
 	//----------------------------------------------------------------------------
