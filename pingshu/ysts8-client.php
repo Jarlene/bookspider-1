@@ -68,8 +68,8 @@
 
 			$name = $dbbook["name"];
 			print_r("AddChapter([$i]$bookid - $name)\n");
-			AddChapter($bookid, $name, $update_mode);
-			sleep(20);
+			if(0 != AddChapter($bookid, $name, $update_mode))
+				sleep(20);
 		}
 	}
 
@@ -140,7 +140,7 @@
 			return -1;
 		} else if(count($dbchapters) == count($chapters)){
 			print_r("book has download.\n");
-			return 0;
+			return 1;
 		}
 
 		if(count($dbchapters)<1 && strlen($result["info"]) > 1){
