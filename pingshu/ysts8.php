@@ -248,21 +248,28 @@ require_once("db-pingshu.inc");
 			return $data;
 		}
 
-		function __ParseBooks($response, $xpath)
+		//----------------------------------------------------------------------------
+		// Website
+		//----------------------------------------------------------------------------	
+		function WebGetBooks($uri)
 		{
-			$doc = dom_parse($response);
-			$elements = xpath_query($doc, $xpath);
+			$html = http_proxy_get($uri, "Ysjs/bot.js", 10);
+			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+			if(strlen($html) < 1) return $books;
+			return $this->__ParseBooks($html, "//div[@class='pingshu_ysts8_i']/ul/li/a | //div[@class='pingshu_ysts8']/ul/li/a | //div[@class='Yshtml']/ul/li/a");
+		}
 
+		function __ParseBooks($html, $path)
+		{
 			$books = array();
+			$xpath = new XPath($html);
+			$elements = $xpath->query($path);
 			foreach ($elements as $element) {
 				$href = $element->getattribute('href');
-				$book = $element->firstChild->wholeText;
+				$book = $element->nodeValue;
 
-				if(strlen($href) > 0 && strlen($book) > 0){
-					$bookid = basename($href);
-					$n = strpos($bookid, '.');
-					$books[substr($bookid, 2, $n-2)] = $book;
-				}
+				$bookid = basename($href, ".html");
+				$books[substr($bookid, 2)] = $book;
 			}
 
 			return $books;
@@ -316,6 +323,22 @@ require_once("db-pingshu.inc");
 			return $data;
 		}
 
+		function GetCatalogUrls($uri)
+		{
+			$html = $this->http->get($uri, "Ysjs/bot.js");
+			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
+			$xpath = new XPath($html);
+			$options = $xpath->query("//select[@name='select']/option");
+
+			$urls = array();
+			foreach ($options as $option) {
+				$href = $option->getattribute('value');
+				if(strlen($href) < 1) continue;
+				$urls[] = dirname($uri) . '/' . $href;
+			}
+			return $urls;
+		}
+		
 		function GetCatalog()
 		{
 			$uri = 'http://www.ysts8.com/index_ys.html';
