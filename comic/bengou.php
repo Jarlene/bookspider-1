@@ -132,7 +132,7 @@ class CBenGou
 	//----------------------------------------------------------------------------
 	// functions
 	//----------------------------------------------------------------------------
-	function __construct($proxy="proxy.cfg1")
+	function __construct($proxy="proxy.cfg")
 	{
 		$this->http = new PHttp($proxy);
 		//$this->http->get_http()->setcookie("/var/cookie.bengou");

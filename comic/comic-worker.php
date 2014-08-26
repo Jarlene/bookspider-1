@@ -7,16 +7,13 @@
 //	require("imanhua.php");
 
 	$sites = array(
-		CBenGou::$siteid => new CBenGou(),
+		CBenGou::$siteid => new CBenGou("proxy.cfg2"),
 	//	CIManHua::$siteid => new CIManHua(),
 	);
 
 	$http = new Http();
 //	$http->setcookie("/var/ysts8.cookie");
 	$http->settimeout(120);
-
-	$client = new GearmanClient();
-	$client->addServer("115.28.54.237", 4730);
 
 	$ip = "192.168.164.128";
 	$task_count = 0;
@@ -35,7 +32,7 @@
 	}
 
 	$basedir = "/comic/bengou/";
-	$paths = array("115.28.51.131" => "/comic/bengou/");
+	$paths = array("115.28.51.131" => "/ts2/comic/bengou/");
 	$ips = get_network_interface();
 	foreach($ips as $net){
 		if(array_key_exists($net["ip"], $paths)){
@@ -46,6 +43,10 @@
 
 	print_r("IP: $ip\n");
 	print_r("DIR: $basedir\n");
+
+	$failedCount = 0;
+	$client = new GearmanClient();
+	$client->addServer("115.28.54.237", 4730);
 
 	$worker = new GearmanWorker();
 	$worker->addServer('115.28.54.237', 4730);
@@ -102,14 +103,16 @@
 	{
 		global $http;
 		global $sites;
-		global $worker;
+		global $client;
+		global $failedCount;
 
 		$site = $sites[$siteid];
 		$chapters = $site->GetChapter($bookid, $chapterid);
 		if(False === $chapters){
-			print_r("task($bookid, $chapterid) failed, re-add it.\n");
+			++$failedCount;
+			print_r("task($bookid, $chapterid) failed[$failedCount], re-add it.\n");
 			$workload = sprintf("%s,%d", $bookid, $chapterid);
-			$worker->doBackground('comic-bengou', $workload, $workload);
+			$client->doBackground('comic-bengou', $workload, $workload);
 			return False;
 		}
 
