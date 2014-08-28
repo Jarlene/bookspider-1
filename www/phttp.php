@@ -23,6 +23,7 @@ class PHttp
 					return $html;
 				} else {
 					unset($this->proxies[$this->offset]);
+					$this->proxies = array_values($this->proxies);
 				}
 			}
 		}
