@@ -47,7 +47,7 @@ class XPath
 		}
 		return $elements;
 	}
-	
+
 	function get_value($path, $parent=null, $default=null)
 	{
 		$elements = $this->query($path, $parent);
@@ -63,7 +63,23 @@ class XPath
 			return $elements->item(0)->getattribute($attr);
 		return $default;
 	}
-	
+
+	function get_text($path, $parent=null, $default=null)
+	{
+		$texts = array();
+		$elements = $this->query($path, $parent);
+		if(1 == $elements->length){
+			foreach($elements->item(0)->childNodes as $node){
+				if(XML_TEXT_NODE == $node->nodeType){
+					$texts[] = $node->nodeValue;
+				}
+			}
+			return join("\r\n", $texts);
+		} else
+			return $default;
+		}
+	}
+
 	private $m_xpath;
 };
 
