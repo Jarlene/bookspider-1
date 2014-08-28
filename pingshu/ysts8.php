@@ -208,8 +208,8 @@ require_once("db-pingshu.inc");
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			$xpath = new XPath($html);
 			$infos = $xpath->query("//div[@class='ny_txt']/ul/p");
-			$elements = $xpath->query("//div[@class='ny_l']/ul/li/a[1]");
-
+			$elements = $xpath->query("//div[@class='ny_l']/ul/li/a[1] | //div[@class='zxwz']/ul/li/a[1]");
+			
 			$summary = "";
 			foreach($infos as $info){
 				foreach($info->childNodes as $node){
