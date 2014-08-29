@@ -229,11 +229,11 @@ require_once("db-pingshu.inc");
 					if(strlen($href) > 0 && strlen($name) > 0){
 						$chapterid = basename($href, ".html");
 						list($play, $bookid, $dir1, $dir2, $chapter) = explode("_", $chapterid);
-						if($dir1 > 99999 || 1 != $dir2 || $chapter > 9999){
+						if((int)$dir1 > 99999 || (int)$dir2 > 9 || (int)$chapter > 9999){
 							print_r("invalid chapter: $chapterid\n");
 							die();
 						}
-						$chapterid = sprintf("%05d%d%04d", $dir1, $dir2, $chapter);
+						$chapterid = sprintf("%05d%d%04d", (int)$dir1, (int)$dir2, (int)$chapter);
 						$chapters[] = array("name" => $name, "uri" => $chapterid);
 					}
 				}
