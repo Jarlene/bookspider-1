@@ -14,7 +14,7 @@ class CPingShu8
 
 	public $redirect = 0;
 	public $useDelegate = 1;
-	private $dbhost = "115.28.54.237";
+	private $dbhost = "127.0.0.1";
 	public static $siteid = 1;
 
 	function GetName()
@@ -434,13 +434,12 @@ class CPingShu8
 		if(!$mdb->exists($hotkey)){
 			$sql = sprintf('select hot from books where siteid=%d and bookid="%s"', $siteid, $bookid);
 			$res = $db->exec($sql);
-			if($res && $row = $res->fetch_assoc())
+			if($res && $row = $res->fetch_assoc()){
 				$mdb->set($hotkey, (int)$row["hot"]);
+			}
 		}
 
-		$value = $mdb->incr($hotkey);		
-		$sql = sprintf('update books set hot=%d where siteid=%d and bookid="%s"', (int)$value, $siteid, $bookid);
-		$db->exec($sql);
+		$value = $mdb->incr($hotkey);
 	}
 
 	//---------------------------------------------------------------------------
