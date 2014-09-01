@@ -14,7 +14,7 @@ class CPingShu8
 
 	public $redirect = 0;
 	public $useDelegate = 1;
-	private $dbhost = "127.0.0.1";
+	private $dbhost = "115.28.54.237";
 	public static $siteid = 1;
 
 	function GetName()
@@ -25,7 +25,7 @@ class CPingShu8
 	function GetAudio($bookid, $chapter, $uri)
 	{
 		global $headers;
-		
+
 		//list($play, $chapterid) = explode("_", basename($uri, ".html"));
 		$chapterid = $uri;
 
@@ -33,6 +33,9 @@ class CPingShu8
 			$siteid = self::$siteid;
 		else
 			$siteid = 2;
+		
+		$this->UpdateBookHot($siteid, $bookid);
+	
 		$rawuri = $this->DBGetAudio($bookid, $chapterid, $siteid);
 //		if(strlen($rawuri) < 1)
 //			$rawuri = $this->WebGetAudio($bookid, $chapterid, $uri);
@@ -203,8 +206,23 @@ class CPingShu8
 
 		$uri = $chapter["uri"];
 		$uri2 = $chapter["uri2"];
-		if(0==strlen($uri) || (strlen($uri2) > 0 && 0==$chapterid%2))
-			$uri = $uri2;
+		
+		if (strlen($uri2) > 0)
+		{
+			if(0==strlen($uri))   //只有uri2,走uri2
+				$uri = $uri2;
+			else if(0 < strlen($uri))  //  uri1和uri2同时存在，x/10走uri2
+			{
+				if (0 == strcmp(substr($uri, 0, 14), '115.29.145.111'))  // uri在111服务器上, 走uri2
+					$uri = $uri2;
+				else
+				{
+					$rand = rand(1,10);
+					if ($rand > 10)
+						$uri = $uri2;
+				}
+			}
+		}
 
 		$server = "";
 		$path = "/";
@@ -402,6 +420,27 @@ class CPingShu8
 
 		$res->free();
 		$res = null;
+	}
+
+	//---------------------------------------------------------------------------
+	// user function
+	//---------------------------------------------------------------------------
+	function UpdateBookHot($siteid, $bookid)
+	{
+		global $mdb;
+
+		$db = new DBPingShu($this->dbhost);
+		$hotkey = "ts-server-hot-" . $this->GetName() . "-book-" . $bookid;
+		if(!$mdb->exists($hotkey)){
+			$sql = sprintf('select hot from books where siteid=%d and bookid="%s"', $siteid, $bookid);
+			$res = $db->exec($sql);
+			if($res && $row = $res->fetch_assoc())
+				$mdb->set($hotkey, (int)$row["hot"]);
+		}
+
+		$value = $mdb->incr($hotkey);		
+		$sql = sprintf('update books set hot=%d where siteid=%d and bookid="%s"', (int)$value, $siteid, $bookid);
+		$db->exec($sql);
 	}
 
 	//---------------------------------------------------------------------------
