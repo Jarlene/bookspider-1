@@ -7,12 +7,21 @@
 	require_once("http-multiple-proxy.php");
 	require("pingshu8.php");
 
+	$client = new GearmanClient();
+	$client->addServer("115.28.54.237", 4730);	
 	$db = new DBPingShu("115.28.54.237");
 
-	$update_mode = False;
-	Action1($update_mode);
-	Action2($update_mode);
-	Action3();
+	$useDelegate = 0;
+	
+	$update_mode = TRUE; // 只找没有的书
+	//Action1($update_mode);
+	//Action2($update_mode);
+	//Action3();
+	if($update_mode)// 每天调用更新一次
+	{
+		Action4($update_mode); 
+		Action3();
+	}
 
 	function Action1($update_mode)
 	{
@@ -29,8 +38,10 @@
 			if(!array_key_exists($id, $dbbooks))
 			{
 				print_r("[$i]DB add book($id, $name)\n");
-				if(0 != $db->add_book(CPingShu8::$siteid, $id, "", $name, "", "", "", ""))
+				if(0 != $db->add_book(CPingShu8::$siteid, $id, "", $name, "", "", "", "")){
 					print_r("add book($id) error: " . $db->get_error() . "\n");
+					die();
+				}
 			}
 		}
 	}
@@ -47,17 +58,17 @@
 			$i++;
 			$name = $dbbook["name"];
 			print_r("AddChapter([$i]$bookid - $name)\n");
-			AddChapter($bookid, $dbbook, $update_mode);
+			if(0 != AddChapter($bookid, $dbbook, $update_mode))
+				sleep(20);
 		}
 	}
 
 	function Action3()
 	{
-		$client = new GearmanClient();
-		$client->addServer("115.28.54.237", 4730);
-
 		$i = 0;
 		global $db;
+		global $client;
+
 		$dbbooks = $db->get_books(CPingShu8::$siteid);
 		foreach($dbbooks as $bookid => $dbbook)
 		{
@@ -66,14 +77,44 @@
 			{
 				$uri = $dbchapter["uri"];
 				$uri2 = $dbchapter["uri2"];
-				//if(strlen($uri2) > 1 || 0==strncmp("175.195.249.184", $uri, 10))
-				if(strlen($uri) > 1 || strlen($uri2) > 1)
+				if(strlen($uri2) > 1 || 0==strncmp("175.195.249.184", $uri, 10))
+				//if(strlen($uri) > 1 || strlen($uri2) > 1)
 					continue;
 
-				print_r("Add task($bookid, $chapterid)\n");
+				++$i;
+				print_r("[$i]Add task($bookid, $chapterid)\n");
 				$workload = sprintf("%s,%d", $bookid, $chapterid);
 				$client->doBackground('DownloadPingshu8', $workload, $workload);
 			}
+		}
+	}
+	
+	function Action4($update_mode)
+	{
+		$books = GetBooks($update_mode);
+		$n = count($books);
+		print_r("Get Books: " . count($books) . "\n");
+	
+		$i = 0;
+		global $db;
+		$dbbooks = $db->get_books(CPingShu8::$siteid);
+		foreach($books as $id => $name)
+		{
+			$i++;
+			print_r("$id = $name \n");
+			if(!array_key_exists($id, $dbbooks))
+			{
+				print_r("[$i]DB add book($id, $name)\n");
+				if(0 != $db->add_book(CPingShu8::$siteid, $id, "", $name, "", "", "", "")){
+					print_r("add book($id) error: " . $db->get_error() . "\n");
+					die();
+				}
+
+				$dbbooks[$id] = array("icon" => "");
+			}
+
+			if(0 != AddChapter($id, $dbbooks[$id], $update_mode))
+				sleep(20);
 		}
 	}
 
@@ -82,6 +123,7 @@
 	//----------------------------------------------------------------------------
 	function GetBooks($update_mode)
 	{
+		global $useDelegate;
 		$books = array();
 
 		$urls = array();
@@ -95,8 +137,13 @@
 			$urls[]= "http://www.pingshu8.com/Special/Msp_218.Htm";
 		}
 
-		foreach($urls as $uri){
-			$html = http_proxy_get($uri, "luckyzz@163.com", 20);
+		foreach($urls as $uri)
+		{
+			if ($useDelegate == 1)
+				$html = http_proxy_get($uri, "luckyzz@163.com", 20);
+			else
+				$html = http_get($uri);
+			
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			if(strlen($html) < 1){
 				print_r("Load failed: $uri\n");
@@ -104,14 +151,27 @@
 			}
 
 			$xpath = new XPath($html);
-			$elements = $xpath->query("//div[@class='tab3']/a | //div[@class='tab33']/a");
-			foreach ($elements as $element) {
-				$href = $element->getattribute('href');
-				$book = $element->nodeValue;
+			
+			if(0 == strcmp($uri, 'http://www.pingshu8.com/music/newzj.htm')){
+				$elements = $xpath->query("//div[@class='tab3']/ul/li/a[2]");
+				foreach ($elements as $element){
+					$href = $element->getattribute('href');
+					$book = $xpath->get_value("span", $element);
 
-				$bookid = basename($href);
-				$n = strpos($bookid, '.');
-				$books[substr($bookid, 4, $n-4)] = $book;
+					$bookid = basename($href);
+					$n = strpos($bookid, '.');
+					$books[substr($bookid, 4, $n-4)] = $book;
+				}
+			} else {
+				$elements = $xpath->query("//div[@class='tab3']/a | //div[@class='tab33']/a");
+				foreach ($elements as $element) {
+					$href = $element->getattribute('href');
+					$book = $element->nodeValue;
+
+					$bookid = basename($href);
+					$n = strpos($bookid, '.');
+					$books[substr($bookid, 4, $n-4)] = $book;
+				}
 			}
 		}
 
@@ -129,12 +189,14 @@
 			return 0;
 		}
 
-		$book = __WebGetChapters($bookid);
+		$book = __WebGetChapters($bookid, count($dbchapters));
 		if(strlen($dbbook["icon"]) < 1 && strlen($book["icon"]) > 1){
 			$bookname = $dbbook["name"];
 			print_r("DB book update($bookid, $bookname)\n");
-			if(0 != $db->update_book(CPingShu8::$siteid, $bookid, "", $bookname, $book["icon"], $book["info"], $book["catalog"], $book["subcatalog"]))
+			if(0 != $db->update_book(CPingShu8::$siteid, $bookid, "", $bookname, $book["icon"], $book["info"], $book["catalog"], $book["subcatalog"])){
 				print_r("update book2($bookid) error: " . $db->get_error() . "\n");
+				die();
+			}
 		}
 
 		$chapters = $book["chapter"];
@@ -144,30 +206,53 @@
 			if(!array_key_exists($chapterid, $dbchapters)){
 				$name = $chapter["name"];
 				print_r("DB add chapter($bookid, $chapterid, $name)\n");
-				if(0 != $db->add_chapter(CPingShu8::$siteid, $bookid, $chapterid, $name, ""))
+				if(0 != $db->add_chapter(CPingShu8::$siteid, $bookid, $chapterid, $name, "")){
 					print_r("add_chapter($bookid, $chapterid) error: " . $db->get_error() . "\n");
+					die();
+				}
+
+				print_r("Add task($bookid, $chapterid)\n");
+				$workload = sprintf("%s,%d", $bookid, $chapterid);
+				$client->doBackground('DownloadPingshu8', $workload, $workload);
 			}
 		}
+
+		return 1;
 	}
 
 	//----------------------------------------------------------------------------
 	// Website
 	//----------------------------------------------------------------------------	
-	function __WebGetChapters($bookid)
+	function __WebGetChapters($bookid, $dbChapterCount)
 	{
+		global $useDelegate;
+		
 		$book = __WebGetBookInfo($bookid);
+		
+		$updateCount = $book["count"] - $dbChapterCount;
+		
+		if ($updateCount%10)
+			$addPage = 1;
+		else 
+			$addPage = 0;
+		$updatePage = $updateCount/10 + $addPage;
 
 		list($v1, $v2, $v3) = explode("_", $bookid);
 
 		$urls = array();
 		$page = $book["page"];
-		for($i = 1; $i < $page; $i++){
+		for($i = ($page-$updatePage)+1; $i < $page; $i++){
 			$urls[] = sprintf("http://www.pingshu8.com/MusicList/mmc_%d_%d_%d.htm", $v1, $v2, $i+1);
 		}
 
 		if(count($urls) > 0){
 			$result = array();
-			$http = new HttpMultipleProxy("proxy.cfg");
+			
+			if ($useDelegate == 1)
+				$http = new HttpMultipleProxy("proxy.cfg");
+			else
+				$http = new HttpMultiple();
+
 			$r = $http->get($urls, '_OnReadChapter', &$result, 20);
 
 			if(count($result) != count($urls)){
@@ -186,9 +271,18 @@
 
 	function __WebGetBookInfo($bookid)
 	{
+		global $useDelegate;
+		
 		$uri = "http://www.pingshu8.com/MusicList/mmc_$bookid.htm";
 		$referer = "Referer: http://www.pingshu8.com/top/xiangsheng.htm";
-		$html = http_proxy_get($uri, "luckyzz@163.com", 20, "proxy.cfg", array($referer));
+		
+		if ($useDelegate == 1)
+			$html = http_proxy_get($uri, "luckyzz@163.com", 20, "proxy.cfg", array($referer));
+		else
+			$html = http_get($uri, 20, "", array($referer));
+		
+		
+		
 		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 		if(strlen($html) < 1){
 			$data = array();
@@ -252,7 +346,8 @@
 			$href = $element->getattribute('href');
 			$chapter = $element->nodeValue;
 
-			if(strlen($href) > 0 && strlen($chapter) > 0){
+			if(strlen($href) > 0 && strlen($chapter) > 0)
+			{
 				list($play, $chapterid) = explode("_", basename($href, ".html"));
 				$chapters[] = array("name" => $chapter, "uri" => $chapterid);
 			}

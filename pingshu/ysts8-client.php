@@ -37,21 +37,25 @@
 				$i++;
 				if(!array_key_exists($id, $dbbooks)){
 					print_r("[$i]DB add book($id, $name)\n");
-					if(0 != $db->add_book(CYSTS8::$siteid, $id, "", $name, "", "", "", ""))
+					if(0 != $db->add_book(CYSTS8::$siteid, $id, "", $name, "", "", "", "")){
 						print_r("add book($id) error: " . $db->get_error() . "\n");
+						die();
+					}
 				} else {
 					$dbbook = $dbbooks[$id];
 					if(strlen($dbbook["name"]) < 1){
 						print_r("[$i]DB book update($id, $name)\n");
-						if(0 != $db->update_book(CYSTS8::$siteid, $id, $dbbook["author"], $name, $dbbook["icon"], $dbbook["summary"], $dbbook["catalog"], $dbbook["subcatalog"]))
+						if(0 != $db->update_book(CYSTS8::$siteid, $id, $dbbook["author"], $name, $dbbook["icon"], $dbbook["summary"], $dbbook["catalog"], $dbbook["subcatalog"])){
 							print_r("update book($id) error: " . $db->get_error() . "\n");
+							die();
+						}
 					}
 				}
 			}
 			sleep(10);
 		}
 	}
-	
+
 	// add
 	function Action2($update_mode)
 	{
@@ -64,7 +68,7 @@
 		foreach($dbbooks as $bookid => $dbbook)
 		{
 			$i++;
-			//if($i >= 1089) break;
+			//if($i < 10000) continue;
 
 			$name = $dbbook["name"];
 			print_r("AddChapter([$i]$bookid - $name)\n");
@@ -92,7 +96,8 @@
 				if(strlen($uri) > 1 || strlen($uri2) > 1)
 					continue;
 
-				print_r("Add task($bookid, $chapterid)\n");
+				++$i;
+				print_r("[$i]Add task($bookid, $chapterid)\n");
 				$workload = sprintf("%s,%d", $bookid, $chapterid);
 				$client->doBackground('DownloadYsts8', $workload, $workload);
 			}
@@ -145,8 +150,10 @@
 
 		if(count($dbchapters)<1 && strlen($result["info"]) > 1){
 			print_r("DB book update($bookid, $bookname)\n");
-			if(0 != $db->update_book(CYSTS8::$siteid, $bookid, "", $bookname, $result["icon"], $result["info"], $result["catalog"], $result["subcatalog"]))
+			if(0 != $db->update_book(CYSTS8::$siteid, $bookid, "", $bookname, $result["icon"], $result["info"], $result["catalog"], $result["subcatalog"])){
 				print_r("update book($bookid) error: " . $db->get_error() . "\n");
+				die();
+			}
 		}
 
 		print_r("db chapters: " . count($dbchapters) . " chapters: " . count($chapters) . "\n");
@@ -155,9 +162,11 @@
 			if(!array_key_exists($chapterid, $dbchapters)){
 				$name = $chapter["name"];
 				print_r("DB add chapter($bookid, $chapterid, $name)\n");
-				$db->add_chapter(CYSTS8::$siteid, $bookid, $chapterid, $name, "");
+				if(0 != $db->add_chapter(CYSTS8::$siteid, $bookid, $chapterid, $name, "")){
+					print_r("add_chapter($bookid, $chapterid) error: " . $db->get_error() . "\n");
+					die();
+				}
 	
-				global $client;
 				print_r("Add task($bookid, $chapterid)\n");
 				$workload = sprintf("%s,%d", $bookid, $chapterid);
 				$client->doBackground('DownloadYsts8', $workload, $workload);

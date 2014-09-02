@@ -277,6 +277,8 @@ class CPingShu8
 		if(False == $book || 0 == count($chapters))
 			return False;
 		
+		ksort($chapters);
+
 		$data = array();
 		$data["icon"] = $book["icon"];
 		$data["info"] = $book["summary"];
