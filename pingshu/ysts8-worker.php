@@ -12,7 +12,7 @@
 
 	$task_count = 0;
 	$basedir = "/ts/ysts8/";
-	$paths = array("115.28.51.131" => "/ts2/ysts8/", "175.195.249.184" => "/home/ysts8/", "210.183.56.107" => "/home/ysts8/");
+	$paths = array("115.28.51.131" => "/ts2/ysts8/", "175.195.249.184" => "/home/ysts8/", "210.183.56.107" => "/ts/ysts8/");
 	$ips = get_network_interface();
 	foreach($ips as $net){
 		if(array_key_exists($net["ip"], $paths)){
@@ -117,6 +117,7 @@
 		$uri = urlencode($uri);
 		$uri = str_replace('%3A', ':', $uri);
 		$uri = str_replace('%2F', '/', $uri);
+		$uri = str_replace('+', '%20', $uri);
 
 		$suffix = $matches1[1];
 		$result = "$uri?$suffix";
@@ -172,7 +173,7 @@
 		$filename = sprintf("$dir/%d.mp3", $chapterid);
 		file_put_contents($filename, $audio);
 
-		sleep(40);
+		sleep(17);
 		return 0;
 	}
 
