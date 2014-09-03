@@ -6,7 +6,7 @@
 
 	// proxies
 	$http = new Http();
-	$http->setcookie("/var/ysts8.cookie");
+//	$http->setcookie("/var/ysts8.cookie");
 	$http->settimeout(120);
 	//$proxies = split(",", file_get_contents("proxy.cfg"));
 
@@ -29,6 +29,7 @@
 	while ($worker->work());
 
 	function DoDownload($job) {
+		sleep(17);
 
 		$args = $job->workload();
 		list($bookid, $chapterid) = explode(",", $args);
@@ -117,6 +118,8 @@
 		$uri = urlencode($uri);
 		$uri = str_replace('%3A', ':', $uri);
 		$uri = str_replace('%2F', '/', $uri);
+		$uri = str_replace('%28', '(', $uri);
+		$uri = str_replace('%29', ')', $uri);
 		$uri = str_replace('+', '%20', $uri);
 
 		$suffix = $matches1[1];
@@ -172,8 +175,6 @@
 
 		$filename = sprintf("$dir/%d.mp3", $chapterid);
 		file_put_contents($filename, $audio);
-
-		sleep(17);
 		return 0;
 	}
 
