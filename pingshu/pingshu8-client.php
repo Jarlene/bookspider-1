@@ -1,78 +1,82 @@
 <?php
-	require_once("php/util.inc");
 	require_once("php/dom.inc");
-	require_once("php/http.inc");
-	require_once("http-proxy.php");
-	require_once("php/http-multiple.inc");
-	require_once("http-multiple-proxy.php");
-	require("pingshu8.php");
+	require_once("phttp.php");
+	require_once("db-pingshu.inc");
 
-	$client = new GearmanClient();
-	$client->addServer("115.28.54.237", 4730);	
+	$siteid = 1;
 	$db = new DBPingShu("115.28.54.237");
+	$http = new PHttp();
 
-	$useDelegate = 0;
-	
-	$update_mode = TRUE; // 只找没有的书
-	//Action1($update_mode);
-	//Action2($update_mode);
-	//Action3();
-	if($update_mode)// 每天调用更新一次
-	{
-		Action4($update_mode); 
-		Action3();
+	$update_mode = TRUE;
+	if($update_mode){
+		Action1($siteid, True); 
+	} else {
+		Action1($siteid, False);
+		Action2($siteid);
+		Action3($siteid);
 	}
 
-	function Action1($update_mode)
+	function Action1($siteid, $update_mode)
 	{
+		global $db;
+
 		$books = GetBooks($update_mode);
 		$n = count($books);
 		print_r("Get Books: " . count($books) . "\n");
 
 		$i = 0;
-		global $db;
-		$dbbooks = $db->get_books(CPingShu8::$siteid);
+		$dbbooks = $db->get_books($siteid);
 		foreach($books as $id => $name)
 		{
 			$i++;
 			if(!array_key_exists($id, $dbbooks))
 			{
 				print_r("[$i]DB add book($id, $name)\n");
-				if(0 != $db->add_book(CPingShu8::$siteid, $id, "", $name, "", "", "", "")){
+				if(0 != $db->add_book($siteid, $id, "", $name, "", "", "", "")){
 					print_r("add book($id) error: " . $db->get_error() . "\n");
 					die();
 				}
+
+				$dbbooks[$id] = array("icon" => ""); // for AddChapter
+			}
+
+			if($update_mode){
+				print_r("AddChapter([$i]$bookid - $name)\n");
+				if(0 != AddChapter($siteid, $id, $dbbooks[$id], $update_mode))
+					sleep(20);
 			}
 		}
 	}
 
-	function Action2($update_mode)
+	function Action2($siteid)
 	{
 		global $db;
-		$dbbooks = $db->get_books(CPingShu8::$siteid);
+		$dbbooks = $db->get_books($siteid);
 		print_r("db-book count: " . count($dbbooks) . "\n");
 
-		$i = 0;	
+		$i = 0;
 		foreach($dbbooks as $bookid => $dbbook)
 		{
 			$i++;
 			$name = $dbbook["name"];
 			print_r("AddChapter([$i]$bookid - $name)\n");
-			if(0 != AddChapter($bookid, $dbbook, $update_mode))
+			if(0 != AddChapter($siteid, $bookid, $dbbook, False))
 				sleep(20);
 		}
 	}
 
-	function Action3()
+	function Action3($siteid)
 	{
-		$i = 0;
 		global $db;
-		global $client;
 
-		$dbbooks = $db->get_books(CPingShu8::$siteid);
+		$client = new GearmanClient();
+		$client->addServer("115.28.54.237", 4730);
+
+		$i = 0;
+		$dbbooks = $db->get_books($siteid);
 		foreach($dbbooks as $bookid => $dbbook)
 		{
-			$dbchapters = $db->get_chapters(CPingShu8::$siteid, $bookid);
+			$dbchapters = $db->get_chapters($siteid, $bookid);
 			foreach($dbchapters as $chapterid => $dbchapter)
 			{
 				$uri = $dbchapter["uri"];
@@ -88,42 +92,13 @@
 			}
 		}
 	}
-	
-	function Action4($update_mode)
-	{
-		$books = GetBooks($update_mode);
-		$n = count($books);
-		print_r("Get Books: " . count($books) . "\n");
-	
-		$i = 0;
-		global $db;
-		$dbbooks = $db->get_books(CPingShu8::$siteid);
-		foreach($books as $id => $name)
-		{
-			$i++;
-			print_r("$id = $name \n");
-			if(!array_key_exists($id, $dbbooks))
-			{
-				print_r("[$i]DB add book($id, $name)\n");
-				if(0 != $db->add_book(CPingShu8::$siteid, $id, "", $name, "", "", "", "")){
-					print_r("add book($id) error: " . $db->get_error() . "\n");
-					die();
-				}
-
-				$dbbooks[$id] = array("icon" => "");
-			}
-
-			if(0 != AddChapter($id, $dbbooks[$id], $update_mode))
-				sleep(20);
-		}
-	}
 
 	//----------------------------------------------------------------------------
 	// functions
 	//----------------------------------------------------------------------------
 	function GetBooks($update_mode)
 	{
-		global $useDelegate;
+		global $http;
 		$books = array();
 
 		$urls = array();
@@ -139,11 +114,7 @@
 
 		foreach($urls as $uri)
 		{
-			if ($useDelegate == 1)
-				$html = http_proxy_get($uri, "luckyzz@163.com", 20);
-			else
-				$html = http_get($uri);
-			
+			$html = $http->get($uri, "luckyzz@163.com");
 			$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
 			if(strlen($html) < 1){
 				print_r("Load failed: $uri\n");
@@ -178,42 +149,49 @@
 		return $books;
 	}
 
-	function AddChapter($bookid, $dbbook, $update_mode)
+	function AddChapter($siteid, $bookid, $dbbook, $update_mode)
 	{
 		global $db;
-		global $client;
 
-		$dbchapters = $db->get_chapters(CPingShu8::$siteid, $bookid);
-		if(1 != $update_mode && count($dbchapters) > 0){
+		$dbchapters = $db->get_chapters($siteid, $bookid);
+		if(!$update_mode && count($dbchapters) > 0){
 			print_r("book has download.\n");
 			return 0;
 		}
 
-		$book = __WebGetChapters($bookid, count($dbchapters));
+		// load book info
+		$book = __WebGetBookInfo($bookid);
+		if(False === $book){
+			print_r("AddChapter($siteid, $bookid) failed.\n");
+			return 1;
+		}
+
 		if(strlen($dbbook["icon"]) < 1 && strlen($book["icon"]) > 1){
 			$bookname = $dbbook["name"];
 			print_r("DB book update($bookid, $bookname)\n");
-			if(0 != $db->update_book(CPingShu8::$siteid, $bookid, "", $bookname, $book["icon"], $book["info"], $book["catalog"], $book["subcatalog"])){
+			if(0 != $db->update_book($siteid, $bookid, "", $bookname, $book["icon"], $book["info"], $book["catalog"], $book["subcatalog"])){
 				print_r("update book2($bookid) error: " . $db->get_error() . "\n");
 				die();
 			}
 		}
 
-		$chapters = $book["chapter"];
+		if($book["count"] == count($dbchapters)){
+			print_r("book has download.\n");
+			return 1;	
+		}
+
+		// load chapters
+		$chapters = __WebGetChapters($bookid, $book, count($dbchapters));
 		print_r("db chapters: " . count($dbchapters) . " chapters: " . count($chapters) . "\n");
 		foreach($chapters as $chapter){
 			$chapterid = $chapter["uri"];
 			if(!array_key_exists($chapterid, $dbchapters)){
 				$name = $chapter["name"];
 				print_r("DB add chapter($bookid, $chapterid, $name)\n");
-				if(0 != $db->add_chapter(CPingShu8::$siteid, $bookid, $chapterid, $name, "")){
+				if(0 != $db->add_chapter($siteid, $bookid, $chapterid, $name, "")){
 					print_r("add_chapter($bookid, $chapterid) error: " . $db->get_error() . "\n");
 					die();
 				}
-
-				print_r("Add task($bookid, $chapterid)\n");
-				$workload = sprintf("%s,%d", $bookid, $chapterid);
-				$client->doBackground('DownloadPingshu8', $workload, $workload);
 			}
 		}
 
@@ -223,78 +201,40 @@
 	//----------------------------------------------------------------------------
 	// Website
 	//----------------------------------------------------------------------------	
-	function __WebGetChapters($bookid, $dbChapterCount)
+	function __WebGetChapters($bookid, $book, $dbChapterCount)
 	{
-		global $useDelegate;
-		
-		$book = __WebGetBookInfo($bookid);
-		
-		$updateCount = $book["count"] - $dbChapterCount;
-		
-		if ($updateCount%10)
-			$addPage = 1;
-		else 
-			$addPage = 0;
-		$updatePage = $updateCount/10 + $addPage;
-
+		global $http;
 		list($v1, $v2, $v3) = explode("_", $bookid);
 
-		$urls = array();
 		$page = $book["page"];
-		for($i = ($page-$updatePage)+1; $i < $page; $i++){
-			$urls[] = sprintf("http://www.pingshu8.com/MusicList/mmc_%d_%d_%d.htm", $v1, $v2, $i+1);
-		}
+		// $n = $dbChapterCount/10;
+		// for($i = $n>0 ? $n : 1; $i < $page; $i++){
+		for($i = 1; $i < $page; $i++){
+			$uri = sprintf("http://www.pingshu8.com/MusicList/mmc_%d_%d_%d.htm", $v1, $v2, $i+1);
+			$html = $http->get($uri, "luckyzz@163.com", array("referer" => $referer));
+			if(strlen($html) < 1){
+				print_r("__WebGetChapters($uri) failed.\n");
+				return False;
+			}
 
-		if(count($urls) > 0){
-			$result = array();
-			
-			if ($useDelegate == 1)
-				$http = new HttpMultipleProxy("proxy.cfg");
-			else
-				$http = new HttpMultiple();
-
-			$r = $http->get($urls, '_OnReadChapter', &$result, 20);
-
-			if(count($result) != count($urls)){
-				$book["chapter"] = array(); // empty data(some uri request failed)
-			} else {
-				for($i = 0; $i < count($result); $i++){
-					foreach($result[$i] as $chapter){
-						$book["chapter"][] = $chapter;
-					}
-				}
+			$chapters = __ParseChapter($html);
+			foreach($chapters as $chapter){
+				$book["chapter"][] = $chapter;
 			}
 		}
 
-		return $book;
+		return $book["chapter"];
 	}
 
 	function __WebGetBookInfo($bookid)
 	{
-		global $useDelegate;
+		global $http;
 		
 		$uri = "http://www.pingshu8.com/MusicList/mmc_$bookid.htm";
 		$referer = "Referer: http://www.pingshu8.com/top/xiangsheng.htm";
-		
-		if ($useDelegate == 1)
-			$html = http_proxy_get($uri, "luckyzz@163.com", 20, "proxy.cfg", array($referer));
-		else
-			$html = http_get($uri, 20, "", array($referer));
-		
-		
-		
+		$html = $http->get($uri, "luckyzz@163.com", array("referer" => $referer));
 		$html = str_replace("text/html; charset=gb2312", "text/html; charset=gb18030", $html);
-		if(strlen($html) < 1){
-			$data = array();
-			$data["icon"] = "";
-			$data["info"] = "";
-			$data["page"] = 0;
-			$data["count"] = 0;
-			$data["chapter"] = array();
-			$data["catalog"] = "";
-			$data["subcatalog"] = "";
-			return $data;
-		}
+		if(strlen($html) < 1) return False;
 
 		$host = parse_url($uri);
 		$xpath = new XPath($html);
@@ -308,6 +248,7 @@
 			$data["icon"] = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $iconuri;
 		}
 
+		$data = array();
 		list($count) = sscanf($value, " 共有%d集");
 		$data["info"] = $xpath->get_value("//div[@class='c']/div");
 		$data["page"] = $selects->length;
@@ -316,21 +257,6 @@
 		$data["catalog"] = $xpath->get_value("//div[@class='t1']/div/a[2]");
 		$data["subcatalog"] = $xpath->get_value("//div[@class='t1']/div/a[3]");
 		return $data;
-	}
-
-	function _OnReadChapter($param, $i, $r, $header, $body)
-	{
-		if(0 != $r){
-			//error_log("_OnReadChapter $i: error: $r\n", 3, "pingshu.log");
-			return -1;
-		} else if(!stripos($body, "luckyzz@163.com")){
-			// check html content integrity
-			//error_log("Integrity check error $i\n", 3, "pingshu.log");
-			return -1;
-		}
-
-		$param[$i] = __ParseChapter($body);
-		return 0;
 	}
 
 	function __ParseChapter($html)
