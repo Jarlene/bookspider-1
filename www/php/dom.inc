@@ -75,12 +75,12 @@ class XPath
 				}
 			}
 			return join("\r\n", $texts);
-		} else
+		} else {
 			return $default;
 		}
 	}
 
-	private $m_xpath;
+	private $m_xpath = null;
 };
 
 ?>
