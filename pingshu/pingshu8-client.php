@@ -242,13 +242,13 @@
 		$selects = $xpath->query("//select[@name='turnPage']/option");
 		$iconuri = $xpath->get_attribute("//div[@class='a']/img", "src");
 
+		$data = array();
 		if(0==strncmp("../", $iconuri, 3)){
 			$data["icon"] = 'http://' . $host["host"] . dirname(dirname($host["path"])) . '/' . substr($iconuri, 3);
 		} else {
 			$data["icon"] = 'http://' . $host["host"] . dirname($host["path"]) . '/' . $iconuri;
 		}
 
-		$data = array();
 		list($count) = sscanf($value, " 共有%d集");
 		$data["info"] = $xpath->get_value("//div[@class='c']/div");
 		$data["page"] = $selects->length;
